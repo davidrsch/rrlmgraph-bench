@@ -1,0 +1,20 @@
+Package: miniDsProject
+Type: Package
+Title: Mini Data Science Project (rrlmgraph Benchmark Fixture)
+Version: 0.1.0
+Description: A small but realistic data-science R project used as the
+    primary benchmark fixture for rrlmgraph.  Not intended for
+    independent installation.
+Authors@R: person("David", "Schoch", email = "davidrsch@gmail.com",
+    role = c("aut", "cre"))
+License: MIT
+Depends:
+    R (>= 4.1.0)
+Imports:
+    dplyr,
+    stats,
+    utils
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
