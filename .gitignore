@@ -1,0 +1,17 @@
+# R artifacts
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
+# Package build outputs
+*.tar.gz
+*.zip
+
+# renv / packrat
+renv/library/
+packrat/lib*/
+
+# vscode
+.vscode/

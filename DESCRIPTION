@@ -1,0 +1,30 @@
+Package: rrlmgraphbench
+Type: Package
+Title: Benchmark Suite for rrlmgraph
+Version: 0.1.0
+Authors@R: person("David", "Schoch", email = "davidrsch@gmail.com",
+    role = c("aut", "cre"))
+Description: Provides fixture projects and ground-truth datasets for
+    benchmarking the rrlmgraph package.  Fixtures range from a minimal
+    data-science script project to a medium-sized Shiny application and a
+    small R package, covering the full spectrum of project types supported
+    by rrlmgraph.
+License: MIT + file LICENSE
+Depends:
+    R (>= 4.1.0)
+Imports:
+    cli,
+    fs,
+    rrlmgraph
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-US
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+URL: https://github.com/davidrsch/rrlmgraph-bench
+BugReports: https://github.com/davidrsch/rrlmgraph-bench/issues
