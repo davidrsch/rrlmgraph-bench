@@ -1,0 +1,14 @@
+{
+  "task_id": "task_008_nf_shiny",
+  "category": "new_function",
+  "project": "shiny_app_medium",
+  "description": "Implement the missing `build_download_handler(data_r)` function that is already called in `server_logic()` but not yet defined. The function takes a reactive expression `data_r` and returns a `shiny::downloadHandler()` that: (1) sets `filename` to a function returning `paste0('survey_export_', Sys.Date(), '.csv')`; (2) writes the current reactive data to `con` with `utils::write.csv(data_r(), con, row.names = FALSE)`. Include Roxygen docs.",
+  "seed_node": "server::server_logic",
+  "ground_truth_nodes": [
+    "server::server_logic",
+    "server::build_download_handler"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_008_nf_shiny_solution.R",
+  "evaluation_method": "exec_correct",
+  "difficulty": "medium"
+}

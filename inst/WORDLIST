@@ -1,8 +1,15 @@
 artefacts
 benchmarking
+BM25
+Bonferroni
 Codecov
+dotchart
+formals
+hallucination
 knitr
 NAMESPACE
+NDCG
+NSE
 OpenAI
 Ollama
 ORCID
@@ -12,6 +19,7 @@ rrlmgraph
 rrlmgraphbench
 rmarkdown
 Roxygen
+TER
 testthat
 TFIDF
 tidyverse

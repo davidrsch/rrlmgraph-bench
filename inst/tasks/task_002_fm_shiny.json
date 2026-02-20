@@ -1,0 +1,13 @@
+{
+  "task_id": "task_002_fm_shiny",
+  "category": "function_modification",
+  "project": "shiny_app_medium",
+  "description": "Extend `update_filtered_data()` to accept an optional `score_max` numeric argument (default NULL). When provided, filter out rows where `df$score > score_max`, implementing a two-sided score range filter alongside the existing `score_threshold` lower-bound filter.",
+  "seed_node": "server::update_filtered_data",
+  "ground_truth_nodes": [
+    "server::update_filtered_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_002_fm_shiny_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "medium"
+}

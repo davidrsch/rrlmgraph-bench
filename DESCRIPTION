@@ -20,14 +20,20 @@ Depends:
     R (>= 4.2.0)
 Imports:
     cli,
+    ellmer,
     fs,
-    rrlmgraph
+    igraph,
+    jsonlite,
+    methods,
+    rrlmgraph,
+    stats
 Suggests:
     knitr,
     rmarkdown,
     spelling,
     testthat (>= 3.0.0),
     withr
+VignetteBuilder: knitr
 Remotes:
     davidrsch/rrlmgraph
 Config/testthat/edition: 3

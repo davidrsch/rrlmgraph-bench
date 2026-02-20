@@ -1,0 +1,13 @@
+{
+  "task_id": "task_005_bd_shiny",
+  "category": "bug_diagnosis",
+  "project": "shiny_app_medium",
+  "description": "In `filterServer()`, the `shiny::updateSelectizeInput()` call is applied to the `keyword` input, which was created as a `shiny::textInput()`. `updateSelectizeInput` only works with `selectizeInput` widgets; using it on a `textInput` silently fails to update the widget. Replace the call with `shiny::updateTextInput()` so the keyword input is correctly populated with filter choices.",
+  "seed_node": "module_filter::filterServer",
+  "ground_truth_nodes": [
+    "module_filter::filterServer"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_005_bd_shiny_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "medium"
+}
