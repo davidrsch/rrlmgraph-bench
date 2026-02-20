@@ -1,0 +1,10 @@
+# R.buildignore entries — development-only files excluded from the tarball
+^\.git$
+^\.gitignore$
+^\.github$
+^\.Rproj\.user$
+^rrlmgraphbench\.Rproj$
+^cran-comments\.md$
+^revdep$
+^_pkgdown\.yml$
+^pkgdown$

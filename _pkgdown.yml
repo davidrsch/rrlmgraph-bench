@@ -1,0 +1,39 @@
+url: https://davidrsch.github.io/rrlmgraph-bench/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#1A4F74"
+    navbar-light-color: "white"
+    navbar-light-brand-color: "white"
+    navbar-light-brand-hover-color: "white"
+    navbar-light-active-color: "white"
+    code_font: "monospace"
+
+development:
+  mode: auto
+
+navbar:
+  bg: primary
+  type: light
+  structure:
+    left:  [intro, reference, news]
+    right: [search, github]
+  components:
+    intro:
+      text: "Benchmark Report"
+      href: articles/benchmark_report.html
+    github:
+      icon: fa-github
+      href: https://github.com/davidrsch/rrlmgraph-bench
+
+reference:
+  - title: "Benchmark Runner"
+    desc: >
+      Functions for executing the full benchmark suite against
+      fixture projects and ground-truth datasets.
+    contents:
+      - run_full_benchmark
+      - compute_benchmark_statistics
+      - count_hallucinations
+      - rrlmgraphbench-package
