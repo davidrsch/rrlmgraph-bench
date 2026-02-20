@@ -69,7 +69,10 @@ test_that("AC3: rrlmgraph context uses >= 60 % fewer tokens than full_files", {
 
   g <- rrlmgraph::build_rrlm_graph(mini_path)
   ctx_graph <- rrlmgraph::query_context(g, "split data into train/test")
-  tokens_graph <- nchar(if (is.null(ctx_graph$context_string)) "" else ctx_graph$context_string) %/% 4L
+  tokens_graph <- nchar(
+    if (is.null(ctx_graph$context_string)) "" else ctx_graph$context_string
+  ) %/%
+    4L
 
   r_files <- list.files(file.path(mini_path, "R"), "\\.R$", full.names = TRUE)
   full_text <- paste(
