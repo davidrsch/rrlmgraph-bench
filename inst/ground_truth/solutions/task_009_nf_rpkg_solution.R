@@ -31,7 +31,7 @@ setMethod("summarise_result", "ModelResult", function(object) {
 
   data.frame(
     metric = metric_names,
-    value  = metric_values,
+    value = metric_values,
     stringsAsFactors = FALSE
   )
 })
