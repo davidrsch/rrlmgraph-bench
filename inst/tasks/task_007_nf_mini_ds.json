@@ -1,0 +1,14 @@
+{
+  "task_id": "task_007_nf_mini_ds",
+  "category": "new_function",
+  "project": "mini_ds_project",
+  "description": "Write a new exported function `save_benchmark_results(results, path)` in `R/benchmark.R`. The function should: (1) validate that `results` has class `'benchmark_result'`; (2) serialise `results` to `path` using `saveRDS()`; (3) print a message 'Saved benchmark results to <path>' using `message()`; (4) return `path` invisibly. Include full Roxygen documentation.",
+  "seed_node": "benchmark::run_benchmark",
+  "ground_truth_nodes": [
+    "benchmark::run_benchmark",
+    "benchmark::format_results"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_007_nf_mini_ds_solution.R",
+  "evaluation_method": "exec_correct",
+  "difficulty": "easy"
+}

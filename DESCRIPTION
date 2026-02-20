@@ -19,21 +19,24 @@ License: MIT + file LICENSE
 Depends:
     R (>= 4.2.0)
 Imports:
-    cli,
-    fs,
-    rrlmgraph
+    ellmer,
+    igraph,
+    jsonlite,
+    rrlmgraph,
+    stats
 Suggests:
     knitr,
     rmarkdown,
     spelling,
     testthat (>= 3.0.0),
     withr
+VignetteBuilder: knitr
 Remotes:
     davidrsch/rrlmgraph
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 URL: https://github.com/davidrsch/rrlmgraph-bench
 BugReports: https://github.com/davidrsch/rrlmgraph-bench/issues

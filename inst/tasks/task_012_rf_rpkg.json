@@ -1,0 +1,13 @@
+{
+  "task_id": "task_012_rf_rpkg",
+  "category": "refactoring",
+  "project": "r_package_small",
+  "description": "Replace the `for`-loop in `cross_validate()` with an `lapply()` call. The refactored function should collect fold results in a single `lapply(seq_len(config@cv_folds), function(k) { ... })` expression, assigning the result directly to `metric_rows`. The final `do.call(rbind, metric_rows)` and `colMeans()` lines remain unchanged. The refactored version must be semantically equivalent and produce the same numeric output given the same seed.",
+  "seed_node": "exported_fns::cross_validate",
+  "ground_truth_nodes": [
+    "exported_fns::cross_validate"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_012_rf_rpkg_solution.R",
+  "evaluation_method": "semantic_equiv",
+  "difficulty": "easy"
+}

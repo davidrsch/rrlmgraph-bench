@@ -48,17 +48,29 @@ jobs:
           needs: check
 
       - name: Document
-        run: Rscript -e 'devtools::document()'
+        run: |
+          Rscript -e 'devtools::document()'
+          mkdir -p spell-debug
+          git diff man/ > spell-debug/rd_diff.txt 2>&1 || true
 
       - name: Spell check
         shell: Rscript {0}
         run: |
+          dir.create("spell-debug", showWarnings = FALSE)
           res <- spelling::spell_check_package()
           if (nrow(res) > 0L) {
             print(res)
+            write.csv(res, "spell-debug/spell_failures.csv", row.names = FALSE)
             stop("Spell check failed -- add words to inst/WORDLIST.",
                  call. = FALSE)
           }
+
+      - name: Upload spell-check debug
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spell-debug-${{ matrix.config.r }}
+          path: spell-debug/
 
       - uses: r-lib/actions/check-r-package@v2
         with:

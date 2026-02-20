@@ -1,0 +1,256 @@
+---
+title: "rrlmgraph Benchmark Report"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rrlmgraph Benchmark Report}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4,
+  out.width = "100%"
+)
+library(rrlmgraphbench)
+```
+
+## Overview
+
+This vignette presents a reproducible benchmark comparing six retrieval
+strategies for providing R coding context to an LLM:
+
+| Strategy | Description |
+|---|---|
+| `rrlmgraph_tfidf` | rrlmgraph graph traversal with TF-IDF embeddings |
+| `rrlmgraph_ollama` | rrlmgraph graph traversal with Ollama embeddings |
+| `full_files` | Entire source files dumped verbatim (baseline) |
+| `bm25_retrieval` | BM25 keyword retrieval (no graph) |
+| `no_context` | No context supplied |
+| `random_k` | Five randomly sampled code chunks |
+
+Results are loaded from a precomputed RDS file to allow the vignette to
+knit without an active LLM API key.
+
+---
+
+## Load precomputed results
+
+```{r load-results, error=TRUE}
+results_path <- system.file(
+  "results", "benchmark_results.rds",
+  package = "rrlmgraphbench"
+)
+
+if (file.exists(results_path)) {
+  all_results <- readRDS(results_path)
+} else {
+  message("Pre-computed results not found. Running a dry-run benchmark.")
+  all_results <- run_full_benchmark(
+    output_path = tempfile(fileext = ".rds"),
+    n_trials    = 1L,
+    .dry_run    = TRUE
+  )
+}
+str(all_results, max.level = 1)
+```
+
+---
+
+## Summary statistics
+
+```{r summary-stats}
+stats <- compute_benchmark_statistics(all_results)
+knitr::kable(
+  stats$summary[, c(
+    "strategy", "n", "mean_score", "sd_score",
+    "ci_lo_95", "ci_hi_95", "mean_total_tokens", "hallucination_rate"
+  )],
+  digits = 3,
+  caption = "Mean score, 95 % CI, token usage, and hallucination rate per strategy."
+)
+```
+
+---
+
+## Score distribution
+
+```{r score-plot}
+# Base-R dot chart sorted by mean score
+summary_df <- stats$summary
+summary_df <- summary_df[order(summary_df$mean_score, decreasing = TRUE), ]
+
+dotchart(
+  summary_df$mean_score,
+  labels = summary_df$strategy,
+  xlab   = "Mean score (0–1)",
+  main   = "Strategy performance",
+  pch    = 19,
+  col    = "steelblue"
+)
+segments(
+  x0   = summary_df$ci_lo_95,
+  x1   = summary_df$ci_hi_95,
+  y0   = seq_len(nrow(summary_df)),
+  lwd  = 2,
+  col  = "steelblue"
+)
+```
+
+---
+
+## Token Efficiency Ratio (TER)
+
+TER measures score-per-token relative to the `full_files` baseline.
+A TER > 1 means the strategy achieves a higher score per token consumed.
+
+```{r ter}
+ter_df <- data.frame(
+  strategy = names(stats$ter),
+  TER      = round(stats$ter, 3)
+)
+ter_df <- ter_df[!is.na(ter_df$TER), ]
+ter_df <- ter_df[order(ter_df$TER, decreasing = TRUE), ]
+knitr::kable(ter_df,
+  row.names = FALSE,
+  caption = "Token Efficiency Ratio relative to full_files baseline."
+)
+```
+
+---
+
+## Hallucination analysis
+
+```{r hallucination}
+hall_df <- stats$summary[, c("strategy", "hallucination_rate")]
+hall_df$hallucination_rate <- round(hall_df$hallucination_rate, 3)
+hall_df <- hall_df[order(hall_df$hallucination_rate), ]
+knitr::kable(hall_df,
+  row.names = FALSE,
+  caption = "Fraction of responses containing at least one hallucination."
+)
+```
+
+Hallucination type breakdown (where available):
+
+```{r hall-types}
+if ("hallucination_details" %in% names(all_results)) {
+  details_flat <- unlist(strsplit(
+    all_results$hallucination_details[nzchar(all_results$hallucination_details)],
+    "; "
+  ))
+  if (length(details_flat) > 0) {
+    type_pattern <- regmatches(
+      details_flat,
+      regexpr("invented_function|invalid_argument|wrong_namespace", details_flat)
+    )
+    type_counts <- sort(table(type_pattern), decreasing = TRUE)
+    barplot(
+      type_counts,
+      main = "Hallucination types",
+      ylab = "Count",
+      col = c("tomato", "goldenrod", "steelblue"),
+      names.arg = c("invented\nfunction", "invalid\nargument", "wrong\nnamespace")[
+        match(names(type_counts), c("invented_function", "invalid_argument", "wrong_namespace"))
+      ]
+    )
+  } else {
+    message("No hallucinations detected in the loaded results.")
+  }
+}
+```
+
+---
+
+## Pairwise statistical tests
+
+Welch *t*-tests with Bonferroni correction and Cohen's *d*.
+
+```{r pairwise}
+pw <- stats$pairwise
+if (!is.null(pw) && nrow(pw) > 0) {
+  pw$sig <- ifelse(pw$p_bonferroni < 0.001, "***",
+    ifelse(pw$p_bonferroni < 0.01, "**",
+      ifelse(pw$p_bonferroni < 0.05, "*", "")
+    )
+  )
+  knitr::kable(
+    pw[, c(
+      "strategy_1", "strategy_2", "statistic",
+      "p_value_raw", "p_bonferroni", "cohens_d", "sig"
+    )],
+    digits = 4,
+    caption = "Pairwise Welch t-tests. * p<0.05; ** p<0.01; *** p<0.001 (Bonferroni)."
+  )
+}
+```
+
+---
+
+## Per-project breakdown
+
+```{r project-breakdown}
+if ("task_id" %in% names(all_results)) {
+  # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds)
+  all_results$project <- sub(
+    ".*_(mini_ds|shiny|rpkg).*", "\\1",
+    all_results$task_id
+  )
+  proj_summary <- aggregate(
+    score ~ strategy + project,
+    data = all_results,
+    FUN  = mean
+  )
+  proj_wide <- reshape(
+    proj_summary,
+    idvar = "strategy",
+    timevar = "project",
+    direction = "wide"
+  )
+  names(proj_wide) <- gsub("score\\.", "", names(proj_wide))
+  knitr::kable(
+    proj_wide,
+    digits  = 3,
+    caption = "Mean score disaggregated by fixture project."
+  )
+}
+```
+
+---
+
+## Recursive-improvement trajectory
+
+If multi-trial results are available, this plot shows whether score
+improves across successive trials (a proxy for benefit from context).
+
+```{r improvement-plot}
+if ("trial" %in% names(all_results)) {
+  trial_means <- aggregate(score ~ strategy + trial,
+    data = all_results, FUN = mean
+  )
+  strategies <- unique(trial_means$strategy)
+  cols <- rainbow(length(strategies))
+  plot(
+    range(trial_means$trial), c(0, 1),
+    type = "n",
+    xlab = "Trial", ylab = "Mean score",
+    main = "Score by trial"
+  )
+  for (i in seq_along(strategies)) {
+    sub <- trial_means[trial_means$strategy == strategies[i], ]
+    lines(sub$trial, sub$score, col = cols[i], lwd = 2, type = "b", pch = 19)
+  }
+  legend("bottomright", legend = strategies, col = cols, lwd = 2, cex = 0.8)
+}
+```
+
+---
+
+## Session info
+
+```{r session-info}
+sessionInfo()
+```

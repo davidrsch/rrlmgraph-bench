@@ -1,0 +1,13 @@
+{
+  "task_id": "task_010_rf_mini_ds",
+  "category": "refactoring",
+  "project": "mini_ds_project",
+  "description": "Refactor `calculate_mrr()` to eliminate the explicit `vapply()` loop. Replace it with a vectorised approach: use `match(TRUE, as.logical(r))` (inside a `vapply` or `sapply`) to find the first hit index. Alternatively, use `Position(isTRUE, r)` to locate the first TRUE element. The function must produce identical numeric output to the original for all valid inputs. Do not change the public interface or Roxygen documentation.",
+  "seed_node": "benchmark::calculate_mrr",
+  "ground_truth_nodes": [
+    "benchmark::calculate_mrr"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_010_rf_mini_ds_solution.R",
+  "evaluation_method": "semantic_equiv",
+  "difficulty": "medium"
+}
