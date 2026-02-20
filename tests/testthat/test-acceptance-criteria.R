@@ -54,7 +54,10 @@ test_that("AC2: query_context() respects the max_tokens budget", {
     "split data into train/test",
     budget_tokens = budget
   )
-  actual_tokens <- nchar(if (is.null(ctx$context_string)) "" else ctx$context_string) %/% 4L
+  actual_tokens <- nchar(
+    if (is.null(ctx$context_string)) "" else ctx$context_string
+  ) %/%
+    4L
   expect_lte(actual_tokens, budget * 1.1) # allow 10% tolerance for word boundaries
 })
 
