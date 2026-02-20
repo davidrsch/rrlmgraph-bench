@@ -173,9 +173,15 @@ list_r_files <- function(project_path) {
   }
 }
 
-build_context <- function(strategy, task, graph_tfidf, graph_ollama,
-                           source_files) {
-  switch(strategy,
+build_context <- function(
+  strategy,
+  task,
+  graph_tfidf,
+  graph_ollama,
+  source_files
+) {
+  switch(
+    strategy,
     rrlmgraph_tfidf = {
       if (is.null(graph_tfidf)) return(character(0L))
       tryCatch(
