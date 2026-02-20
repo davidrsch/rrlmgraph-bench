@@ -114,7 +114,10 @@ run_full_benchmark <- function(
     )
     graph_ollama <- tryCatch(
       rrlmgraph::rrlm_graph(project_path, embed_method = "ollama"),
-      error = function(e) { warning(e); NULL }
+      error = function(e) {
+        warning(e)
+        NULL
+      }
     )
     source_files <- list_r_files(project_path)
 
