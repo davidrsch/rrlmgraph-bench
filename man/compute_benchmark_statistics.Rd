@@ -37,7 +37,7 @@ hallucination rate) per strategy.
 baseline.
 \item Pairwise two-sample Welch \emph{t}-tests with Cohen's \emph{d} and
 Bonferroni-corrected \emph{p}-values.
-\item Mean Normalised Discounted Cumulative Gain (NDCG) where
+\item Mean Normalized Discounted Cumulative Gain (NDCG) where
 relevance ranks are available.
 }
 }

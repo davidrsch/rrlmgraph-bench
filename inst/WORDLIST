@@ -1,12 +1,16 @@
 artefacts
+AST
 benchmarking
 BM25
 Bonferroni
 Codecov
 dotchart
+embeddings
 formals
 hallucination
+IDF
 knitr
+LLM
 NAMESPACE
 NDCG
 NSE
@@ -20,7 +24,9 @@ rrlmgraphbench
 rmarkdown
 Roxygen
 TER
+TF
 testthat
 TFIDF
 tidyverse
+Welch
 withr

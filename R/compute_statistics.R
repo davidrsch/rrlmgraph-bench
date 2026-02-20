@@ -9,7 +9,7 @@
 #'         baseline.
 #'   \item Pairwise two-sample Welch *t*-tests with Cohen's *d* and
 #'         Bonferroni-corrected *p*-values.
-#'   \item Mean Normalised Discounted Cumulative Gain (NDCG) where
+#'   \item Mean Normalized Discounted Cumulative Gain (NDCG) where
 #'         relevance ranks are available.
 #' }
 #'

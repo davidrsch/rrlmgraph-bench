@@ -10,10 +10,10 @@ vignette: >
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment  = "#>",
-  fig.width  = 7,
+  comment = "#>",
+  fig.width = 7,
   fig.height = 4,
-  out.width  = "100%"
+  out.width = "100%"
 )
 library(rrlmgraphbench)
 ```
@@ -32,12 +32,12 @@ strategies for providing R coding context to an LLM:
 | `no_context` | No context supplied |
 | `random_k` | Five randomly sampled code chunks |
 
-Results are loaded from a pre-generated RDS file to allow the vignette to
+Results are loaded from a precomputed RDS file to allow the vignette to
 knit without an active LLM API key.
 
 ---
 
-## Load pre-computed results
+## Load precomputed results
 
 ```{r load-results, error=TRUE}
 results_path <- system.file(
@@ -81,7 +81,7 @@ knitr::kable(
 ```{r score-plot}
 # Base-R dot chart sorted by mean score
 summary_df <- stats$summary
-summary_df  <- summary_df[order(summary_df$mean_score, decreasing = TRUE), ]
+summary_df <- summary_df[order(summary_df$mean_score, decreasing = TRUE), ]
 
 dotchart(
   summary_df$mean_score,
@@ -114,8 +114,10 @@ ter_df <- data.frame(
 )
 ter_df <- ter_df[!is.na(ter_df$TER), ]
 ter_df <- ter_df[order(ter_df$TER, decreasing = TRUE), ]
-knitr::kable(ter_df, row.names = FALSE,
-             caption = "Token Efficiency Ratio relative to full_files baseline.")
+knitr::kable(ter_df,
+  row.names = FALSE,
+  caption = "Token Efficiency Ratio relative to full_files baseline."
+)
 ```
 
 ---
@@ -126,8 +128,10 @@ knitr::kable(ter_df, row.names = FALSE,
 hall_df <- stats$summary[, c("strategy", "hallucination_rate")]
 hall_df$hallucination_rate <- round(hall_df$hallucination_rate, 3)
 hall_df <- hall_df[order(hall_df$hallucination_rate), ]
-knitr::kable(hall_df, row.names = FALSE,
-             caption = "Fraction of responses containing at least one hallucination.")
+knitr::kable(hall_df,
+  row.names = FALSE,
+  caption = "Fraction of responses containing at least one hallucination."
+)
 ```
 
 Hallucination type breakdown (where available):
@@ -146,9 +150,9 @@ if ("hallucination_details" %in% names(all_results)) {
     type_counts <- sort(table(type_pattern), decreasing = TRUE)
     barplot(
       type_counts,
-      main  = "Hallucination types",
-      ylab  = "Count",
-      col   = c("tomato", "goldenrod", "steelblue"),
+      main = "Hallucination types",
+      ylab = "Count",
+      col = c("tomato", "goldenrod", "steelblue"),
       names.arg = c("invented\nfunction", "invalid\nargument", "wrong\nnamespace")[
         match(names(type_counts), c("invented_function", "invalid_argument", "wrong_namespace"))
       ]
@@ -169,12 +173,16 @@ Welch *t*-tests with Bonferroni correction and Cohen's *d*.
 pw <- stats$pairwise
 if (!is.null(pw) && nrow(pw) > 0) {
   pw$sig <- ifelse(pw$p_bonferroni < 0.001, "***",
-             ifelse(pw$p_bonferroni < 0.01,  "**",
-             ifelse(pw$p_bonferroni < 0.05,  "*", "")))
+    ifelse(pw$p_bonferroni < 0.01, "**",
+      ifelse(pw$p_bonferroni < 0.05, "*", "")
+    )
+  )
   knitr::kable(
-    pw[, c("strategy_1", "strategy_2", "statistic",
-           "p_value_raw", "p_bonferroni", "cohens_d", "sig")],
-    digits  = 4,
+    pw[, c(
+      "strategy_1", "strategy_2", "statistic",
+      "p_value_raw", "p_bonferroni", "cohens_d", "sig"
+    )],
+    digits = 4,
     caption = "Pairwise Welch t-tests. * p<0.05; ** p<0.01; *** p<0.001 (Bonferroni)."
   )
 }
@@ -187,8 +195,10 @@ if (!is.null(pw) && nrow(pw) > 0) {
 ```{r project-breakdown}
 if ("task_id" %in% names(all_results)) {
   # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds)
-  all_results$project <- sub(".*_(mini_ds|shiny|rpkg).*", "\\1",
-                              all_results$task_id)
+  all_results$project <- sub(
+    ".*_(mini_ds|shiny|rpkg).*", "\\1",
+    all_results$task_id
+  )
   proj_summary <- aggregate(
     score ~ strategy + project,
     data = all_results,
@@ -196,8 +206,8 @@ if ("task_id" %in% names(all_results)) {
   )
   proj_wide <- reshape(
     proj_summary,
-    idvar    = "strategy",
-    timevar  = "project",
+    idvar = "strategy",
+    timevar = "project",
     direction = "wide"
   )
   names(proj_wide) <- gsub("score\\.", "", names(proj_wide))
@@ -219,9 +229,10 @@ improves across successive trials (a proxy for benefit from context).
 ```{r improvement-plot}
 if ("trial" %in% names(all_results)) {
   trial_means <- aggregate(score ~ strategy + trial,
-                           data = all_results, FUN = mean)
-  strategies  <- unique(trial_means$strategy)
-  cols        <- rainbow(length(strategies))
+    data = all_results, FUN = mean
+  )
+  strategies <- unique(trial_means$strategy)
+  cols <- rainbow(length(strategies))
   plot(
     range(trial_means$trial), c(0, 1),
     type = "n",
