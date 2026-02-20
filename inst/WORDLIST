@@ -3,6 +3,7 @@ AST
 benchmarking
 BM25
 Bonferroni
+CI
 Codecov
 Cohen
 dotchart
@@ -18,14 +19,18 @@ NSE
 OpenAI
 Ollama
 ORCID
+pairwise
 pkgdown
 precomputed
+RDS
 reprex
 resamples
+RHS
 rrlmgraph
 rrlmgraphbench
 rmarkdown
 Roxygen
+SD
 TER
 TF
 testthat
