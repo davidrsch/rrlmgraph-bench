@@ -61,12 +61,12 @@
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 run_full_benchmark <- function(
-    tasks_dir    = system.file("tasks",    package = "rrlmgraphbench"),
-    projects_dir = system.file("projects", package = "rrlmgraphbench"),
-    output_path,
-    n_trials     = 3L,
-    seed         = 42L,
-    .dry_run     = FALSE
+  tasks_dir = system.file("tasks", package = "rrlmgraphbench"),
+  projects_dir = system.file("projects", package = "rrlmgraphbench"),
+  output_path,
+  n_trials = 3L,
+  seed = 42L,
+  .dry_run = FALSE
 ) {
   set.seed(seed)
 
