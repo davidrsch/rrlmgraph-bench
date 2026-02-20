@@ -110,7 +110,7 @@ run_full_benchmark <- function(
   for (task in tasks) {
     project_path <- file.path(projects_dir, task$project)
     if (.dry_run) {
-      graph_tfidf  <- NULL
+      graph_tfidf <- NULL
       graph_ollama <- NULL
       source_files <- character(0L)
     } else {
