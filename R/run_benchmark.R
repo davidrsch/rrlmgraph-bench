@@ -136,9 +136,9 @@ run_full_benchmark <- function(
         )
         results[[run_idx]] <- result_row
 
-        elapsed    <- proc.time()[["elapsed"]] - t0
-        per_run    <- elapsed / run_idx
-        remaining  <- (n_combos - run_idx) * per_run
+        elapsed <- proc.time()[["elapsed"]] - t0
+        per_run <- elapsed / run_idx
+        remaining <- (n_combos - run_idx) * per_run
         message(sprintf(
           "[%d/%d] task=%s strategy=%-20s trial=%d | score=%.3f | est. %.0fs remaining",
           run_idx, n_combos,
