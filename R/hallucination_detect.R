@@ -13,7 +13,7 @@
 #'     where `fn` does not actually export `fn`.
 #' }
 #' Non-standard-evaluation column references (bare names inside `dplyr`
-#' verbs, `data.table` `[ ]`, or formula RHS) are **not** flagged; the
+#' verbs, `data.table` indexing, or formula RHS) are **not** flagged; the
 #' detector only inspects calls whose first element is a symbol.
 #'
 #' @param code  Character(1).  R source code, as returned by the LLM.

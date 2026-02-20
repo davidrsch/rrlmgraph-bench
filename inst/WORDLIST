@@ -4,6 +4,7 @@ benchmarking
 BM25
 Bonferroni
 Codecov
+Cohen
 dotchart
 embeddings
 formals
@@ -18,7 +19,9 @@ OpenAI
 Ollama
 ORCID
 pkgdown
+precomputed
 reprex
+resamples
 rrlmgraph
 rrlmgraphbench
 rmarkdown

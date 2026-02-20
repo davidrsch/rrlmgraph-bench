@@ -38,10 +38,8 @@ function can be resolved in session).
 where \code{fn} does not actually export \code{fn}.
 }
 Non-standard-evaluation column references (bare names inside \code{dplyr}
-verbs, \code{data.table} \verb{[ ]}, or formula RHS) are \strong{not} flagged; the
+verbs, \code{data.table} indexing, or formula RHS) are \strong{not} flagged; the
 detector only inspects calls whose first element is a symbol.
-
-[ ]: R:\%20
 }
 \examples{
 code <- "result <- xyzzy_nonexistent_fn(mtcars, foo = 1)"
