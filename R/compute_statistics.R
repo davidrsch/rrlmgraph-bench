@@ -1,6 +1,6 @@
 #' Compute benchmark statistics from a full results data frame
 #'
-#' Aggregates per-trial results produced by [run_full_benchmark()] into
+#' Aggregates per-trial results produced by \code{run_full_benchmark()} into
 #' a comprehensive report containing:
 #' \itemize{
 #'   \item Summary table (mean, SD, 95 \% CI, token counts,
@@ -18,7 +18,7 @@
 #' confidence intervals (5 000 resamples) are used instead of the
 #' normal-approximation CI.
 #'
-#' @param all_results A `data.frame` produced by [run_full_benchmark()].
+#' @param all_results A `data.frame` produced by \code{run_full_benchmark()}.
 #'   Required columns:
 #'   \describe{
 #'     \item{`strategy`}{Character. Strategy label.}

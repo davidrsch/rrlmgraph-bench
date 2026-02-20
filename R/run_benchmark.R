@@ -109,21 +109,27 @@ run_full_benchmark <- function(
 
   for (task in tasks) {
     project_path <- file.path(projects_dir, task$project)
-    graph_tfidf <- tryCatch(
-      rrlmgraph::rrlm_graph(project_path, embed_method = "tfidf"),
-      error = function(e) {
-        warning(e)
-        NULL
-      }
-    )
-    graph_ollama <- tryCatch(
-      rrlmgraph::rrlm_graph(project_path, embed_method = "ollama"),
-      error = function(e) {
-        warning(e)
-        NULL
-      }
-    )
-    source_files <- list_r_files(project_path)
+    if (.dry_run) {
+      graph_tfidf  <- NULL
+      graph_ollama <- NULL
+      source_files <- character(0L)
+    } else {
+      graph_tfidf <- tryCatch(
+        rrlmgraph::rrlm_graph(project_path, embed_method = "tfidf"),
+        error = function(e) {
+          warning(e)
+          NULL
+        }
+      )
+      graph_ollama <- tryCatch(
+        rrlmgraph::rrlm_graph(project_path, embed_method = "ollama"),
+        error = function(e) {
+          warning(e)
+          NULL
+        }
+      )
+      source_files <- list_r_files(project_path)
+    }
 
     for (strategy in strategies) {
       for (trial in seq_len(n_trials)) {

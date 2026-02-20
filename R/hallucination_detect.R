@@ -5,7 +5,7 @@
 #' \enumerate{
 #'   \item **Invented functions** – calls to names that appear neither in
 #'     the rrlmgraph call-graph (`graph`) nor in the current R session via
-#'     [base::getAnywhere()].
+#'     \code{getAnywhere()}.
 #'   \item **Invalid arguments** – named arguments that are not listed in
 #'     [base::formals()] for the target function (only checked when the
 #'     function can be resolved in session).

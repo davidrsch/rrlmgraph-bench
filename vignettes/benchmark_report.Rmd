@@ -39,7 +39,7 @@ knit without an active LLM API key.
 
 ## Load pre-computed results
 
-```{r load-results}
+```{r load-results, error=TRUE}
 results_path <- system.file(
   "results", "benchmark_results.rds",
   package = "rrlmgraphbench"
