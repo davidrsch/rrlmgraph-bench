@@ -93,7 +93,10 @@ run_full_benchmark <- function(
   n_combos <- length(task_ids) * length(strategies) * n_trials
   message(sprintf(
     "[rrlmgraphbench] Starting benchmark: %d tasks × %d strategies × %d trials = %d runs",
-    length(task_ids), length(strategies), n_trials, n_combos
+    length(task_ids),
+    length(strategies),
+    n_trials,
+    n_combos
   ))
 
   t0      <- proc.time()[["elapsed"]]
