@@ -221,15 +221,17 @@ build_context <- function(
       if (is.null(graph_ollama)) {
         return(character(0L))
       }
-      tryCatch({
-        ctx <- rrlmgraph::query_context(
-          graph_ollama,
-          task$description,
-          seed_node = task$seed_node
-        )
-        if (is.null(ctx$context_string)) character(0L) else ctx$context_string
-      },
-      error = function(e) character(0L))
+      tryCatch(
+        {
+          ctx <- rrlmgraph::query_context(
+            graph_ollama,
+            task$description,
+            seed_node = task$seed_node
+          )
+          if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+        },
+        error = function(e) character(0L)
+      )
     },
     full_files = {
       vapply(source_files, read_lines_safe, character(1L))
