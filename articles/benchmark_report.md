@@ -30,121 +30,28 @@ results_path <- system.file(
 if (file.exists(results_path)) {
   all_results <- readRDS(results_path)
 } else {
-  message("Pre-computed results not found. Running a dry-run benchmark.")
   all_results <- run_full_benchmark(
     output_path = tempfile(fileext = ".rds"),
-    n_trials    = 1L,
+    n_trials    = 3L,
     .dry_run    = TRUE
   )
 }
-#> Pre-computed results not found. Running a dry-run benchmark.
-#> [rrlmgraphbench] Starting benchmark: 15 tasks × 6 strategies × 1 trials = 90 runs
-#> [1/90] task=task_001_fm_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 3s
-#> [2/90] task=task_001_fm_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 1s
-#> [3/90] task=task_001_fm_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 1s
-#> [4/90] task=task_001_fm_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 1s
-#> [5/90] task=task_001_fm_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 1s
-#> [6/90] task=task_001_fm_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [7/90] task=task_002_fm_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [8/90] task=task_002_fm_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [9/90] task=task_002_fm_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [10/90] task=task_002_fm_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [11/90] task=task_002_fm_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [12/90] task=task_002_fm_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [13/90] task=task_003_fm_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [14/90] task=task_003_fm_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [15/90] task=task_003_fm_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [16/90] task=task_003_fm_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [17/90] task=task_003_fm_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [18/90] task=task_003_fm_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [19/90] task=task_004_bd_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [20/90] task=task_004_bd_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [21/90] task=task_004_bd_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [22/90] task=task_004_bd_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [23/90] task=task_004_bd_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [24/90] task=task_004_bd_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [25/90] task=task_005_bd_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [26/90] task=task_005_bd_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [27/90] task=task_005_bd_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [28/90] task=task_005_bd_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [29/90] task=task_005_bd_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [30/90] task=task_005_bd_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [31/90] task=task_006_bd_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [32/90] task=task_006_bd_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [33/90] task=task_006_bd_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [34/90] task=task_006_bd_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [35/90] task=task_006_bd_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [36/90] task=task_006_bd_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [37/90] task=task_007_nf_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [38/90] task=task_007_nf_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [39/90] task=task_007_nf_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [40/90] task=task_007_nf_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [41/90] task=task_007_nf_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [42/90] task=task_007_nf_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [43/90] task=task_008_nf_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [44/90] task=task_008_nf_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [45/90] task=task_008_nf_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [46/90] task=task_008_nf_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [47/90] task=task_008_nf_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [48/90] task=task_008_nf_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [49/90] task=task_009_nf_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [50/90] task=task_009_nf_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [51/90] task=task_009_nf_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [52/90] task=task_009_nf_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [53/90] task=task_009_nf_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [54/90] task=task_009_nf_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [55/90] task=task_010_rf_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [56/90] task=task_010_rf_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [57/90] task=task_010_rf_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [58/90] task=task_010_rf_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [59/90] task=task_010_rf_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [60/90] task=task_010_rf_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [61/90] task=task_011_rf_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [62/90] task=task_011_rf_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [63/90] task=task_011_rf_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [64/90] task=task_011_rf_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [65/90] task=task_011_rf_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [66/90] task=task_011_rf_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [67/90] task=task_012_rf_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [68/90] task=task_012_rf_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [69/90] task=task_012_rf_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [70/90] task=task_012_rf_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [71/90] task=task_012_rf_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [72/90] task=task_012_rf_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [73/90] task=task_013_doc_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [74/90] task=task_013_doc_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [75/90] task=task_013_doc_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [76/90] task=task_013_doc_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [77/90] task=task_013_doc_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [78/90] task=task_013_doc_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [79/90] task=task_014_doc_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [80/90] task=task_014_doc_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [81/90] task=task_014_doc_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [82/90] task=task_014_doc_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [83/90] task=task_014_doc_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [84/90] task=task_014_doc_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [85/90] task=task_015_doc_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
-#> [86/90] task=task_015_doc_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
-#> [87/90] task=task_015_doc_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s
-#> [88/90] task=task_015_doc_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
-#> [89/90] task=task_015_doc_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s
-#> [90/90] task=task_015_doc_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [rrlmgraphbench] Results saved to: /tmp/RtmpKN4DIa/file1fee2dece048.rds
-str(all_results, max.level = 1)
-#> 'data.frame':    90 obs. of  12 variables:
-#>  $ task_id              : chr  "task_001_fm_mini_ds" "task_001_fm_mini_ds" "task_001_fm_mini_ds" "task_001_fm_mini_ds" ...
-#>  $ strategy             : chr  "rrlmgraph_tfidf" "rrlmgraph_ollama" "full_files" "bm25_retrieval" ...
-#>  $ trial                : int  1 1 1 1 1 1 1 1 1 1 ...
-#>  $ score                : num  0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
-#>  $ context_tokens       : int  0 0 0 0 0 0 0 0 0 0 ...
-#>  $ response_tokens      : int  0 0 0 0 0 0 0 0 0 0 ...
-#>  $ total_tokens         : int  0 0 0 0 0 0 0 0 0 0 ...
-#>  $ latency_sec          : num  0 0 0 0 0 0 0 0 0 0 ...
-#>  $ hallucination_count  : int  0 0 0 0 0 0 0 0 0 0 ...
-#>  $ hallucination_details: chr  "" "" "" "" ...
-#>  $ syntax_valid         : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
-#>  $ runs_without_error   : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...
+knitr::kable(
+  head(all_results[, c("task_id", "strategy", "trial", "score", "total_tokens")], 6),
+  caption = "First 6 rows of results (dry-run: score = 0.5 placeholder)."
+)
 ```
+
+| task_id             | strategy         | trial | score | total_tokens |
+|:--------------------|:-----------------|------:|------:|-------------:|
+| task_001_fm_mini_ds | rrlmgraph_tfidf  |     1 |   0.5 |            0 |
+| task_001_fm_mini_ds | rrlmgraph_tfidf  |     2 |   0.5 |            0 |
+| task_001_fm_mini_ds | rrlmgraph_tfidf  |     3 |   0.5 |            0 |
+| task_001_fm_mini_ds | rrlmgraph_ollama |     1 |   0.5 |            0 |
+| task_001_fm_mini_ds | rrlmgraph_ollama |     2 |   0.5 |            0 |
+| task_001_fm_mini_ds | rrlmgraph_ollama |     3 |   0.5 |            0 |
+
+First 6 rows of results (dry-run: score = 0.5 placeholder).
 
 ------------------------------------------------------------------------
 
@@ -164,12 +71,12 @@ knitr::kable(
 
 | strategy         |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
 |:-----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
-| rrlmgraph_tfidf  |  15 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| rrlmgraph_ollama |  15 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| full_files       |  15 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| bm25_retrieval   |  15 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| no_context       |  15 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| random_k         |  15 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| rrlmgraph_tfidf  |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| rrlmgraph_ollama |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| full_files       |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| bm25_retrieval   |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| no_context       |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| random_k         |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
 
 Mean score, 95 % CI, token usage, and hallucination rate per strategy.
 

@@ -36,6 +36,7 @@
       <ul class="navbar-nav me-auto">
 <li class="active nav-item"><a class="nav-link" href="../articles/benchmark_report.html">Benchmark Report</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -120,120 +121,71 @@ to knit without an active LLM API key.</p>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">results_path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">results_path</span><span class="op">)</span></span>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Pre-computed results not found. Running a dry-run benchmark."</span><span class="op">)</span></span>
 <span>  <span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_full_benchmark.html">run_full_benchmark</a></span><span class="op">(</span></span>
 <span>    output_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span>,</span>
-<span>    n_trials    <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>    n_trials    <span class="op">=</span> <span class="fl">3L</span>,</span>
 <span>    .dry_run    <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; Pre-computed results not found. Running a dry-run benchmark.</span></span>
-<span><span class="co">#&gt; [rrlmgraphbench] Starting benchmark: 15 tasks × 6 strategies × 1 trials = 90 runs</span></span>
-<span><span class="co">#&gt; [1/90] task=task_001_fm_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 3s</span></span>
-<span><span class="co">#&gt; [2/90] task=task_001_fm_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 1s</span></span>
-<span><span class="co">#&gt; [3/90] task=task_001_fm_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 1s</span></span>
-<span><span class="co">#&gt; [4/90] task=task_001_fm_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 1s</span></span>
-<span><span class="co">#&gt; [5/90] task=task_001_fm_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 1s</span></span>
-<span><span class="co">#&gt; [6/90] task=task_001_fm_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [7/90] task=task_002_fm_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [8/90] task=task_002_fm_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [9/90] task=task_002_fm_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [10/90] task=task_002_fm_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [11/90] task=task_002_fm_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [12/90] task=task_002_fm_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [13/90] task=task_003_fm_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [14/90] task=task_003_fm_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [15/90] task=task_003_fm_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [16/90] task=task_003_fm_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [17/90] task=task_003_fm_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [18/90] task=task_003_fm_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [19/90] task=task_004_bd_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [20/90] task=task_004_bd_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [21/90] task=task_004_bd_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [22/90] task=task_004_bd_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [23/90] task=task_004_bd_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [24/90] task=task_004_bd_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [25/90] task=task_005_bd_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [26/90] task=task_005_bd_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [27/90] task=task_005_bd_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [28/90] task=task_005_bd_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [29/90] task=task_005_bd_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [30/90] task=task_005_bd_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [31/90] task=task_006_bd_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [32/90] task=task_006_bd_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [33/90] task=task_006_bd_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [34/90] task=task_006_bd_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [35/90] task=task_006_bd_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [36/90] task=task_006_bd_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [37/90] task=task_007_nf_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [38/90] task=task_007_nf_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [39/90] task=task_007_nf_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [40/90] task=task_007_nf_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [41/90] task=task_007_nf_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [42/90] task=task_007_nf_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [43/90] task=task_008_nf_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [44/90] task=task_008_nf_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [45/90] task=task_008_nf_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [46/90] task=task_008_nf_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [47/90] task=task_008_nf_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [48/90] task=task_008_nf_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [49/90] task=task_009_nf_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [50/90] task=task_009_nf_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [51/90] task=task_009_nf_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [52/90] task=task_009_nf_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [53/90] task=task_009_nf_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [54/90] task=task_009_nf_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [55/90] task=task_010_rf_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [56/90] task=task_010_rf_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [57/90] task=task_010_rf_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [58/90] task=task_010_rf_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [59/90] task=task_010_rf_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [60/90] task=task_010_rf_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [61/90] task=task_011_rf_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [62/90] task=task_011_rf_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [63/90] task=task_011_rf_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [64/90] task=task_011_rf_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [65/90] task=task_011_rf_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [66/90] task=task_011_rf_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [67/90] task=task_012_rf_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [68/90] task=task_012_rf_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [69/90] task=task_012_rf_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [70/90] task=task_012_rf_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [71/90] task=task_012_rf_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [72/90] task=task_012_rf_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [73/90] task=task_013_doc_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [74/90] task=task_013_doc_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [75/90] task=task_013_doc_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [76/90] task=task_013_doc_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [77/90] task=task_013_doc_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [78/90] task=task_013_doc_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [79/90] task=task_014_doc_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [80/90] task=task_014_doc_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [81/90] task=task_014_doc_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [82/90] task=task_014_doc_shiny strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [83/90] task=task_014_doc_shiny strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [84/90] task=task_014_doc_shiny strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [85/90] task=task_015_doc_rpkg strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [86/90] task=task_015_doc_rpkg strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [87/90] task=task_015_doc_rpkg strategy=full_files           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [88/90] task=task_015_doc_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [89/90] task=task_015_doc_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [90/90] task=task_015_doc_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s</span></span>
-<span><span class="co">#&gt; [rrlmgraphbench] Results saved to: /tmp/RtmpKN4DIa/file1fee2dece048.rds</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">all_results</span>, max.level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; 'data.frame':    90 obs. of  12 variables:</span></span>
-<span><span class="co">#&gt;  $ task_id              : chr  "task_001_fm_mini_ds" "task_001_fm_mini_ds" "task_001_fm_mini_ds" "task_001_fm_mini_ds" ...</span></span>
-<span><span class="co">#&gt;  $ strategy             : chr  "rrlmgraph_tfidf" "rrlmgraph_ollama" "full_files" "bm25_retrieval" ...</span></span>
-<span><span class="co">#&gt;  $ trial                : int  1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="co">#&gt;  $ score                : num  0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...</span></span>
-<span><span class="co">#&gt;  $ context_tokens       : int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;  $ response_tokens      : int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;  $ total_tokens         : int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;  $ latency_sec          : num  0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;  $ hallucination_count  : int  0 0 0 0 0 0 0 0 0 0 ...</span></span>
-<span><span class="co">#&gt;  $ hallucination_details: chr  "" "" "" "" ...</span></span>
-<span><span class="co">#&gt;  $ syntax_valid         : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...</span></span>
-<span><span class="co">#&gt;  $ runs_without_error   : logi  TRUE TRUE TRUE TRUE TRUE TRUE ...</span></span></code></pre></div>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"task_id"</span>, <span class="st">"strategy"</span>, <span class="st">"trial"</span>, <span class="st">"score"</span>, <span class="st">"total_tokens"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">6</span><span class="op">)</span>,</span>
+<span>  caption <span class="op">=</span> <span class="st">"First 6 rows of results (dry-run: score = 0.5 placeholder)."</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>First 6 rows of results (dry-run: score = 0.5
+placeholder).</caption>
+<thead><tr class="header">
+<th align="left">task_id</th>
+<th align="left">strategy</th>
+<th align="right">trial</th>
+<th align="right">score</th>
+<th align="right">total_tokens</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">rrlmgraph_tfidf</td>
+<td align="right">1</td>
+<td align="right">0.5</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">rrlmgraph_tfidf</td>
+<td align="right">2</td>
+<td align="right">0.5</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">rrlmgraph_tfidf</td>
+<td align="right">3</td>
+<td align="right">0.5</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">1</td>
+<td align="right">0.5</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">2</td>
+<td align="right">0.5</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">3</td>
+<td align="right">0.5</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
 <hr>
 </div>
 <div class="section level2">
@@ -275,7 +227,7 @@ strategy.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">15</td>
+<td align="right">45</td>
 <td align="right">0.5</td>
 <td align="right">0</td>
 <td align="right">0.5</td>
@@ -285,7 +237,7 @@ strategy.</caption>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">15</td>
+<td align="right">45</td>
 <td align="right">0.5</td>
 <td align="right">0</td>
 <td align="right">0.5</td>
@@ -295,7 +247,7 @@ strategy.</caption>
 </tr>
 <tr class="odd">
 <td align="left">full_files</td>
-<td align="right">15</td>
+<td align="right">45</td>
 <td align="right">0.5</td>
 <td align="right">0</td>
 <td align="right">0.5</td>
@@ -305,7 +257,7 @@ strategy.</caption>
 </tr>
 <tr class="even">
 <td align="left">bm25_retrieval</td>
-<td align="right">15</td>
+<td align="right">45</td>
 <td align="right">0.5</td>
 <td align="right">0</td>
 <td align="right">0.5</td>
@@ -315,7 +267,7 @@ strategy.</caption>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">15</td>
+<td align="right">45</td>
 <td align="right">0.5</td>
 <td align="right">0</td>
 <td align="right">0.5</td>
@@ -325,7 +277,7 @@ strategy.</caption>
 </tr>
 <tr class="even">
 <td align="left">random_k</td>
-<td align="right">15</td>
+<td align="right">45</td>
 <td align="right">0.5</td>
 <td align="right">0</td>
 <td align="right">0.5</td>
