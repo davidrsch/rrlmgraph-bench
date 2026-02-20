@@ -141,9 +141,13 @@ run_full_benchmark <- function(
         remaining <- (n_combos - run_idx) * per_run
         message(sprintf(
           "[%d/%d] task=%s strategy=%-20s trial=%d | score=%.3f | est. %.0fs remaining",
-          run_idx, n_combos,
-          task$task_id, strategy, trial,
-          result_row$score, remaining
+          run_idx,
+          n_combos,
+          task$task_id,
+          strategy,
+          trial,
+          result_row$score,
+          remaining
         ))
       }
     }
