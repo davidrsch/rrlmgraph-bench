@@ -7,6 +7,7 @@ name: run-benchmark
 
 permissions:
   contents: write           # needed to commit the results RDS
+  models: read              # needed for GitHub Models inference API
 
 jobs:
   benchmark:
@@ -30,6 +31,19 @@ jobs:
             local::.
           needs: local
 
+      - name: Verify GitHub Models access
+        run: |
+          Rscript -e '
+            # Quick smoke-test: can we call the models API?
+            tryCatch({
+              chat <- ellmer::chat_github(model = "gpt-4o-mini")
+              resp <- chat$chat("Say only: OK")
+              message("GitHub Models smoke test PASSED: ", trimws(resp))
+            }, error = function(e) {
+              stop("GitHub Models smoke test FAILED: ", conditionMessage(e))
+            })
+          '
+
       - name: Run benchmark
         run: |
           Rscript -e '
@@ -40,6 +54,10 @@ jobs:
               llm_model    = "gpt-4o-mini"
             )
             message("Benchmark complete. Rows: ", nrow(results))
+            message("Score summary: min=", min(results$score),
+                    " max=", max(results$score),
+                    " mean=", round(mean(results$score), 3))
+            message("Total tokens: ", sum(results$total_tokens))
           '
 
       - name: Commit results
@@ -47,5 +65,5 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add inst/results/benchmark_results.rds
-          git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results [skip ci]"
+          git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results"
           git push

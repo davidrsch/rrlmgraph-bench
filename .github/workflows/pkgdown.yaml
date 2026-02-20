@@ -22,6 +22,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
+      models: read         # may be needed if vignette hits LLM
     steps:
       - uses: actions/checkout@v4
 

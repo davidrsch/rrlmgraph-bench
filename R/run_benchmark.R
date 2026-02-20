@@ -414,7 +414,7 @@ run_single <- function(
         chat$chat(prompt)
       },
       error = function(e) {
-        warning("[run_single] LLM call failed: ", conditionMessage(e))
+        message("[run_single] LLM call failed: ", conditionMessage(e))
         ""
       }
     )
