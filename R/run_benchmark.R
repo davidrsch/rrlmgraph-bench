@@ -132,7 +132,7 @@ run_full_benchmark <- function(
           graph_tfidf = graph_tfidf,
           graph_ollama = graph_ollama,
           source_files = source_files,
-          .dry_run     = .dry_run
+          .dry_run = .dry_run
         )
         results[[run_idx]] <- result_row
 
