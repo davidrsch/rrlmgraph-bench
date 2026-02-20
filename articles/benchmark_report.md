@@ -40,11 +40,11 @@ if (file.exists(results_path)) {
 #> Pre-computed results not found. Running a dry-run benchmark.
 #> [rrlmgraphbench] Starting benchmark: 15 tasks × 6 strategies × 1 trials = 90 runs
 #> [1/90] task=task_001_fm_mini_ds strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 3s
-#> [2/90] task=task_001_fm_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 2s
+#> [2/90] task=task_001_fm_mini_ds strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 1s
 #> [3/90] task=task_001_fm_mini_ds strategy=full_files           trial=1 | score=0.500 | est. 1s
 #> [4/90] task=task_001_fm_mini_ds strategy=bm25_retrieval       trial=1 | score=0.500 | est. 1s
 #> [5/90] task=task_001_fm_mini_ds strategy=no_context           trial=1 | score=0.500 | est. 1s
-#> [6/90] task=task_001_fm_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 1s
+#> [6/90] task=task_001_fm_mini_ds strategy=random_k             trial=1 | score=0.500 | est. 0s
 #> [7/90] task=task_002_fm_shiny strategy=rrlmgraph_tfidf      trial=1 | score=0.500 | est. 0s
 #> [8/90] task=task_002_fm_shiny strategy=rrlmgraph_ollama     trial=1 | score=0.500 | est. 0s
 #> [9/90] task=task_002_fm_shiny strategy=full_files           trial=1 | score=0.500 | est. 0s
@@ -129,7 +129,7 @@ if (file.exists(results_path)) {
 #> [88/90] task=task_015_doc_rpkg strategy=bm25_retrieval       trial=1 | score=0.500 | est. 0s
 #> [89/90] task=task_015_doc_rpkg strategy=no_context           trial=1 | score=0.500 | est. 0s
 #> [90/90] task=task_015_doc_rpkg strategy=random_k             trial=1 | score=0.500 | est. 0s
-#> [rrlmgraphbench] Results saved to: /tmp/Rtmpi4SYBz/file1d6f7ec0b4bb.rds
+#> [rrlmgraphbench] Results saved to: /tmp/RtmpKN4DIa/file1fee2dece048.rds
 str(all_results, max.level = 1)
 #> 'data.frame':    90 obs. of  12 variables:
 #>  $ task_id              : chr  "task_001_fm_mini_ds" "task_001_fm_mini_ds" "task_001_fm_mini_ds" "task_001_fm_mini_ds" ...

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="120"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="120"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- Background rounded square -->
+  <rect width="120" height="120" rx="18" fill="#1A4F74"></rect>
+
+  <!-- Benchmark bar chart (base) -->
+  <rect x="18" y="78" width="14" height="26" rx="2" fill="#AADFF8" opacity="0.6"></rect>
+  <rect x="38" y="60" width="14" height="44" rx="2" fill="#7ECFF5" opacity="0.8"></rect>
+  <rect x="58" y="42" width="14" height="62" rx="2" fill="#5AB4E8"></rect>
+  <rect x="78" y="52" width="14" height="52" rx="2" fill="#7ECFF5" opacity="0.8"></rect>
+  <rect x="98" y="68" width="8" height="36" rx="2" fill="#AADFF8" opacity="0.6"></rect>
+
+  <!-- Graph node overlay (top right) -->
+  <circle cx="92" cy="24" r="8" fill="#7ECFF5" stroke="#FFFFFF" stroke-width="1.5"></circle>
+  <circle cx="72" cy="34" r="6" fill="#AADFF8" stroke="#FFFFFF" stroke-width="1"></circle>
+  <line x1="72" y1="34" x2="92" y2="24" stroke="#5AB4E8" stroke-width="1.5" opacity="0.8"></line>
+</svg></svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>
