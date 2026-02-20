@@ -164,7 +164,12 @@ list_r_files <- function(project_path) {
   if (dir.exists(r_dir)) {
     list.files(r_dir, pattern = "\\.R$", full.names = TRUE, recursive = TRUE)
   } else {
-    list.files(project_path, pattern = "\\.R$", full.names = TRUE, recursive = TRUE)
+    list.files(
+      project_path,
+      pattern = "\\.R$",
+      full.names = TRUE,
+      recursive = TRUE
+    )
   }
 }
 
