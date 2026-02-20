@@ -99,7 +99,7 @@ run_full_benchmark <- function(
     n_combos
   ))
 
-  t0      <- proc.time()[["elapsed"]]
+  t0 <- proc.time()[["elapsed"]]
   results <- vector("list", n_combos)
   run_idx <- 0L
 
