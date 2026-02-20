@@ -105,7 +105,7 @@ run_full_benchmark <- function(
 
   for (task in tasks) {
     project_path <- file.path(projects_dir, task$project)
-    graph_tfidf  <- tryCatch(
+    graph_tfidf <- tryCatch(
       rrlmgraph::rrlm_graph(project_path, embed_method = "tfidf"),
       error = function(e) { warning(e); NULL }
     )
