@@ -26,7 +26,7 @@ setMethod("summarise_result", "ModelResult", function(object) {
   metric_values <- unname(object@metrics)
 
   # Append timestamp as a numeric (Unix epoch) for uniformity
-  metric_names  <- c(metric_names, "timestamp")
+  metric_names <- c(metric_names, "timestamp")
   metric_values <- c(metric_values, as.numeric(object@timestamp))
 
   data.frame(
