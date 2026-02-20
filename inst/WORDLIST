@@ -11,6 +11,7 @@ embeddings
 formals
 hallucination
 IDF
+JSON
 knitr
 LLM
 NAMESPACE
