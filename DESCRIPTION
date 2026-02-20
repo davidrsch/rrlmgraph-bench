@@ -2,8 +2,14 @@ Package: rrlmgraphbench
 Type: Package
 Title: Benchmark Suite for rrlmgraph
 Version: 0.1.0
-Authors@R: person("David", "Schoch", email = "davidrsch@gmail.com",
-    role = c("aut", "cre"))
+Authors@R: 
+    person(
+        "David",
+        "Díaz",
+        role = c("aut", "cph", "cre"),
+        email = "davidrsch@gmail.com",
+        comment = c(ORCID = "0000-0002-0927-9795")
+    )
 Description: Provides fixture projects and ground-truth datasets for
     benchmarking the rrlmgraph package.  Fixtures range from a minimal
     data-science script project to a medium-sized Shiny application and a
