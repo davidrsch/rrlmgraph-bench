@@ -81,7 +81,9 @@ run_full_benchmark <- function(
 
   # ---- Load task definitions ------------------------------------------
   task_files <- list.files(tasks_dir, pattern = "\\.json$", full.names = TRUE)
-  if (!length(task_files)) stop("No task JSON files found in: ", tasks_dir)
+  if (!length(task_files)) {
+    stop("No task JSON files found in: ", tasks_dir)
+  }
 
   tasks <- lapply(task_files, function(fp) {
     jsonlite::fromJSON(fp, simplifyVector = TRUE)
