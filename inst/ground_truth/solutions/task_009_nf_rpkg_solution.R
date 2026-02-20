@@ -22,7 +22,7 @@ setGeneric("summarise_result", function(object) {
 #' @describeIn ModelResult Return a tidy data frame of metrics.
 #' @export
 setMethod("summarise_result", "ModelResult", function(object) {
-  metric_names  <- names(object@metrics)
+  metric_names <- names(object@metrics)
   metric_values <- unname(object@metrics)
 
   # Append timestamp as a numeric (Unix epoch) for uniformity
