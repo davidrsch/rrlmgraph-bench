@@ -205,15 +205,17 @@ build_context <- function(
       if (is.null(graph_tfidf)) {
         return(character(0L))
       }
-      tryCatch({
-        ctx <- rrlmgraph::query_context(
-          graph_tfidf,
-          task$description,
-          seed_node = task$seed_node
-        )
-        if (is.null(ctx$context_string)) character(0L) else ctx$context_string
-      },
-      error = function(e) character(0L))
+      tryCatch(
+        {
+          ctx <- rrlmgraph::query_context(
+            graph_tfidf,
+            task$description,
+            seed_node = task$seed_node
+          )
+          if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+        },
+        error = function(e) character(0L)
+      )
     },
     rrlmgraph_ollama = {
       if (is.null(graph_ollama)) {
