@@ -1,0 +1,52 @@
+on:
+  workflow_dispatch:        # run manually from the Actions tab
+  schedule:
+    - cron: "0 3 * * 1"    # every Monday at 03:00 UTC
+
+name: run-benchmark
+
+permissions:
+  contents: write           # needed to commit the results RDS
+  models: read              # needed for GitHub Models API access
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}  # auto-set, no extra secret needed
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::ellmer
+            any::jsonlite
+            github::davidrsch/rrlmgraph
+            local::.
+          needs: []
+
+      - name: Run benchmark
+        run: |
+          Rscript -e '
+            results <- rrlmgraphbench::run_full_benchmark(
+              output_path  = "inst/results/benchmark_results.rds",
+              n_trials     = 3L,
+              llm_provider = "github",
+              llm_model    = "gpt-4o-mini"
+            )
+            message("Benchmark complete. Rows: ", nrow(results))
+          '
+
+      - name: Commit results
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add inst/results/benchmark_results.rds
+          git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results [skip ci]"
+          git push

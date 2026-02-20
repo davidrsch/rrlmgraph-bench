@@ -14,9 +14,19 @@
 #' | `no_context` | No context provided to the LLM |
 #' | `random_k` | *k* randomly sampled code chunks |
 #'
-#' LLM calls are issued through `ellmer::parallel_chat()` for
-#' concurrency.  A progress message is emitted after each task x strategy
-#' combination together with a rolling time estimate.
+#' LLM calls are issued sequentially via \pkg{ellmer}.
+#' A progress message is emitted after each task x strategy combination
+#' together with a rolling time estimate.
+#'
+#' @section Authentication:
+#' \describe{
+#'   \item{`"github"` (default)}{Uses `GITHUB_PAT` / `GITHUB_TOKEN`.
+#'     In GitHub Actions this is set automatically as
+#'     `secrets.GITHUB_TOKEN` -- no extra secret needed.}
+#'   \item{`"openai"`}{Requires `OPENAI_API_KEY`.}
+#'   \item{`"anthropic"`}{Requires `ANTHROPIC_API_KEY`.}
+#'   \item{`"ollama"`}{No key needed (local daemon).}
+#' }
 #'
 #' @param tasks_dir    Path to the directory containing task JSON files
 #'   (default: `system.file("tasks", package = "rrlmgraphbench")`).
@@ -27,6 +37,12 @@
 #'   saved as an RDS file.  Parent directories are created if needed.
 #' @param n_trials     Integer(1). Number of independent trials per
 #'   task x strategy pair.  Defaults to `3L`.
+#' @param llm_provider Character(1). LLM provider passed to \pkg{ellmer}.
+#'   One of `"github"` (default), `"openai"`, `"anthropic"`, `"ollama"`.
+#' @param llm_model    Character(1) or `NULL`. Model name.  When `NULL`
+#'   a sensible per-provider default is used: `"gpt-4o-mini"` for
+#'   `"github"` and `"openai"`, `"claude-3-5-haiku-latest"` for
+#'   `"anthropic"`, `"llama3.2"` for `"ollama"`.
 #' @param seed         Integer(1). Random seed passed to [base::set.seed()]
 #'   before any stochastic operations.  Defaults to `42L`.
 #' @param .dry_run     Logical(1). When `TRUE` the LLM is not called;
@@ -51,10 +67,10 @@
 #'
 #' @examples
 #' \dontrun{
+#' # Uses GitHub Models (GITHUB_TOKEN auto-set in Actions -- no secret needed)
 #' results <- run_full_benchmark(
 #'   output_path = "inst/results/benchmark_results.rds",
-#'   n_trials    = 3L,
-#'   seed        = 42L
+#'   n_trials    = 3L
 #' )
 #' head(results)
 #' }
@@ -66,9 +82,12 @@ run_full_benchmark <- function(
   projects_dir = system.file("projects", package = "rrlmgraphbench"),
   output_path,
   n_trials = 3L,
+  llm_provider = c("github", "openai", "anthropic", "ollama"),
+  llm_model = NULL,
   seed = 42L,
   .dry_run = FALSE
 ) {
+  llm_provider <- match.arg(llm_provider)
   set.seed(seed)
 
   strategies <- c(
@@ -142,6 +161,8 @@ run_full_benchmark <- function(
           graph_tfidf = graph_tfidf,
           graph_ollama = graph_ollama,
           source_files = source_files,
+          llm_provider = llm_provider,
+          llm_model = llm_model,
           .dry_run = .dry_run
         )
         results[[run_idx]] <- result_row
@@ -341,6 +362,8 @@ run_single <- function(
   graph_tfidf,
   graph_ollama,
   source_files,
+  llm_provider = "github",
+  llm_model = NULL,
   .dry_run
 ) {
   ctx_chunks <- build_context(
@@ -369,11 +392,25 @@ run_single <- function(
   } else {
     prompt <- format_prompt(task, ctx_chunks)
     t1 <- proc.time()[["elapsed"]]
+    # -- Resolve ellmer chat function by provider ---------------------
+    default_models <- c(
+      github    = "gpt-4o-mini",
+      openai    = "gpt-4o-mini",
+      anthropic = "claude-3-5-haiku-latest",
+      ollama    = "llama3.2"
+    )
+    resolved_model <- if (!is.null(llm_model)) llm_model else default_models[[llm_provider]]
+    chat_fn_name <- switch(
+      llm_provider,
+      github    = "chat_github",
+      openai    = "chat_openai",
+      anthropic = "chat_anthropic",
+      ollama    = "chat_ollama"
+    )
     llm_result <- tryCatch(
       {
-        chat <- ellmer::chat_openai(
-          model = Sys.getenv("OPENAI_MODEL", "gpt-4o-mini")
-        )
+        chat_fn <- getExportedValue("ellmer", chat_fn_name)
+        chat <- chat_fn(model = resolved_model)
         chat$chat(prompt)
       },
       error = function(e) {
