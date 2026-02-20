@@ -1,17 +1,17 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>/404.html</loc></url>
-<url><loc>/CODE_OF_CONDUCT.html</loc></url>
-<url><loc>/CONTRIBUTING.html</loc></url>
-<url><loc>/LICENSE-text.html</loc></url>
-<url><loc>/SUPPORT.html</loc></url>
-<url><loc>/articles/benchmark_report.html</loc></url>
-<url><loc>/articles/index.html</loc></url>
-<url><loc>/authors.html</loc></url>
-<url><loc>/index.html</loc></url>
-<url><loc>/reference/compute_benchmark_statistics.html</loc></url>
-<url><loc>/reference/count_hallucinations.html</loc></url>
-<url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/rrlmgraphbench-package.html</loc></url>
-<url><loc>/reference/run_full_benchmark.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/404.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/CODE_OF_CONDUCT.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/CONTRIBUTING.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/LICENSE-text.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/SUPPORT.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/articles/benchmark_report.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/articles/index.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/authors.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/index.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/compute_benchmark_statistics.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/count_hallucinations.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/index.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/rrlmgraphbench-package.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/run_full_benchmark.html</loc></url>
 </urlset>
 
