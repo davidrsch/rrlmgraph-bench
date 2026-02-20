@@ -7,7 +7,6 @@ name: run-benchmark
 
 permissions:
   contents: write           # needed to commit the results RDS
-  models: read              # needed for GitHub Models API access
 
 jobs:
   benchmark:
@@ -29,7 +28,7 @@ jobs:
             any::jsonlite
             github::davidrsch/rrlmgraph
             local::.
-          needs: []
+          needs: local
 
       - name: Run benchmark
         run: |
