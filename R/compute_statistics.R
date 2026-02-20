@@ -45,7 +45,8 @@
 #' stats$summary
 #' }
 #'
-#' @importFrom stats sd qt t.test shapiro.test
+#' @importFrom stats sd qt t.test shapiro.test quantile setNames
+#' @importFrom utils combn
 #' @export
 compute_benchmark_statistics <- function(all_results) {
   required_cols <- c("strategy", "score", "total_tokens", "hallucination_count")

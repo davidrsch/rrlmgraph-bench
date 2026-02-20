@@ -15,7 +15,7 @@
 #' | `random_k` | *k* randomly sampled code chunks |
 #'
 #' LLM calls are issued through `ellmer::parallel_chat()` for
-#' concurrency.  A progress message is emitted after each task × strategy
+#' concurrency.  A progress message is emitted after each task x strategy
 #' combination together with a rolling time estimate.
 #'
 #' @param tasks_dir    Path to the directory containing task JSON files
@@ -26,7 +26,7 @@
 #' @param output_path  File path where the resulting `data.frame` is
 #'   saved as an RDS file.  Parent directories are created if needed.
 #' @param n_trials     Integer(1). Number of independent trials per
-#'   task × strategy pair.  Defaults to `3L`.
+#'   task x strategy pair.  Defaults to `3L`.
 #' @param seed         Integer(1). Random seed passed to [base::set.seed()]
 #'   before any stochastic operations.  Defaults to `42L`.
 #' @param .dry_run     Logical(1). When `TRUE` the LLM is not called;
@@ -59,7 +59,7 @@
 #' head(results)
 #' }
 #'
-#' @importFrom utils txtProgressBar setTxtProgressBar
+#' @importFrom utils txtProgressBar setTxtProgressBar head
 #' @export
 run_full_benchmark <- function(
   tasks_dir = system.file("tasks", package = "rrlmgraphbench"),
@@ -115,14 +115,14 @@ run_full_benchmark <- function(
       source_files <- character(0L)
     } else {
       graph_tfidf <- tryCatch(
-        rrlmgraph::rrlm_graph(project_path, embed_method = "tfidf"),
+        rrlmgraph::build_rrlm_graph(project_path, embed_method = "tfidf"),
         error = function(e) {
           warning(e)
           NULL
         }
       )
       graph_ollama <- tryCatch(
-        rrlmgraph::rrlm_graph(project_path, embed_method = "ollama"),
+        rrlmgraph::build_rrlm_graph(project_path, embed_method = "ollama"),
         error = function(e) {
           warning(e)
           NULL
@@ -205,27 +205,29 @@ build_context <- function(
       if (is.null(graph_tfidf)) {
         return(character(0L))
       }
-      tryCatch(
-        rrlmgraph::query_context(
+      tryCatch({
+        ctx <- rrlmgraph::query_context(
           graph_tfidf,
           task$description,
           seed_node = task$seed_node
-        ),
-        error = function(e) character(0L)
-      )
+        )
+        if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+      },
+      error = function(e) character(0L))
     },
     rrlmgraph_ollama = {
       if (is.null(graph_ollama)) {
         return(character(0L))
       }
-      tryCatch(
-        rrlmgraph::query_context(
+      tryCatch({
+        ctx <- rrlmgraph::query_context(
           graph_ollama,
           task$description,
           seed_node = task$seed_node
-        ),
-        error = function(e) character(0L)
-      )
+        )
+        if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+      },
+      error = function(e) character(0L))
     },
     full_files = {
       vapply(source_files, read_lines_safe, character(1L))

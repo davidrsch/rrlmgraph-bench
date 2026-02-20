@@ -25,7 +25,7 @@ source trees (default:
 saved as an RDS file.  Parent directories are created if needed.}
 
 \item{n_trials}{Integer(1). Number of independent trials per
-task × strategy pair.  Defaults to \code{3L}.}
+task x strategy pair.  Defaults to \code{3L}.}
 
 \item{seed}{Integer(1). Random seed passed to \code{\link[base:Random]{base::set.seed()}}
 before any stochastic operations.  Defaults to \code{42L}.}
@@ -69,7 +69,7 @@ results to \code{output_path}.
 
 
 LLM calls are issued through \code{ellmer::parallel_chat()} for
-concurrency.  A progress message is emitted after each task × strategy
+concurrency.  A progress message is emitted after each task x strategy
 combination together with a rolling time estimate.
 }
 }

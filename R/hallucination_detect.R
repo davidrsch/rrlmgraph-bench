@@ -3,13 +3,13 @@
 #' Parses `code` using [base::parse()] and walks the resulting AST to
 #' find:
 #' \enumerate{
-#'   \item **Invented functions** – calls to names that appear neither in
+#'   \item **Invented functions** -- calls to names that appear neither in
 #'     the rrlmgraph call-graph (`graph`) nor in the current R session via
 #'     \code{getAnywhere()}.
-#'   \item **Invalid arguments** – named arguments that are not listed in
+#'   \item **Invalid arguments** -- named arguments that are not listed in
 #'     [base::formals()] for the target function (only checked when the
 #'     function can be resolved in session).
-#'   \item **Wrong-package namespace calls** – `pkg::fn()` references
+#'   \item **Wrong-package namespace calls** -- `pkg::fn()` references
 #'     where `fn` does not actually export `fn`.
 #' }
 #' Non-standard-evaluation column references (bare names inside `dplyr`
@@ -35,6 +35,7 @@
 #' code <- "result <- xyzzy_nonexistent_fn(mtcars, foo = 1)"
 #' count_hallucinations(code)
 #'
+#' @importFrom utils getAnywhere
 #' @export
 count_hallucinations <- function(code, graph = NULL) {
   stopifnot(is.character(code), length(code) == 1L)
@@ -44,7 +45,7 @@ count_hallucinations <- function(code, graph = NULL) {
     parse(text = code, keep.source = FALSE),
     error = function(e) {
       warning(
-        "count_hallucinations: code failed to parse – ",
+        "count_hallucinations: code failed to parse - ",
         conditionMessage(e)
       )
       return(NULL)
@@ -131,7 +132,7 @@ count_hallucinations <- function(code, graph = NULL) {
 
     # --- 3b. Invented function -----------------------------------------
     if (!is.null(fn_name) && fn_name != "") {
-      # Skip NSE wrappers – bare names inside them are column refs
+      # Skip NSE wrappers -- bare names inside them are column refs
       if (!fn_name %in% nse_wrappers) {
         in_session <- tryCatch(
           {

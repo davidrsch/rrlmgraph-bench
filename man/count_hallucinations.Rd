@@ -28,13 +28,13 @@ Returns an empty list when no hallucinations are found.
 Parses \code{code} using \code{\link[base:parse]{base::parse()}} and walks the resulting AST to
 find:
 \enumerate{
-\item \strong{Invented functions} – calls to names that appear neither in
+\item \strong{Invented functions} -- calls to names that appear neither in
 the rrlmgraph call-graph (\code{graph}) nor in the current R session via
 \code{getAnywhere()}.
-\item \strong{Invalid arguments} – named arguments that are not listed in
+\item \strong{Invalid arguments} -- named arguments that are not listed in
 \code{\link[base:formals]{base::formals()}} for the target function (only checked when the
 function can be resolved in session).
-\item \strong{Wrong-package namespace calls} – \code{pkg::fn()} references
+\item \strong{Wrong-package namespace calls} -- \code{pkg::fn()} references
 where \code{fn} does not actually export \code{fn}.
 }
 Non-standard-evaluation column references (bare names inside \code{dplyr}

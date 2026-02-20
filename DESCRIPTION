@@ -19,12 +19,9 @@ License: MIT + file LICENSE
 Depends:
     R (>= 4.2.0)
 Imports:
-    cli,
     ellmer,
-    fs,
     igraph,
     jsonlite,
-    methods,
     rrlmgraph,
     stats
 Suggests:
