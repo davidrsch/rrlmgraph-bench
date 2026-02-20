@@ -50,28 +50,27 @@ jobs:
       - name: Document
         run: |
           Rscript -e 'devtools::document()'
-          echo "### Rd diff after document()" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          git diff --stat man/ >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p spell-debug
+          git diff man/ > spell-debug/rd_diff.txt 2>&1 || true
 
       - name: Spell check
         shell: Rscript {0}
         run: |
+          dir.create("spell-debug", showWarnings = FALSE)
           res <- spelling::spell_check_package()
           if (nrow(res) > 0L) {
             print(res)
-            summary_file <- Sys.getenv("GITHUB_STEP_SUMMARY")
-            if (nzchar(summary_file)) {
-              cat("## Spell Check Failures\n\n", file = summary_file, append = TRUE)
-              cat("```\n", file = summary_file, append = TRUE)
-              out <- capture.output(print(res))
-              cat(paste(out, collapse = "\n"), "\n", file = summary_file, append = TRUE)
-              cat("```\n", file = summary_file, append = TRUE)
-            }
+            write.csv(res, "spell-debug/spell_failures.csv", row.names = FALSE)
             stop("Spell check failed -- add words to inst/WORDLIST.",
                  call. = FALSE)
           }
+
+      - name: Upload spell-check debug
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spell-debug-${{ matrix.config.r }}
+          path: spell-debug/
 
       - uses: r-lib/actions/check-r-package@v2
         with:
