@@ -126,10 +126,10 @@ run_full_benchmark <- function(
         run_idx <- run_idx + 1L
 
         result_row <- run_single(
-          task         = task,
-          strategy     = strategy,
-          trial        = trial,
-          graph_tfidf  = graph_tfidf,
+          task = task,
+          strategy = strategy,
+          trial = trial,
+          graph_tfidf = graph_tfidf,
           graph_ollama = graph_ollama,
           source_files = source_files,
           .dry_run     = .dry_run
