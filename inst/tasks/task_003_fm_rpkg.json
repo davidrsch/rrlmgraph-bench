@@ -1,12 +1,12 @@
-{
+﻿{
   "task_id": "task_003_fm_rpkg",
   "category": "function_modification",
   "project": "r_package_small",
   "description": "Add a `verbose` logical parameter (default FALSE) to `cross_validate()`. When TRUE, print per-fold metrics to the console after each fold completes, formatted as 'Fold k/K: rmse=X mae=Y r_squared=Z'.",
-  "seed_node": "exported_fns::cross_validate",
+  "seed_node": "R/exported_fns::cross_validate",
   "ground_truth_nodes": [
-    "exported_fns::cross_validate",
-    "exported_fns::fit_model_s4"
+    "R/exported_fns::cross_validate",
+    "R/exported_fns::fit_model_s4"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_003_fm_rpkg_solution.R",
   "evaluation_method": "ast_diff",

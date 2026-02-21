@@ -1,11 +1,11 @@
-{
+﻿{
   "task_id": "task_004_bd_mini_ds",
   "category": "bug_diagnosis",
   "project": "mini_ds_project",
   "description": "There is a latent bug in `calculate_mrr()`: when a relevance vector `r` contains only `NA` values, `which(as.logical(r))[1L]` returns `NA` (not an empty integer), causing `is.na(first_hit)` to evaluate TRUE and correctly return 0 -- but `as.logical(NA)` produces `NA` not `FALSE`, which means `which()` treats NA elements as NA and skips them, still accidentally working. However, a vector of all-NA integers (e.g. `c(NA_integer_, NA_integer_)`) is NOT treated as all-FALSE, so the function silently produces NaN in some edge cases. Fix `calculate_mrr()` to coerce each element with `!is.na(r) & as.logical(r)` before passing to `which()`, ensuring NA relevance flags are treated as non-relevant.",
-  "seed_node": "benchmark::calculate_mrr",
+  "seed_node": "R/benchmark::calculate_mrr",
   "ground_truth_nodes": [
-    "benchmark::calculate_mrr"
+    "R/benchmark::calculate_mrr"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_004_bd_mini_ds_solution.R",
   "evaluation_method": "test_pass",

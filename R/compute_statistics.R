@@ -58,6 +58,21 @@ compute_benchmark_statistics <- function(all_results) {
     )
   }
 
+  # Detect degenerate case: only one trial per strategy.
+  # t-tests, SDs, and CIs are undefined with n = 1.
+  n_trials_detected <- if ("trial" %in% names(all_results)) {
+    max(all_results$trial, na.rm = TRUE)
+  } else {
+    1L
+  }
+  if (n_trials_detected < 2L) {
+    cli::cli_warn(c(
+      "!" = "n_trials = 1: inferential statistics require >= 2 trials.",
+      "i" = "Returning point estimates only (no CI, t-tests, or Cohen's d).",
+      "i" = "Rerun with n_trials >= 3 for full statistical output."
+    ))
+  }
+
   baseline_strategy <- "full_files"
   strategies <- unique(all_results$strategy)
 
@@ -133,6 +148,16 @@ compute_benchmark_statistics <- function(all_results) {
   }
 
   # ---- 3. Pairwise tests + Cohen's d (Bonferroni) --------------------
+  # Requires variance, so skip when n_trials < 2.
+  if (n_trials_detected < 2L) {
+    return(list(
+      summary  = summary_df,
+      ter      = ter,
+      pairwise = NULL,
+      ndcg     = NULL
+    ))
+  }
+
   pairs <- combn(strategies, 2L, simplify = FALSE)
   pairwise_rows <- lapply(pairs, function(p) {
     s1 <- p[1L]

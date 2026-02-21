@@ -1,12 +1,12 @@
-{
+﻿{
   "task_id": "task_001_fm_mini_ds",
   "category": "function_modification",
   "project": "mini_ds_project",
   "description": "Add a `stratified` logical parameter (default FALSE) to `split_data.data.frame()`. When TRUE and a `strata` column argument is also provided, the function should split each stratum independently at the given ratio and combine the results, so class proportions are preserved in both the training and test sets.",
-  "seed_node": "data_prep::split_data.data.frame",
+  "seed_node": "R/data_prep::split_data.data.frame",
   "ground_truth_nodes": [
-    "data_prep::split_data.data.frame",
-    "data_prep::split_data"
+    "R/data_prep::split_data.data.frame",
+    "R/data_prep::split_data"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_001_fm_mini_ds_solution.R",
   "evaluation_method": "ast_diff",

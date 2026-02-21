@@ -75,3 +75,15 @@ jobs:
           git add inst/results/benchmark_results.rds
           git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results"
           git push
+
+      - name: Trigger pkgdown rebuild
+        # GitHub security prevents a GITHUB_TOKEN commit from auto-triggering
+        # other workflows (anti-loop protection).  We dispatch pkgdown
+        # explicitly here so the published site always reflects the new results.
+        if: success()
+        run: |
+          gh workflow run pkgdown.yaml \
+            --repo davidrsch/rrlmgraph-bench \
+            --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

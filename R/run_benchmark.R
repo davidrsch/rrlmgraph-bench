@@ -100,10 +100,22 @@ run_full_benchmark <- function(
     "rrlmgraph_tfidf",
     "rrlmgraph_ollama",
     "full_files",
-    "bm25_retrieval",
+    "term_overlap",
     "no_context",
     "random_k"
   )
+
+  # Skip Ollama-backed strategy when the local daemon is not running.
+  # In CI Ollama is never available, so without this guard the
+  # rrlmgraph_ollama results are identical to no_context and mislead
+  # readers of the published report. (see bench#18)
+  if (!rrlmgraph::ollama_available()) {
+    cli::cli_warn(c(
+      "!" = "Ollama daemon unavailable — skipping {.val rrlmgraph_ollama} strategy.",
+      "i" = "Results will be collected for {length(strategies) - 1L} strategies."
+    ))
+    strategies <- setdiff(strategies, "rrlmgraph_ollama")
+  }
 
   # ---- Load task definitions ------------------------------------------
   task_files <- list.files(tasks_dir, pattern = "\\.json$", full.names = TRUE)
@@ -263,8 +275,8 @@ build_context <- function(
     full_files = {
       vapply(source_files, read_lines_safe, character(1L))
     },
-    bm25_retrieval = {
-      bm25_retrieve(task$description, source_files)
+    term_overlap = {
+      term_overlap_retrieve(task$description, source_files)
     },
     no_context = {
       character(0L)
@@ -288,6 +300,14 @@ read_lines_safe <- function(path) {
 }
 
 bm25_retrieve <- function(query, files, k = 5L) {
+  term_overlap_retrieve(query, files, k)
+}
+
+# NOTE: the strategy was previously mislabeled "bm25_retrieval" — this is
+# a simple term-presence count, NOT true BM25 (no IDF, no length
+# normalisation).  Issue bench#20 tracks implementing proper BM25 in a
+# future sprint.  The wrapper above preserves backward compatibility.
+term_overlap_retrieve <- function(query, files, k = 5L) {
   if (!length(files)) {
     return(character(0L))
   }
@@ -328,7 +348,7 @@ format_prompt <- function(task, context_chunks) {
   }
 }
 
-score_response <- function(response_code, task) {
+score_response <- function(response_code, task, source_files = NULL) {
   # Rubric: syntax (0.3) + ground truth nodes present (0.4) + runs (0.3)
   syntax_ok <- tryCatch(
     {
@@ -347,7 +367,17 @@ score_response <- function(response_code, task) {
         # namespace prefix before searching so bare function names in the
         # LLM response (e.g. "split_data.data.frame") still match.
         bare_n <- sub("^[^:]+::", "", n)
-        grepl(bare_n, response_code, fixed = TRUE)
+        # Use word-boundary regex to avoid false positives from partial
+        # name matches (e.g. "split_data_old" matching "split_data").
+        # Escape regex metacharacters in bare_n (e.g. "." in S3 methods).
+        esc_n <- gsub(
+          "([.+*?\\[\\^\\]$(){}=!<>|:\\-#])",
+          "\\\\\\1",
+          bare_n,
+          perl = TRUE
+        )
+        pattern <- paste0("(?<![A-Za-z0-9._])", esc_n, "(?![A-Za-z0-9._])")
+        grepl(pattern, response_code, perl = TRUE)
       },
       logical(1L)
     )
@@ -356,7 +386,19 @@ score_response <- function(response_code, task) {
 
   runs_ok <- tryCatch(
     {
-      env <- new.env(parent = baseenv())
+      # Evaluate in a child of globalenv() so that calls using installed
+      # packages (via :: or library()) work.  Source project files first so
+      # the LLM's use of project-internal functions can also be tested.
+      # Previously used baseenv() which is missing almost every package and
+      # caused runs_ok to be systematically FALSE for all realistic code.
+      env <- new.env(parent = globalenv())
+      if (!is.null(source_files) && length(source_files) > 0L) {
+        for (sf in source_files) {
+          tryCatch(source(sf, local = env, echo = FALSE), error = function(e) {
+            NULL
+          })
+        }
+      }
       eval(parse(text = response_code), envir = env)
       TRUE
     },
@@ -410,34 +452,37 @@ run_single <- function(
     # GitHub Models only implements /chat/completions, so we call
     # chat_openai_compatible() directly for the github provider.
     default_models <- c(
-      github    = "gpt-4.1-mini",
-      openai    = "gpt-4.1-mini",
+      github = "gpt-4.1-mini",
+      openai = "gpt-4.1-mini",
       anthropic = "claude-3-5-haiku-latest",
-      ollama    = "llama3.2"
+      ollama = "llama3.2"
     )
-    resolved_model <- if (!is.null(llm_model)) llm_model else default_models[[llm_provider]]
+    resolved_model <- if (!is.null(llm_model)) {
+      llm_model
+    } else {
+      default_models[[llm_provider]]
+    }
     llm_result <- tryCatch(
       {
         chat <- if (llm_provider == "github") {
           # In CI GITHUB_PAT is set by the workflow env block.
           # For local use, GITHUB_TOKEN or GITHUB_PAT must be set.
-          gh_pat <- Sys.getenv("GITHUB_PAT",
-                      Sys.getenv("GITHUB_TOKEN", ""))
+          gh_pat <- Sys.getenv("GITHUB_PAT", Sys.getenv("GITHUB_TOKEN", ""))
           if (!nzchar(gh_pat)) {
             stop("Set GITHUB_PAT or GITHUB_TOKEN to use llm_provider='github'")
           }
           cred_fn <- (function(k) function() k)(gh_pat)
           ellmer::chat_openai_compatible(
-            base_url    = "https://models.github.ai/inference/",
-            model       = resolved_model,
+            base_url = "https://models.github.ai/inference/",
+            model = resolved_model,
             credentials = cred_fn
           )
         } else {
           chat_fn_name <- switch(
             llm_provider,
-            openai    = "chat_openai",
+            openai = "chat_openai",
             anthropic = "chat_anthropic",
-            ollama    = "chat_ollama"
+            ollama = "chat_ollama"
           )
           chat_fn <- getExportedValue("ellmer", chat_fn_name)
           chat_fn(model = resolved_model)
@@ -453,7 +498,7 @@ run_single <- function(
     response_code <- llm_result
     response_tokens <- nchar(response_code) %/% 4L
 
-    rubric <- score_response(response_code, task)
+    rubric <- score_response(response_code, task, source_files = source_files)
     score <- rubric$score
     syntax_valid <- rubric$syntax_valid
     runs_ok <- rubric$runs_without_error

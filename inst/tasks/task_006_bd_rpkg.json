@@ -1,12 +1,12 @@
-{
+﻿{
   "task_id": "task_006_bd_rpkg",
   "category": "bug_diagnosis",
   "project": "r_package_small",
   "description": "In `scale_predictors()`, `lapply(df[num_cols], scale)` assigns the result of `base::scale()` directly back into the data frame. `scale()` returns a matrix with `dimnames` and `'scaled:center'`/`'scaled:scale'` attributes. When stored in a data frame column, this creates a one-column matrix rather than a plain numeric vector, breaking downstream functions that expect atomic columns (e.g. `stats::lm()` raises 'variable lengths differ'). Fix `scale_predictors()` by wrapping each `scale()` result in `as.numeric()` so the attributes are dropped.",
-  "seed_node": "exported_fns::scale_predictors",
+  "seed_node": "R/exported_fns::scale_predictors",
   "ground_truth_nodes": [
-    "exported_fns::scale_predictors",
-    "exported_fns::fit_model_s4"
+    "R/exported_fns::scale_predictors",
+    "R/exported_fns::fit_model_s4"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_006_bd_rpkg_solution.R",
   "evaluation_method": "test_pass",

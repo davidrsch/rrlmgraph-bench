@@ -1,14 +1,14 @@
-{
+﻿{
   "task_id": "task_011_rf_shiny",
   "category": "refactoring",
   "project": "shiny_app_medium",
   "description": "Refactor `update_filtered_data()` by extracting its three filter blocks into three small private helper functions: `filter_by_date(df, date_range)`, `filter_by_group(df, group_select)`, and `filter_by_score(df, score_threshold)`. Each helper should take a data frame and the relevant input value, apply its filter, and return the filtered data frame. `update_filtered_data()` becomes a three-line pipeline calling these helpers in order.",
-  "seed_node": "server::update_filtered_data",
+  "seed_node": "R/server::update_filtered_data",
   "ground_truth_nodes": [
-    "server::update_filtered_data",
-    "server::filter_by_date",
-    "server::filter_by_group",
-    "server::filter_by_score"
+    "R/server::update_filtered_data",
+    "R/server::filter_by_date",
+    "R/server::filter_by_group",
+    "R/server::filter_by_score"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_011_rf_shiny_solution.R",
   "evaluation_method": "ast_diff",

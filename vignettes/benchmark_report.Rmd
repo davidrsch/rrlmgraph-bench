@@ -28,7 +28,7 @@ strategies for providing R coding context to an LLM:
 | `rrlmgraph_tfidf` | rrlmgraph graph traversal with TF-IDF embeddings |
 | `rrlmgraph_ollama` | rrlmgraph graph traversal with Ollama embeddings |
 | `full_files` | Entire source files dumped verbatim (baseline) |
-| `bm25_retrieval` | BM25 keyword retrieval (no graph) |
+| `term_overlap` | Term-presence overlap retrieval (no graph) |
 | `no_context` | No context supplied |
 | `random_k` | Five randomly sampled code chunks |
 
@@ -182,6 +182,8 @@ if (!is.null(pw) && nrow(pw) > 0) {
     digits = 4,
     caption = "Pairwise Welch t-tests. * p<0.05; ** p<0.01; *** p<0.001 (Bonferroni)."
   )
+} else {
+  message("Pairwise tests not available (requires n_trials >= 2).")
 }
 ```
 
@@ -191,10 +193,16 @@ if (!is.null(pw) && nrow(pw) > 0) {
 
 ```{r project-breakdown}
 if ("task_id" %in% names(all_results)) {
-  # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds)
-  all_results$project <- sub(
-    ".*_(mini_ds|shiny|rpkg).*", "\\1",
-    all_results$task_id
+  # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds).
+  # Use regmatches() so unrecognised task_ids return NA rather than the
+  # original string (which would silently create a spurious project level).
+  m <- regmatches(
+    all_results$task_id,
+    regexpr("mini_ds|shiny|rpkg", all_results$task_id)
+  )
+  all_results$project <- ifelse(
+    grepl("mini_ds|shiny|rpkg", all_results$task_id),
+    m, NA_character_
   )
   proj_summary <- aggregate(
     score ~ strategy + project,

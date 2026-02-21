@@ -1,12 +1,12 @@
-{
+﻿{
   "task_id": "task_013_doc_mini_ds",
   "category": "documentation",
   "project": "mini_ds_project",
   "description": "Write complete Roxygen2 documentation for `split_data.data.frame()`. The documentation must include: `@param df`, `@param ratio`, `@param ...`; a `@return` describing both list elements; a `@examples` block that creates a 10-row data frame and calls `split_data(df, ratio = 0.7)`; and a `@rdname split_data` cross-reference. The existing stub `#' @rdname split_data` line must be expanded into full documentation.",
-  "seed_node": "data_prep::split_data.data.frame",
+  "seed_node": "R/data_prep::split_data.data.frame",
   "ground_truth_nodes": [
-    "data_prep::split_data.data.frame",
-    "data_prep::split_data"
+    "R/data_prep::split_data.data.frame",
+    "R/data_prep::split_data"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_013_doc_mini_ds_solution.R",
   "evaluation_method": "roxygen_valid",

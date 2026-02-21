@@ -1,12 +1,12 @@
-{
+﻿{
   "task_id": "task_014_doc_shiny",
   "category": "documentation",
   "project": "shiny_app_medium",
   "description": "Write complete Roxygen2 documentation for `render_summary_table()`. The documentation must include: `@param df` with a cross-reference to `[preprocess_data()]`; a `@return` describing the formatted data frame; a `@seealso` linking to `[compute_summary_stats()]`; and an `@examples` block that creates a minimal data frame and calls the function. The `@examples` block must be wrapped in `\\dontrun{}` since it depends on Shiny context.",
-  "seed_node": "server::render_summary_table",
+  "seed_node": "R/server::render_summary_table",
   "ground_truth_nodes": [
-    "server::render_summary_table",
-    "data::compute_summary_stats"
+    "R/server::render_summary_table",
+    "R/data::compute_summary_stats"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_014_doc_shiny_solution.R",
   "evaluation_method": "roxygen_valid",

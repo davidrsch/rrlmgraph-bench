@@ -1,13 +1,13 @@
-{
+﻿{
   "task_id": "task_009_nf_rpkg",
   "category": "new_function",
   "project": "r_package_small",
   "description": "Define a new S4 generic `summarise_result(object)` in `R/AllGenerics.R` and implement a `ModelResult` method in `R/methods-ModelResult.R`. The method should return a `data.frame` with columns `metric` (character) and `value` (numeric) containing one row per entry in `object@metrics`, plus a `timestamp` row. Include Roxygen documentation and export the generic.",
-  "seed_node": "AllClasses::ModelResult",
+  "seed_node": "R/AllClasses::ModelResult",
   "ground_truth_nodes": [
-    "AllClasses::ModelResult",
-    "AllGenerics::model_summary",
-    "methods-ModelResult::model_summary"
+    "R/AllClasses::ModelResult",
+    "R/AllGenerics::model_summary",
+    "R/methods-ModelResult::model_summary"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_009_nf_rpkg_solution.R",
   "evaluation_method": "exec_correct",

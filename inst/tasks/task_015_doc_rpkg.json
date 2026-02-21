@@ -1,13 +1,13 @@
-{
+﻿{
   "task_id": "task_015_doc_rpkg",
   "category": "documentation",
   "project": "r_package_small",
   "description": "Write or substantially improve the Roxygen2 documentation for `compare_models()`. The documentation must include: a detailed `@description`; `@param ...` explaining that one or more `ModelResult` objects or a list of them can be passed; `@param names`; a `@return` describing the data frame structure; a `@seealso` cross-reference to `[fit_model_s4()]` and `[cross_validate()]`; and a self-contained `@examples` block that creates two `FitConfig` objects, fits two models on `mtcars`, and calls `compare_models()` on the results.",
-  "seed_node": "exported_fns::compare_models",
+  "seed_node": "R/exported_fns::compare_models",
   "ground_truth_nodes": [
-    "exported_fns::compare_models",
-    "AllClasses::ModelResult",
-    "exported_fns::fit_model_s4"
+    "R/exported_fns::compare_models",
+    "R/AllClasses::ModelResult",
+    "R/exported_fns::fit_model_s4"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_015_doc_rpkg_solution.R",
   "evaluation_method": "roxygen_valid",
