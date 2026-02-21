@@ -398,7 +398,11 @@ run_single <- function(
   } else {
     prompt <- format_prompt(task, ctx_chunks)
     t1 <- proc.time()[["elapsed"]]
-    # -- Resolve ellmer chat function by provider ---------------------
+    # -- Resolve ellmer chat by provider ------------------------------------
+    # NOTE: ellmer 0.4.0 broke chat_github() by switching from
+    # chat_openai_compatible() to chat_openai() (Responses endpoint).
+    # GitHub Models only implements /chat/completions, so we call
+    # chat_openai_compatible() directly for the github provider.
     default_models <- c(
       github    = "gpt-4.1",
       openai    = "gpt-4.1",
@@ -406,17 +410,32 @@ run_single <- function(
       ollama    = "llama3.2"
     )
     resolved_model <- if (!is.null(llm_model)) llm_model else default_models[[llm_provider]]
-    chat_fn_name <- switch(
-      llm_provider,
-      github    = "chat_github",
-      openai    = "chat_openai",
-      anthropic = "chat_anthropic",
-      ollama    = "chat_ollama"
-    )
     llm_result <- tryCatch(
       {
-        chat_fn <- getExportedValue("ellmer", chat_fn_name)
-        chat <- chat_fn(model = resolved_model)
+        chat <- if (llm_provider == "github") {
+          gh_pat  <- Sys.getenv("GITHUB_PAT", "")
+          if (!nzchar(gh_pat)) {
+            gh_pat <- tryCatch(
+              gitcreds::gitcreds_get()[["password"]],
+              error = function(e) ""
+            )
+          }
+          cred_fn <- (function(k) function() k)(gh_pat)
+          ellmer::chat_openai_compatible(
+            base_url    = "https://models.github.ai/inference/",
+            model       = resolved_model,
+            credentials = cred_fn
+          )
+        } else {
+          chat_fn_name <- switch(
+            llm_provider,
+            openai    = "chat_openai",
+            anthropic = "chat_anthropic",
+            ollama    = "chat_ollama"
+          )
+          chat_fn <- getExportedValue("ellmer", chat_fn_name)
+          chat_fn(model = resolved_model)
+        }
         chat$chat(prompt)
       },
       error = function(e) {

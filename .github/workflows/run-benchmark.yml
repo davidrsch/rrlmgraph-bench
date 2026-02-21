@@ -34,9 +34,17 @@ jobs:
       - name: Verify GitHub Models access
         run: |
           Rscript -e '
-            # Quick smoke-test: can we call the models API?
+            # Quick smoke-test: use chat_openai_compatible() directly because
+            # ellmer 0.4.0 broke chat_github() by routing to the OpenAI
+            # Responses endpoint, which GitHub Models does not implement.
             tryCatch({
-              chat <- ellmer::chat_github(model = "gpt-4.1")
+              gh_pat  <- Sys.getenv("GITHUB_PAT", "")
+              cred_fn <- (function(k) function() k)(gh_pat)
+              chat <- ellmer::chat_openai_compatible(
+                base_url    = "https://models.github.ai/inference/",
+                model       = "gpt-4.1",
+                credentials = cred_fn
+              )
               resp <- chat$chat("Say only: OK")
               message("GitHub Models smoke test PASSED: ", trimws(resp))
             }, error = function(e) {
