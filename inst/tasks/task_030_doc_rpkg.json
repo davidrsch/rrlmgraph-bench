@@ -1,0 +1,15 @@
+{
+  "task_id": "task_030_doc_rpkg",
+  "category": "documentation",
+  "project": "r_package_small",
+  "description": "Write a package-level Roxygen2 help page for `r_package_small` in `R/r_package_small-package.R`. The page must include `@description` with a one-paragraph overview, `@name r_package_small`, `@docType package`, and a `@seealso` pointing to [fit_model_s4()] and [cross_validate()].",
+  "seed_node": "R/AllGenerics::evaluate_model",
+  "ground_truth_nodes": [
+    "R/AllGenerics::evaluate_model",
+    "R/exported_fns::fit_model_s4",
+    "R/exported_fns::cross_validate"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_030_doc_rpkg_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "easy"
+}

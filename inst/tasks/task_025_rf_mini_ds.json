@@ -1,0 +1,16 @@
+{
+  "task_id": "task_025_rf_mini_ds",
+  "category": "refactoring",
+  "project": "mini_ds_project",
+  "description": "Refactor the duplicated data-loading logic that appears identically in `run_benchmark()` and in the test setup file. Extract it into a new `load_and_validate()` helper in `R/data_prep.R` that calls `load_data()`, validates that required columns `id` and `score` are present, and returns the cleaned data frame. Update all call sites to use the new helper.",
+  "seed_node": "R/benchmark::run_benchmark",
+  "ground_truth_nodes": [
+    "R/benchmark::run_benchmark",
+    "R/data_prep::load_and_validate",
+    "R/data_prep::load_data",
+    "R/data_prep::clean_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_025_rf_mini_ds_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "medium"
+}

@@ -1,0 +1,14 @@
+{
+  "task_id": "task_018_fm_rpkg",
+  "category": "function_modification",
+  "project": "r_package_small",
+  "description": "Add an `na.rm` logical parameter (default `TRUE`) to `cross_validate()`. When `na.rm = TRUE`, rows containing any `NA` in the response or predictor columns should be removed before each fold is formed. When `FALSE`, `NA` rows are kept and `NA` propagation follows the default lm() behaviour.",
+  "seed_node": "R/exported_fns::cross_validate",
+  "ground_truth_nodes": [
+    "R/exported_fns::cross_validate",
+    "R/exported_fns::fit_model_s4"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_018_fm_rpkg_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "medium"
+}

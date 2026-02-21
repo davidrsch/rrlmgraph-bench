@@ -1,0 +1,14 @@
+{
+  "task_id": "task_026_rf_shiny",
+  "category": "refactoring",
+  "project": "shiny_app_medium",
+  "description": "The UI definition in `app_ui.R` has grown to over 200 lines. Refactor the sidebar panel definition into a new `sidebar_ui()` function in `R/ui_components.R` and the main panel definition into a `main_panel_ui()` function in the same file. The top-level `app_ui()` function should call these two helpers.",
+  "seed_node": "R/ui_components::ui_components",
+  "ground_truth_nodes": [
+    "R/ui_components::ui_components",
+    "R/server::server_logic"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_026_rf_shiny_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "medium"
+}

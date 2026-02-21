@@ -1,0 +1,14 @@
+{
+  "task_id": "task_024_nf_rpkg",
+  "category": "new_feature",
+  "project": "r_package_small",
+  "description": "Add a `print.ModelResult` S3 method to `R/methods-ModelResult.R` that shows a formatted summary: the call, the number of observations, and the RMSE rounded to 4 decimal places. The method should use `cat()` or `message()` and return the object invisibly.",
+  "seed_node": "R/methods-ModelResult::evaluate_model.lm_result",
+  "ground_truth_nodes": [
+    "R/methods-ModelResult::evaluate_model.lm_result",
+    "R/constructors::new_model_result"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_024_nf_rpkg_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "easy"
+}

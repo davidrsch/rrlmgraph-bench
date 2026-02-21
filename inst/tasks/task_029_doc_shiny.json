@@ -1,0 +1,14 @@
+{
+  "task_id": "task_029_doc_shiny",
+  "category": "documentation",
+  "project": "shiny_app_medium",
+  "description": "Add inline comments to `server_logic()` in `R/server.R` that explain the reactive data flow: (1) why `base_data` uses `shiny::reactive()` rather than being computed once, (2) why the filter module result `filtered_r` is a reactive expression, and (3) what `observe_reset()` does and why it must be called before the output renderers.",
+  "seed_node": "R/server::server_logic",
+  "ground_truth_nodes": [
+    "R/server::server_logic",
+    "R/server::observe_reset"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_029_doc_shiny_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "easy"
+}

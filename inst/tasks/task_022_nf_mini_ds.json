@@ -1,0 +1,16 @@
+{
+  "task_id": "task_022_nf_mini_ds",
+  "category": "new_feature",
+  "project": "mini_ds_project",
+  "description": "Add a `cross_validate_model()` function to `R/benchmark.R` that performs k-fold cross-validation on the mini_ds pipeline. It should accept `data`, `formula`, `k = 5L`, and `seed = 42L` arguments, call `split_data()` and `fit_model()` on each fold, evaluate with `evaluate_model()`, and return a list with `mean_rmse` and per-fold `rmse` values.",
+  "seed_node": "R/benchmark::run_benchmark",
+  "ground_truth_nodes": [
+    "R/benchmark::run_benchmark",
+    "R/models::fit_model",
+    "R/models::evaluate_model",
+    "R/data_prep::split_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_022_nf_mini_ds_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "medium"
+}

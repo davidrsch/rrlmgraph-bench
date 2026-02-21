@@ -1,0 +1,14 @@
+{
+  "task_id": "task_016_fm_mini_ds",
+  "category": "function_modification",
+  "project": "mini_ds_project",
+  "description": "Add a `seed` integer parameter (default `NULL`) to `split_data.data.frame()`. When provided, call `set.seed(seed)` before sampling row indices so that train/test splits are reproducible across runs.",
+  "seed_node": "R/data_prep::split_data.data.frame",
+  "ground_truth_nodes": [
+    "R/data_prep::split_data.data.frame",
+    "R/data_prep::split_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_016_fm_mini_ds_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "easy"
+}

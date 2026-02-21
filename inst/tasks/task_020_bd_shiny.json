@@ -1,0 +1,14 @@
+{
+  "task_id": "task_020_bd_shiny",
+  "category": "bug_debug",
+  "project": "shiny_app_medium",
+  "description": "Fix the reactive dependency loop in `server_logic()` where `observe_reset()` sets an input value inside an observer that is also triggered by that same input, causing an infinite update cycle. Refactor to use `shiny::isolate()` or `shiny::observeEvent()` with `ignoreInit = TRUE` to break the cycle.",
+  "seed_node": "R/server::server_logic",
+  "ground_truth_nodes": [
+    "R/server::server_logic",
+    "R/server::observe_reset"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_020_bd_shiny_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "medium"
+}

@@ -1,0 +1,14 @@
+{
+  "task_id": "task_023_nf_shiny",
+  "category": "new_feature",
+  "project": "shiny_app_medium",
+  "description": "Add a `downloadHandler` button to `server_logic()` that lets users download the currently filtered data table as a CSV file named `survey_filtered.csv`. The download button UI element `downloadButton('download_data', 'Download CSV')` already exists in the UI; wire up the corresponding server-side `output$download_data` handler.",
+  "seed_node": "R/server::server_logic",
+  "ground_truth_nodes": [
+    "R/server::server_logic",
+    "R/data::load_survey_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_023_nf_shiny_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "medium"
+}

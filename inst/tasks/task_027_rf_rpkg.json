@@ -1,0 +1,15 @@
+{
+  "task_id": "task_027_rf_rpkg",
+  "category": "refactoring",
+  "project": "r_package_small",
+  "description": "The `R/utils.R` file contains both string-manipulation helpers (`format_formula_string`, `sanitise_colname`) and numeric utilities (`compute_rmse`, `scale_predictors`). Split it into `R/string_utils.R` and `R/math_utils.R`, moving each function to the appropriate file. Update NAMESPACE and any internal calls accordingly.",
+  "seed_node": "R/utils::compute_rmse",
+  "ground_truth_nodes": [
+    "R/utils::compute_rmse",
+    "R/utils::scale_predictors",
+    "R/exported_fns::fit_model_s4"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_027_rf_rpkg_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "hard"
+}

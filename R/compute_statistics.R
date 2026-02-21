@@ -192,9 +192,18 @@ compute_benchmark_statistics <- function(all_results) {
     rownames(pairwise_df) <- NULL
   }
 
-  # ---- 4. Mean NDCG per strategy -------------------------------------
+  # ---- 4. Mean NDCG per strategy (#27) -------------------------------
+  # Prefer pre-computed ndcg5 / ndcg10 columns (from run_single) over the
+  # legacy rank/relevant columns so that new and old result files both work.
   ndcg <- NULL
-  if (all(c("rank", "relevant") %in% names(all_results))) {
+  if (all(c("ndcg5", "ndcg10") %in% names(all_results))) {
+    ndcg5_mean  <- tapply(all_results$ndcg5,  all_results$strategy, mean, na.rm = TRUE)
+    ndcg10_mean <- tapply(all_results$ndcg10, all_results$strategy, mean, na.rm = TRUE)
+    ndcg <- list(
+      ndcg5  = ndcg5_mean[strategies],
+      ndcg10 = ndcg10_mean[strategies]
+    )
+  } else if (all(c("rank", "relevant") %in% names(all_results))) {
     ndcg <- vapply(
       strategies,
       function(s) {

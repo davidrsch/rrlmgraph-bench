@@ -1,6 +1,6 @@
 #' Run the full rrlmgraph benchmark
 #'
-#' Evaluates six retrieval strategies across every task in `tasks_dir`
+#' Evaluates seven retrieval strategies across every task in `tasks_dir`
 #' using `n_trials` independent trials each, and persists the combined
 #' results to `output_path`.
 #'
@@ -10,7 +10,8 @@
 #' | `rrlmgraph_tfidf` | rrlmgraph with TF-IDF node embeddings |
 #' | `rrlmgraph_ollama` | rrlmgraph with Ollama-backed embeddings |
 #' | `full_files` | Dump every source file in full (baseline) |
-#' | `bm25_retrieval` | BM25 keyword retrieval (no graph) |
+#' | `term_overlap` | Simple term-presence keyword retrieval (no graph) |
+#' | `bm25_retrieval` | True BM25 retrieval -- IDF-weighted, length-normalised |
 #' | `no_context` | No context provided to the LLM |
 #' | `random_k` | *k* randomly sampled code chunks |
 #'
@@ -55,14 +56,21 @@
 #'     \item{`strategy`}{Character.}
 #'     \item{`trial`}{Integer.}
 #'     \item{`score`}{Numeric in \[0, 1\].}
-#'     \item{`context_tokens`}{Integer.}
-#'     \item{`response_tokens`}{Integer.}
+#'     \item{`context_tokens`}{Integer. API-reported input token count when
+#'       available; falls back to `tokenizers::count_words()` or `nchar/4`.}
+#'     \item{`response_tokens`}{Integer. API-reported output token count;
+#'       same fallback chain as `context_tokens`.}
 #'     \item{`total_tokens`}{Integer.}
 #'     \item{`latency_sec`}{Numeric.}
 #'     \item{`hallucination_count`}{Integer.}
 #'     \item{`hallucination_details`}{List column (character vectors).}
 #'     \item{`syntax_valid`}{Logical.}
 #'     \item{`runs_without_error`}{Logical.}
+#'     \item{`retrieved_n`}{Integer. Nodes retrieved by rrlmgraph strategies;
+#'       `0L` for non-graph strategies.}
+#'     \item{`ndcg5`}{Numeric. NDCG\@5 against `ground_truth_nodes` for
+#'       rrlmgraph strategies; `NA_real_` otherwise.}
+#'     \item{`ndcg10`}{Numeric. NDCG\@10; same conditions as `ndcg5`.}
 #'   }
 #'
 #' @examples
@@ -101,6 +109,7 @@ run_full_benchmark <- function(
     "rrlmgraph_ollama",
     "full_files",
     "term_overlap",
+    "bm25_retrieval",
     "no_context",
     "random_k"
   )
@@ -212,6 +221,42 @@ run_full_benchmark <- function(
   saveRDS(all_results, output_path)
   message("[rrlmgraphbench] Results saved to: ", output_path)
 
+  # ---- Write benchmark_meta.json provenance record (#24) ---------------
+  default_models_meta <- c(
+    github    = "gpt-4.1-mini",
+    openai    = "gpt-4.1-mini",
+    anthropic = "claude-3-5-haiku-latest",
+    ollama    = "llama3.2"
+  )
+  resolved_model_meta <- if (!is.null(llm_model)) {
+    llm_model
+  } else {
+    default_models_meta[[llm_provider]]
+  }
+  meta <- list(
+    generated_at           = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    rrlmgraph_version      = as.character(utils::packageVersion("rrlmgraph")),
+    rrlmgraphbench_version = as.character(utils::packageVersion("rrlmgraphbench")),
+    rrlmgraphbench_sha     = tryCatch(
+      system2("git", c("rev-parse", "--short", "HEAD"),
+              stdout = TRUE, stderr = FALSE)[1L],
+      error = function(e) NA_character_
+    ),
+    n_tasks      = length(task_ids),
+    n_trials     = n_trials,
+    n_strategies = length(strategies),
+    strategies   = as.list(strategies),
+    llm_provider = llm_provider,
+    llm_model    = resolved_model_meta
+  )
+  meta_path <- file.path(dirname(output_path), "benchmark_meta.json")
+  tryCatch({
+    writeLines(jsonlite::toJSON(meta, auto_unbox = TRUE, pretty = TRUE), meta_path)
+    message("[rrlmgraphbench] Benchmark metadata written to: ", meta_path)
+  }, error = function(e) {
+    warning("Could not write benchmark_meta.json: ", conditionMessage(e))
+  })
+
   invisible(all_results)
 }
 
@@ -238,39 +283,45 @@ build_context <- function(
   graph_ollama,
   source_files
 ) {
-  switch(
+  node_ids <- character(0L)  # populated by <<- inside rrlmgraph branches
+
+  chunks <- switch(
     strategy,
     rrlmgraph_tfidf = {
       if (is.null(graph_tfidf)) {
-        return(character(0L))
+        character(0L)
+      } else {
+        tryCatch(
+          {
+            ctx <- rrlmgraph::query_context(
+              graph_tfidf,
+              task$description,
+              seed_node = task$seed_node
+            )
+            node_ids <<- if (!is.null(ctx$nodes)) ctx$nodes$node_id else character(0L)
+            if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+          },
+          error = function(e) character(0L)
+        )
       }
-      tryCatch(
-        {
-          ctx <- rrlmgraph::query_context(
-            graph_tfidf,
-            task$description,
-            seed_node = task$seed_node
-          )
-          if (is.null(ctx$context_string)) character(0L) else ctx$context_string
-        },
-        error = function(e) character(0L)
-      )
     },
     rrlmgraph_ollama = {
       if (is.null(graph_ollama)) {
-        return(character(0L))
+        character(0L)
+      } else {
+        tryCatch(
+          {
+            ctx <- rrlmgraph::query_context(
+              graph_ollama,
+              task$description,
+              seed_node = task$seed_node
+            )
+            node_ids <<- if (!is.null(ctx$nodes)) ctx$nodes$node_id else character(0L)
+            if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+          },
+          error = function(e) character(0L)
+        )
       }
-      tryCatch(
-        {
-          ctx <- rrlmgraph::query_context(
-            graph_ollama,
-            task$description,
-            seed_node = task$seed_node
-          )
-          if (is.null(ctx$context_string)) character(0L) else ctx$context_string
-        },
-        error = function(e) character(0L)
-      )
     },
     full_files = {
       vapply(source_files, read_lines_safe, character(1L))
@@ -278,18 +329,24 @@ build_context <- function(
     term_overlap = {
       term_overlap_retrieve(task$description, source_files)
     },
+    bm25_retrieval = {
+      bm25_retrieve(task$description, source_files)
+    },
     no_context = {
       character(0L)
     },
     random_k = {
       k <- min(5L, length(source_files))
       if (k == 0L) {
-        return(character(0L))
+        character(0L)
+      } else {
+        vapply(sample(source_files, k), read_lines_safe, character(1L))
       }
-      vapply(sample(source_files, k), read_lines_safe, character(1L))
     },
     stop("Unknown strategy: ", strategy)
   )
+
+  list(chunks = chunks, node_ids = node_ids)
 }
 
 read_lines_safe <- function(path) {
@@ -299,14 +356,48 @@ read_lines_safe <- function(path) {
   )
 }
 
-bm25_retrieve <- function(query, files, k = 5L) {
-  term_overlap_retrieve(query, files, k)
-}
+bm25_retrieve <- function(query, files, k = 5L, k1 = 1.5, b = 0.75) {
+  # True BM25 (Best Match 25) -- Robertson & Zaragoza (2009) smooth variant.
+  # IDF-weighted, length-normalised term frequency scoring; pure base R.
+  if (!length(files)) return(character(0L))
+  query_terms <- unique(tolower(strsplit(query, "\\W+")[[1L]]))
+  query_terms <- query_terms[nzchar(query_terms)]
+  if (!length(query_terms)) return(term_overlap_retrieve(query, files, k))
 
-# NOTE: the strategy was previously mislabeled "bm25_retrieval" — this is
-# a simple term-presence count, NOT true BM25 (no IDF, no length
-# normalisation).  Issue bench#20 tracks implementing proper BM25 in a
-# future sprint.  The wrapper above preserves backward compatibility.
+  doc_words <- lapply(files, function(fp) {
+    w <- strsplit(tolower(read_lines_safe(fp)), "\\W+")[[1L]]
+    w[nzchar(w)]
+  })
+  doc_lengths <- vapply(doc_words, length, integer(1L))
+  avgdl <- mean(doc_lengths)
+  if (avgdl == 0) return(term_overlap_retrieve(query, files, k))
+  N <- length(files)
+
+  tf_list <- lapply(doc_words, table)
+
+  df_vec <- vapply(query_terms, function(tm) {
+    sum(vapply(tf_list, function(tf) tm %in% names(tf), logical(1L)))
+  }, integer(1L))
+
+  idf_vec <- log((N - df_vec + 0.5) / (df_vec + 0.5) + 1)
+
+  scores <- vapply(seq_along(files), function(i) {
+    tf  <- tf_list[[i]]
+    dl  <- doc_lengths[[i]]
+    sc  <- 0
+    for (j in seq_along(query_terms)) {
+      tm     <- query_terms[[j]]
+      tf_val <- if (tm %in% names(tf)) as.integer(tf[[tm]]) else 0L
+      bm_tf  <- (tf_val * (k1 + 1)) /
+                 (tf_val + k1 * (1 - b + b * dl / avgdl))
+      sc <- sc + idf_vec[[j]] * bm_tf
+    }
+    sc
+  }, numeric(1L))
+
+  top_k <- head(order(scores, decreasing = TRUE), k)
+  vapply(files[top_k], read_lines_safe, character(1L))
+}
 term_overlap_retrieve <- function(query, files, k = 5L) {
   if (!length(files)) {
     return(character(0L))
@@ -348,8 +439,58 @@ format_prompt <- function(task, context_chunks) {
   }
 }
 
+# ---- NDCG helper (#27) ----------------------------------------------
+#' @keywords internal
+.ndcg_at_k <- function(rank_vec, k) {
+  # rank_vec: integer positions of GT nodes in retrieved list (NA = not retrieved)
+  # Returns NDCG@k in [0, 1] or NA_real_ when no GT nodes are present.
+  n_rel <- sum(!is.na(rank_vec))
+  if (n_rel == 0L) return(NA_real_)
+  hits <- rank_vec[!is.na(rank_vec) & rank_vec <= k]
+  dcg  <- sum(1 / log2(hits + 1))
+  idcg <- sum(1 / log2(seq_len(min(n_rel, k)) + 1))
+  if (idcg == 0) NA_real_ else dcg / idcg
+}
+
+# ---- AST-diff scorer (#28) ------------------------------------------
+#' @keywords internal
+ast_diff_score <- function(response_code, ground_truth_code) {
+  # Returns a score in [0, 1] based on structural AST similarity.
+  # Metric: 0.6 * call-name Jaccard + 0.4 * word-token Jaccard.
+  extract_calls <- function(code) {
+    ast <- tryCatch(parse(text = code, keep.source = FALSE), error = function(e) NULL)
+    if (is.null(ast)) return(character(0L))
+    calls <- character(0L)
+    walk <- function(expr) {
+      if (is.call(expr)) {
+        fn <- tryCatch(as.character(expr[[1L]]), error = function(e) NULL)
+        if (length(fn) == 1L && nzchar(fn)) calls <<- c(calls, fn)
+        lapply(as.list(expr[-1L]), walk)
+      } else if (is.recursive(expr)) {
+        lapply(as.list(expr), walk)
+      }
+    }
+    lapply(as.list(ast), walk)
+    unique(calls)
+  }
+
+  jaccard <- function(a, b) {
+    uni <- length(union(a, b))
+    if (uni == 0L) 0 else length(intersect(a, b)) / uni
+  }
+
+  call_j <- jaccard(extract_calls(response_code), extract_calls(ground_truth_code))
+
+  word_tokens <- function(x) {
+    w <- unique(strsplit(tolower(x), "\\W+")[[1L]])
+    w[nzchar(w)]
+  }
+  tok_j <- jaccard(word_tokens(response_code), word_tokens(ground_truth_code))
+
+  0.6 * call_j + 0.4 * tok_j
+}
 score_response <- function(response_code, task, source_files = NULL) {
-  # Rubric: syntax (0.3) + ground truth nodes present (0.4) + runs (0.3)
+  # Rubric: syntax (0.3) + node presence / AST-diff (0.4) + runs (0.3)
   syntax_ok <- tryCatch(
     {
       parse(text = response_code, keep.source = FALSE)
@@ -359,7 +500,25 @@ score_response <- function(response_code, task, source_files = NULL) {
   )
 
   nodes_score <- 0
-  if (length(task$ground_truth_nodes) > 0L) {
+  # Choose scoring method for node-presence component (#28).
+  # Tasks with evaluation_method = "ast_diff" use structural AST similarity;
+  # others use the regex word-boundary approach.
+  use_ast <- isTRUE(identical(task$evaluation_method, "ast_diff")) &&
+    !is.null(task$ground_truth_file) &&
+    nzchar(as.character(task$ground_truth_file))
+
+  if (use_ast) {
+    gt_rel  <- sub("^inst/", "", task$ground_truth_file)
+    gt_path <- system.file(gt_rel, package = "rrlmgraphbench")
+    if (nzchar(gt_path) && file.exists(gt_path)) {
+      gt_code     <- paste(readLines(gt_path, warn = FALSE), collapse = "\n")
+      nodes_score <- ast_diff_score(response_code, gt_code)
+    } else {
+      use_ast <- FALSE  # file not found -- fall through to regex
+    }
+  }
+
+  if (!use_ast && length(task$ground_truth_nodes) > 0L) {
     hits <- vapply(
       task$ground_truth_nodes,
       function(n) {
@@ -420,16 +579,23 @@ run_single <- function(
   llm_model = NULL,
   .dry_run
 ) {
-  ctx_chunks <- build_context(
-    strategy,
-    task,
-    graph_tfidf,
-    graph_ollama,
-    source_files
-  )
-  ctx_text <- paste(ctx_chunks, collapse = "\n")
+  ctx_result    <- build_context(strategy, task, graph_tfidf, graph_ollama, source_files)
+  ctx_chunks    <- ctx_result$chunks
+  retrieved_ids <- ctx_result$node_ids
+  ctx_text      <- paste(ctx_chunks, collapse = "\n")
 
-  context_tokens <- nchar(ctx_text) %/% 4L # rough token estimate
+  # NDCG pre-computation --------------------------------------------------
+  gt_nodes <- if (!is.null(task$ground_truth_nodes)) task$ground_truth_nodes else character(0L)
+  rank_vec <- if (length(retrieved_ids) && length(gt_nodes)) {
+    match(gt_nodes, retrieved_ids)
+  } else {
+    rep(NA_integer_, length(gt_nodes))
+  }
+  ndcg5  <- .ndcg_at_k(rank_vec, 5L)
+  ndcg10 <- .ndcg_at_k(rank_vec, 10L)
+
+  # Token count defaults (nchar/4 heuristic -- overwritten below if API available)
+  context_tokens <- nchar(ctx_text) %/% 4L
   response_code <- ""
   response_tokens <- 0L
   latency_sec <- 0
@@ -496,7 +662,24 @@ run_single <- function(
     )
     latency_sec <- proc.time()[["elapsed"]] - t1
     response_code <- llm_result
-    response_tokens <- nchar(response_code) %/% 4L
+
+    # ---- Token counts: API-reported > tokenizers > nchar/4 (#26) ----------
+    api_tokens <- tryCatch(
+      vapply(chat$last_turn()@tokens, as.integer, integer(1L)),
+      error = function(e) NULL
+    )
+    if (!is.null(api_tokens) && length(api_tokens) >= 2L) {
+      context_tokens  <- api_tokens[[1L]]
+      response_tokens <- api_tokens[[2L]]
+    } else if (requireNamespace("tokenizers", quietly = TRUE)) {
+      count_tok <- function(x) {
+        as.integer(length(tokenizers::tokenize_words(x)[[1L]]))
+      }
+      context_tokens  <- count_tok(ctx_text)
+      response_tokens <- count_tok(response_code)
+    } else {
+      response_tokens <- nchar(response_code) %/% 4L
+    }
 
     rubric <- score_response(response_code, task, source_files = source_files)
     score <- rubric$score
@@ -524,6 +707,9 @@ run_single <- function(
     hallucination_count = as.integer(hall_count),
     hallucination_details = paste(hall_details, collapse = "; "),
     syntax_valid = syntax_valid,
-    runs_without_error = runs_ok
+    runs_without_error = runs_ok,
+    retrieved_n = as.integer(length(retrieved_ids)),
+    ndcg5  = ndcg5,
+    ndcg10 = ndcg10
   )
 }

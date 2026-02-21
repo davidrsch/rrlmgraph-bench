@@ -1,0 +1,14 @@
+{
+  "task_id": "task_028_doc_mini_ds",
+  "category": "documentation",
+  "project": "mini_ds_project",
+  "description": "Write Roxygen2 documentation for `compute_rmse()` in `R/models.R`. The doc block must include `@param predicted`, `@param actual`, `@return`, a one-sentence `@description`, and a `@examples` block demonstrating a call with numeric vectors.",
+  "seed_node": "R/models::compute_rmse",
+  "ground_truth_nodes": [
+    "R/models::compute_rmse",
+    "R/models::evaluate_model"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_028_doc_mini_ds_solution.R",
+  "evaluation_method": "rubric",
+  "difficulty": "easy"
+}

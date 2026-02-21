@@ -1,0 +1,14 @@
+{
+  "task_id": "task_021_bd_rpkg",
+  "category": "bug_debug",
+  "project": "r_package_small",
+  "description": "Fix the S3 method dispatch issue in `evaluate_model()`: when called with an object of class `c(\"lm_result\", \"lm\")`, R dispatches to `evaluate_model.lm` (from stats) instead of `evaluate_model.lm_result` because `lm_result` is not the first class in the vector. Reorder the class attribute so `lm_result` precedes `lm`.",
+  "seed_node": "R/exported_fns::fit_model_s4",
+  "ground_truth_nodes": [
+    "R/exported_fns::fit_model_s4",
+    "R/methods-ModelResult::evaluate_model.lm_result"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_021_bd_rpkg_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "easy"
+}

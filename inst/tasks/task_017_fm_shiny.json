@@ -1,0 +1,14 @@
+{
+  "task_id": "task_017_fm_shiny",
+  "category": "function_modification",
+  "project": "shiny_app_medium",
+  "description": "Extract the reactive filter logic that currently lives inline in `server_logic()` into a standalone function `filter_data(df, input)` in `R/data.R`. The server function should call `filter_data()` instead of the inline expression. The extracted function must accept a data frame and a Shiny input list and return the filtered data frame.",
+  "seed_node": "R/server::server_logic",
+  "ground_truth_nodes": [
+    "R/server::server_logic",
+    "R/data::filter_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_017_fm_shiny_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "medium"
+}

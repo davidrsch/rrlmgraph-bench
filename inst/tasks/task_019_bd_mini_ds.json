@@ -1,0 +1,14 @@
+{
+  "task_id": "task_019_bd_mini_ds",
+  "category": "bug_debug",
+  "project": "mini_ds_project",
+  "description": "Fix the off-by-one error in `split_data.data.frame()`: when computing the row indices for the training set using `sample(nrow(df), ...)`, the function accidentally includes row index 0 for edge-case data frames with exactly 1 row, causing a subscript-out-of-bounds error. Ensure the function handles 1-row edge cases gracefully.",
+  "seed_node": "R/data_prep::split_data.data.frame",
+  "ground_truth_nodes": [
+    "R/data_prep::split_data.data.frame",
+    "R/data_prep::split_data"
+  ],
+  "ground_truth_file": "inst/ground_truth/solutions/task_019_bd_mini_ds_solution.R",
+  "evaluation_method": "ast_diff",
+  "difficulty": "easy"
+}
