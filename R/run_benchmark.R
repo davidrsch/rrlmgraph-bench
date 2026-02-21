@@ -111,7 +111,7 @@ run_full_benchmark <- function(
   # readers of the published report. (see bench#18)
   if (!rrlmgraph::ollama_available()) {
     cli::cli_warn(c(
-      "!" = "Ollama daemon unavailable — skipping {.val rrlmgraph_ollama} strategy.",
+      "!" = "Ollama daemon unavailable -- skipping {.val rrlmgraph_ollama} strategy.",
       "i" = "Results will be collected for {length(strategies) - 1L} strategies."
     ))
     strategies <- setdiff(strategies, "rrlmgraph_ollama")
