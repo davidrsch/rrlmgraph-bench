@@ -10,7 +10,7 @@ strategies for providing R coding context to an LLM:
 | `rrlmgraph_tfidf`  | rrlmgraph graph traversal with TF-IDF embeddings |
 | `rrlmgraph_ollama` | rrlmgraph graph traversal with Ollama embeddings |
 | `full_files`       | Entire source files dumped verbatim (baseline)   |
-| `bm25_retrieval`   | BM25 keyword retrieval (no graph)                |
+| `term_overlap`     | Term-presence overlap retrieval (no graph)       |
 | `no_context`       | No context supplied                              |
 | `random_k`         | Five randomly sampled code chunks                |
 
@@ -54,6 +54,9 @@ First 6 rows of benchmark results.
 
 ``` r
 stats <- compute_benchmark_statistics(all_results)
+#> Warning: ! n_trials = 1: inferential statistics require >= 2 trials.
+#> ℹ Returning point estimates only (no CI, t-tests, or Cohen's d).
+#> ℹ Rerun with n_trials >= 3 for full statistical output.
 knitr::kable(
   stats$summary[, c(
     "strategy", "n", "mean_score", "sd_score",
@@ -210,29 +213,11 @@ if (!is.null(pw) && nrow(pw) > 0) {
     digits = 4,
     caption = "Pairwise Welch t-tests. * p<0.05; ** p<0.01; *** p<0.001 (Bonferroni)."
   )
+} else {
+  message("Pairwise tests not available (requires n_trials >= 2).")
 }
+#> Pairwise tests not available (requires n_trials >= 2).
 ```
-
-| strategy_1       | strategy_2       | statistic | p_value_raw | p_bonferroni | cohens_d | sig |
-|:-----------------|:-----------------|----------:|------------:|-------------:|---------:|:----|
-| rrlmgraph_tfidf  | rrlmgraph_ollama |    0.0000 |      1.0000 |            1 |   0.0000 |     |
-| rrlmgraph_tfidf  | full_files       |   -0.3669 |      0.7165 |            1 |  -0.1340 |     |
-| rrlmgraph_tfidf  | bm25_retrieval   |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
-| rrlmgraph_tfidf  | no_context       |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
-| rrlmgraph_tfidf  | random_k         |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
-| rrlmgraph_ollama | full_files       |   -0.3669 |      0.7165 |            1 |  -0.1340 |     |
-| rrlmgraph_ollama | bm25_retrieval   |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
-| rrlmgraph_ollama | no_context       |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
-| rrlmgraph_ollama | random_k         |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
-| full_files       | bm25_retrieval   |   -0.3859 |      0.7025 |            1 |  -0.1409 |     |
-| full_files       | no_context       |   -0.3859 |      0.7025 |            1 |  -0.1409 |     |
-| full_files       | random_k         |   -0.3859 |      0.7025 |            1 |  -0.1409 |     |
-| bm25_retrieval   | no_context       |    0.0000 |      1.0000 |            1 |   0.0000 |     |
-| bm25_retrieval   | random_k         |    0.0000 |      1.0000 |            1 |   0.0000 |     |
-| no_context       | random_k         |    0.0000 |      1.0000 |            1 |   0.0000 |     |
-
-Pairwise Welch t-tests. \* p\<0.05; \*\* p\<0.01; \*\*\* p\<0.001
-(Bonferroni).
 
 ------------------------------------------------------------------------
 
@@ -240,10 +225,16 @@ Pairwise Welch t-tests. \* p\<0.05; \*\* p\<0.01; \*\*\* p\<0.001
 
 ``` r
 if ("task_id" %in% names(all_results)) {
-  # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds)
-  all_results$project <- sub(
-    ".*_(mini_ds|shiny|rpkg).*", "\\1",
-    all_results$task_id
+  # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds).
+  # Use regmatches() so unrecognised task_ids return NA rather than the
+  # original string (which would silently create a spurious project level).
+  m <- regmatches(
+    all_results$task_id,
+    regexpr("mini_ds|shiny|rpkg", all_results$task_id)
+  )
+  all_results$project <- ifelse(
+    grepl("mini_ds|shiny|rpkg", all_results$task_id),
+    m, NA_character_
   )
   proj_summary <- aggregate(
     score ~ strategy + project,

@@ -92,8 +92,8 @@ retrieval strategies for providing R coding context to an LLM:</p>
 <td>Entire source files dumped verbatim (baseline)</td>
 </tr>
 <tr class="even">
-<td><code>bm25_retrieval</code></td>
-<td>BM25 keyword retrieval (no graph)</td>
+<td><code>term_overlap</code></td>
+<td>Term-presence overlap retrieval (no graph)</td>
 </tr>
 <tr class="odd">
 <td><code>no_context</code></td>
@@ -189,6 +189,9 @@ automatically every Monday (and on demand) by the
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_benchmark_statistics.html">compute_benchmark_statistics</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: <span style="color: #BBBB00;">!</span> n_trials = 1: inferential statistics require &gt;= 2 trials.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Returning point estimates only (no CI, t-tests, or Cohen's d).</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Rerun with n_trials &gt;= 3 for full statistical output.</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
 <span>  <span class="va">stats</span><span class="op">$</span><span class="va">summary</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>    <span class="st">"strategy"</span>, <span class="st">"n"</span>, <span class="st">"mean_score"</span>, <span class="st">"sd_score"</span>,</span>
@@ -455,166 +458,10 @@ hallucination.</caption>
 <span>    digits <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>    caption <span class="op">=</span> <span class="st">"Pairwise Welch t-tests. * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001 (Bonferroni)."</span></span>
 <span>  <span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-<table class="table">
-<caption>Pairwise Welch t-tests. * p&lt;0.05; ** p&lt;0.01; ***
-p&lt;0.001 (Bonferroni).</caption>
-<colgroup>
-<col width="20%">
-<col width="20%">
-<col width="12%">
-<col width="14%">
-<col width="15%">
-<col width="10%">
-<col width="4%">
-</colgroup>
-<thead><tr class="header">
-<th align="left">strategy_1</th>
-<th align="left">strategy_2</th>
-<th align="right">statistic</th>
-<th align="right">p_value_raw</th>
-<th align="right">p_bonferroni</th>
-<th align="right">cohens_d</th>
-<th align="left">sig</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="left">rrlmgraph_ollama</td>
-<td align="right">0.0000</td>
-<td align="right">1.0000</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="left">full_files</td>
-<td align="right">-0.3669</td>
-<td align="right">0.7165</td>
-<td align="right">1</td>
-<td align="right">-0.1340</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="left">bm25_retrieval</td>
-<td align="right">-0.7559</td>
-<td align="right">0.4561</td>
-<td align="right">1</td>
-<td align="right">-0.2760</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="left">no_context</td>
-<td align="right">-0.7559</td>
-<td align="right">0.4561</td>
-<td align="right">1</td>
-<td align="right">-0.2760</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="left">random_k</td>
-<td align="right">-0.7559</td>
-<td align="right">0.4561</td>
-<td align="right">1</td>
-<td align="right">-0.2760</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">rrlmgraph_ollama</td>
-<td align="left">full_files</td>
-<td align="right">-0.3669</td>
-<td align="right">0.7165</td>
-<td align="right">1</td>
-<td align="right">-0.1340</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">rrlmgraph_ollama</td>
-<td align="left">bm25_retrieval</td>
-<td align="right">-0.7559</td>
-<td align="right">0.4561</td>
-<td align="right">1</td>
-<td align="right">-0.2760</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">rrlmgraph_ollama</td>
-<td align="left">no_context</td>
-<td align="right">-0.7559</td>
-<td align="right">0.4561</td>
-<td align="right">1</td>
-<td align="right">-0.2760</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">rrlmgraph_ollama</td>
-<td align="left">random_k</td>
-<td align="right">-0.7559</td>
-<td align="right">0.4561</td>
-<td align="right">1</td>
-<td align="right">-0.2760</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">full_files</td>
-<td align="left">bm25_retrieval</td>
-<td align="right">-0.3859</td>
-<td align="right">0.7025</td>
-<td align="right">1</td>
-<td align="right">-0.1409</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">full_files</td>
-<td align="left">no_context</td>
-<td align="right">-0.3859</td>
-<td align="right">0.7025</td>
-<td align="right">1</td>
-<td align="right">-0.1409</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">full_files</td>
-<td align="left">random_k</td>
-<td align="right">-0.3859</td>
-<td align="right">0.7025</td>
-<td align="right">1</td>
-<td align="right">-0.1409</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">bm25_retrieval</td>
-<td align="left">no_context</td>
-<td align="right">0.0000</td>
-<td align="right">1.0000</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">bm25_retrieval</td>
-<td align="left">random_k</td>
-<td align="right">0.0000</td>
-<td align="right">1.0000</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left">no_context</td>
-<td align="left">random_k</td>
-<td align="right">0.0000</td>
-<td align="right">1.0000</td>
-<td align="right">1</td>
-<td align="right">0.0000</td>
-<td align="left"></td>
-</tr>
-</tbody>
-</table>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Pairwise tests not available (requires n_trials &gt;= 2)."</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; Pairwise tests not available (requires n_trials &gt;= 2).</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -622,10 +469,16 @@ p&lt;0.001 (Bonferroni).</caption>
 </h2>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="st">"task_id"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds)</span></span>
-<span>  <span class="va">all_results</span><span class="op">$</span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span></span>
-<span>    <span class="st">".*_(mini_ds|shiny|rpkg).*"</span>, <span class="st">"\\1"</span>,</span>
-<span>    <span class="va">all_results</span><span class="op">$</span><span class="va">task_id</span></span>
+<span>  <span class="co"># Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds).</span></span>
+<span>  <span class="co"># Use regmatches() so unrecognised task_ids return NA rather than the</span></span>
+<span>  <span class="co"># original string (which would silently create a spurious project level).</span></span>
+<span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/regmatches.html" class="external-link">regmatches</a></span><span class="op">(</span></span>
+<span>    <span class="va">all_results</span><span class="op">$</span><span class="va">task_id</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">regexpr</a></span><span class="op">(</span><span class="st">"mini_ds|shiny|rpkg"</span>, <span class="va">all_results</span><span class="op">$</span><span class="va">task_id</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">all_results</span><span class="op">$</span><span class="va">project</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"mini_ds|shiny|rpkg"</span>, <span class="va">all_results</span><span class="op">$</span><span class="va">task_id</span><span class="op">)</span>,</span>
+<span>    <span class="va">m</span>, <span class="cn">NA_character_</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="va">proj_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span></span>
 <span>    <span class="va">score</span> <span class="op">~</span> <span class="va">strategy</span> <span class="op">+</span> <span class="va">project</span>,</span>
