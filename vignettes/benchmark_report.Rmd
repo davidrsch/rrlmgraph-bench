@@ -32,31 +32,26 @@ strategies for providing R coding context to an LLM:
 | `no_context` | No context supplied |
 | `random_k` | Five randomly sampled code chunks |
 
-Results are loaded from a precomputed RDS file to allow the vignette to
-knit without an active LLM API key.
+Results are loaded from `inst/results/benchmark_results.rds`, regenerated
+automatically every Monday (and on demand) by the `run-benchmark` CI workflow
+using GitHub Models (`gpt-4o-mini`).
 
 ---
 
-## Load precomputed results
+## Results
 
-```{r load-results, message=FALSE, warning=FALSE, error=TRUE}
+```{r load-results, message=FALSE, warning=FALSE}
 results_path <- system.file(
   "results", "benchmark_results.rds",
   package = "rrlmgraphbench"
 )
-
-if (file.exists(results_path)) {
-  all_results <- readRDS(results_path)
-} else {
-  all_results <- run_full_benchmark(
-    output_path = tempfile(fileext = ".rds"),
-    n_trials    = 3L,
-    .dry_run    = TRUE
-  )
+if (!file.exists(results_path)) {
+  stop("benchmark_results.rds not found -- trigger the run-benchmark workflow.")
 }
+all_results <- readRDS(results_path)
 knitr::kable(
   head(all_results[, c("task_id", "strategy", "trial", "score", "total_tokens")], 6),
-  caption = "First 6 rows of results (dry-run: score = 0.5 placeholder)."
+  caption = "First 6 rows of benchmark results."
 )
 ```
 
