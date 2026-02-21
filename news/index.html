@@ -35,6 +35,15 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="rrlmgraphbench-010">rrlmgraphbench 0.1.0<a class="anchor" aria-label="anchor" href="#rrlmgraphbench-010"></a></h2>
 <p>First release.</p>
+<div class="section level4">
+<h4 id="bug-fixes-0-1-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-0"></a></h4>
+<ul><li>
+<code>run-benchmark.yml</code> CI workflow: added <code>models: read</code> permission so that <code>GITHUB_TOKEN</code> can call the GitHub Models inference API. Without it every <code><a href="https://ellmer.tidyverse.org/reference/chat_github.html" class="external-link">ellmer::chat_github()</a></code> call returned an empty string and all scores were a degenerate <code>0.6</code> (<a href="https://github.com/davidrsch/rrlmgraph-bench/issues/2" class="external-link">#2</a>).</li>
+<li>Removed <code>[skip ci]</code> from the auto-commit message so that <code>pkgdown</code> rebuilds the benchmark report vignette after every results update.</li>
+<li>LLM call failures in <code>run_single()</code> now emit a <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> (was <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code>) so they are visible in CI logs.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="original-first-release-notes-0-1-0">Original first-release notes<a class="anchor" aria-label="anchor" href="#original-first-release-notes-0-1-0"></a></h4>
 <ul><li>Task corpus: 15 coding tasks across three fixture projects (mini data-science script, medium Shiny app, small R package), covering function-modification, bug-diagnosis, new-feature, refactoring, and documentation categories.</li>
 <li>Ground-truth solutions committed under <code>inst/ground_truth/solutions/</code>.</li>
 <li>
@@ -45,7 +54,9 @@
 <code><a href="../reference/count_hallucinations.html">count_hallucinations()</a></code> — detect invented functions, invalid arguments, and wrong-namespace references in LLM-generated R code.</li>
 <li>Vignette: <code>benchmark_report</code> — reproducible benchmark report using precomputed results.</li>
 </ul></div>
-  </main></div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
