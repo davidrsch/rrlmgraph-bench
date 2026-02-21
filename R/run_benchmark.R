@@ -419,12 +419,12 @@ run_single <- function(
     llm_result <- tryCatch(
       {
         chat <- if (llm_provider == "github") {
-          gh_pat  <- Sys.getenv("GITHUB_PAT", "")
+          # In CI GITHUB_PAT is set by the workflow env block.
+          # For local use, GITHUB_TOKEN or GITHUB_PAT must be set.
+          gh_pat <- Sys.getenv("GITHUB_PAT",
+                      Sys.getenv("GITHUB_TOKEN", ""))
           if (!nzchar(gh_pat)) {
-            gh_pat <- tryCatch(
-              gitcreds::gitcreds_get()[["password"]],
-              error = function(e) ""
-            )
+            stop("Set GITHUB_PAT or GITHUB_TOKEN to use llm_provider='github'")
           }
           cred_fn <- (function(k) function() k)(gh_pat)
           ellmer::chat_openai_compatible(
