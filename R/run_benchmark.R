@@ -90,6 +90,12 @@ run_full_benchmark <- function(
   llm_provider <- match.arg(llm_provider)
   set.seed(seed)
 
+  # Fail fast on rate-limit responses instead of waiting for Retry-After
+  # (which can be days when the daily quota is exhausted).
+  old_max_tries <- getOption("ellmer_max_tries", default = 3L)
+  on.exit(options(ellmer_max_tries = old_max_tries), add = TRUE)
+  options(ellmer_max_tries = 1L)
+
   strategies <- c(
     "rrlmgraph_tfidf",
     "rrlmgraph_ollama",
@@ -404,8 +410,8 @@ run_single <- function(
     # GitHub Models only implements /chat/completions, so we call
     # chat_openai_compatible() directly for the github provider.
     default_models <- c(
-      github    = "gpt-4.1",
-      openai    = "gpt-4.1",
+      github    = "gpt-4.1-mini",
+      openai    = "gpt-4.1-mini",
       anthropic = "claude-3-5-haiku-latest",
       ollama    = "llama3.2"
     )
