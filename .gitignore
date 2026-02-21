@@ -14,4 +14,7 @@ renv/library/
 packrat/lib*/
 
 # vscode
+
+# rrlmgraph cache directories (generated artefacts, not source)
+**/.rrlmgraph/
 .vscode/

@@ -22,6 +22,25 @@ skip_if_no_api_key <- function(var = "OPENAI_API_KEY") {
   }
 }
 
+# Helpers for AC9 - must be defined before the test_that() that calls them
+existsFunction_in_ns <- function(name, env) {
+  tryCatch(
+    is.function(get(name, envir = env, inherits = FALSE)),
+    error = function(e) FALSE
+  )
+}
+
+existsMethod_or_s3 <- function(generic, class) {
+  method_name <- paste0(generic, ".", class)
+  env <- asNamespace("rrlmgraph")
+  found_s3 <- existsFunction_in_ns(method_name, env)
+  found_s4 <- tryCatch(
+    isGeneric(generic) && existsMethod(generic, class),
+    error = function(e) FALSE
+  )
+  found_s3 || found_s4
+}
+
 projects_dir <- system.file("projects", package = "rrlmgraphbench")
 mini_path <- file.path(projects_dir, "mini_ds_project")
 shiny_path <- file.path(projects_dir, "shiny_app_medium")
@@ -37,9 +56,10 @@ test_that("AC1: rrlm_graph() builds without error on all 3 fixture projects", {
   expect_no_error(g_pkg <- rrlmgraph::build_rrlm_graph(pkg_path))
 
   # Each graph should have at least one node
-  expect_gt(length(igraph::V(g_mini$graph)), 0L)
-  expect_gt(length(igraph::V(g_shiny$graph)), 0L)
-  expect_gt(length(igraph::V(g_pkg$graph)), 0L)
+  # rrlm_graph IS an igraph (class is added on top); use V() directly.
+  expect_gt(length(igraph::V(g_mini)), 0L)
+  expect_gt(length(igraph::V(g_shiny)), 0L)
+  expect_gt(length(igraph::V(g_pkg)), 0L)
 })
 
 # -------------------------------------------------------------------------
@@ -173,10 +193,7 @@ test_that("AC8: package works with data-science, Shiny, and R-package project ty
   )
   for (nm in names(project_paths)) {
     p <- project_paths[[nm]]
-    expect_no_error(
-      rrlmgraph::build_rrlm_graph(p),
-      label = paste("build_rrlm_graph() on", nm)
-    )
+    expect_no_error(rrlmgraph::build_rrlm_graph(p))
   }
 })
 
@@ -195,23 +212,4 @@ test_that("AC9: plot.rrlm_graph and summary.rrlm_graph S3 methods are registered
   )
 })
 
-# Internal helper used only in AC9
-existsMethod_or_s3 <- function(generic, class) {
-  method_name <- paste0(generic, ".", class)
-  # Check S3 registry
-  env <- asNamespace("rrlmgraph")
-  found_s3 <- existsFunction(method_name, env)
-  # Also check S4
-  found_s4 <- tryCatch(
-    isGeneric(generic) && existsMethod(generic, class),
-    error = function(e) FALSE
-  )
-  found_s3 || found_s4
-}
 
-existsFunction <- function(name, env) {
-  tryCatch(
-    is.function(get(name, envir = env, inherits = FALSE)),
-    error = function(e) FALSE
-  )
-}

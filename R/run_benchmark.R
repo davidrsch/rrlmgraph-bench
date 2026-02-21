@@ -336,7 +336,13 @@ score_response <- function(response_code, task) {
   if (length(task$ground_truth_nodes) > 0L) {
     hits <- vapply(
       task$ground_truth_nodes,
-      function(n) grepl(n, response_code, fixed = TRUE),
+      function(n) {
+        # ground_truth_nodes use "pkg::fn" rrlmgraph convention; strip the
+        # namespace prefix before searching so bare function names in the
+        # LLM response (e.g. "split_data.data.frame") still match.
+        bare_n <- sub("^[^:]+::", "", n)
+        grepl(bare_n, response_code, fixed = TRUE)
+      },
       logical(1L)
     )
     nodes_score <- mean(hits)
