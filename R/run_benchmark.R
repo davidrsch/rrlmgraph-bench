@@ -400,8 +400,8 @@ run_single <- function(
     t1 <- proc.time()[["elapsed"]]
     # -- Resolve ellmer chat function by provider ---------------------
     default_models <- c(
-      github    = "gpt-4o-mini",
-      openai    = "gpt-4o-mini",
+      github    = "gpt-4.1",
+      openai    = "gpt-4.1",
       anthropic = "claude-3-5-haiku-latest",
       ollama    = "llama3.2"
     )

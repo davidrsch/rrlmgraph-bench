@@ -36,7 +36,7 @@ jobs:
           Rscript -e '
             # Quick smoke-test: can we call the models API?
             tryCatch({
-              chat <- ellmer::chat_github(model = "gpt-4o-mini")
+              chat <- ellmer::chat_github(model = "gpt-4.1")
               resp <- chat$chat("Say only: OK")
               message("GitHub Models smoke test PASSED: ", trimws(resp))
             }, error = function(e) {
@@ -51,7 +51,7 @@ jobs:
               output_path  = "inst/results/benchmark_results.rds",
               n_trials     = 3L,
               llm_provider = "github",
-              llm_model    = "gpt-4o-mini"
+              llm_model    = "gpt-4.1"
             )
             message("Benchmark complete. Rows: ", nrow(results))
             message("Score summary: min=", min(results$score),
