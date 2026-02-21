@@ -14,44 +14,39 @@ strategies for providing R coding context to an LLM:
 | `no_context`       | No context supplied                              |
 | `random_k`         | Five randomly sampled code chunks                |
 
-Results are loaded from a precomputed RDS file to allow the vignette to
-knit without an active LLM API key.
+Results are loaded from `inst/results/benchmark_results.rds`,
+regenerated automatically every Monday (and on demand) by the
+`run-benchmark` CI workflow using GitHub Models (`gpt-4o-mini`).
 
 ------------------------------------------------------------------------
 
-## Load precomputed results
+## Results
 
 ``` r
 results_path <- system.file(
   "results", "benchmark_results.rds",
   package = "rrlmgraphbench"
 )
-
-if (file.exists(results_path)) {
-  all_results <- readRDS(results_path)
-} else {
-  all_results <- run_full_benchmark(
-    output_path = tempfile(fileext = ".rds"),
-    n_trials    = 3L,
-    .dry_run    = TRUE
-  )
+if (!file.exists(results_path)) {
+  stop("benchmark_results.rds not found -- trigger the run-benchmark workflow.")
 }
+all_results <- readRDS(results_path)
 knitr::kable(
   head(all_results[, c("task_id", "strategy", "trial", "score", "total_tokens")], 6),
-  caption = "First 6 rows of results (dry-run: score = 0.5 placeholder)."
+  caption = "First 6 rows of benchmark results."
 )
 ```
 
 | task_id             | strategy         | trial | score | total_tokens |
 |:--------------------|:-----------------|------:|------:|-------------:|
-| task_001_fm_mini_ds | rrlmgraph_tfidf  |     1 |   0.5 |            0 |
-| task_001_fm_mini_ds | rrlmgraph_tfidf  |     2 |   0.5 |            0 |
-| task_001_fm_mini_ds | rrlmgraph_tfidf  |     3 |   0.5 |            0 |
-| task_001_fm_mini_ds | rrlmgraph_ollama |     1 |   0.5 |            0 |
-| task_001_fm_mini_ds | rrlmgraph_ollama |     2 |   0.5 |            0 |
-| task_001_fm_mini_ds | rrlmgraph_ollama |     3 |   0.5 |            0 |
+| task_001_fm_mini_ds | rrlmgraph_tfidf  |     1 |   0.4 |          320 |
+| task_001_fm_mini_ds | rrlmgraph_ollama |     1 |   0.4 |          327 |
+| task_001_fm_mini_ds | full_files       |     1 |   0.4 |         1585 |
+| task_001_fm_mini_ds | bm25_retrieval   |     1 |   0.4 |         1508 |
+| task_001_fm_mini_ds | no_context       |     1 |   0.4 |          252 |
+| task_001_fm_mini_ds | random_k         |     1 |   0.4 |         1534 |
 
-First 6 rows of results (dry-run: score = 0.5 placeholder).
+First 6 rows of benchmark results.
 
 ------------------------------------------------------------------------
 
@@ -71,12 +66,12 @@ knitr::kable(
 
 | strategy         |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
 |:-----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
-| rrlmgraph_tfidf  |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| rrlmgraph_ollama |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| full_files       |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| bm25_retrieval   |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| no_context       |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
-| random_k         |  45 |        0.5 |        0 |      0.5 |      0.5 |                 0 |                  0 |
+| rrlmgraph_tfidf  |  15 |      0.520 |    0.101 |    0.467 |    0.560 |           526.333 |                  0 |
+| rrlmgraph_ollama |  15 |      0.520 |    0.101 |    0.467 |    0.573 |           524.733 |                  0 |
+| full_files       |  15 |      0.533 |    0.098 |    0.493 |    0.573 |          3312.333 |                  0 |
+| bm25_retrieval   |  15 |      0.547 |    0.092 |    0.493 |    0.587 |          3121.400 |                  0 |
+| no_context       |  15 |      0.547 |    0.092 |    0.507 |    0.587 |            41.733 |                  0 |
+| random_k         |  15 |      0.547 |    0.092 |    0.507 |    0.587 |          3106.933 |                  0 |
 
 Mean score, 95 % CI, token usage, and hallucination rate per strategy.
 
@@ -128,8 +123,13 @@ knitr::kable(ter_df,
 )
 ```
 
-| strategy | TER |
-|----------|-----|
+| strategy         |    TER |
+|:-----------------|-------:|
+| no_context       | 81.353 |
+| rrlmgraph_ollama |  6.155 |
+| rrlmgraph_tfidf  |  6.136 |
+| random_k         |  1.093 |
+| bm25_retrieval   |  1.088 |
 
 Token Efficiency Ratio relative to full_files baseline.
 
@@ -215,21 +215,21 @@ if (!is.null(pw) && nrow(pw) > 0) {
 
 | strategy_1       | strategy_2       | statistic | p_value_raw | p_bonferroni | cohens_d | sig |
 |:-----------------|:-----------------|----------:|------------:|-------------:|---------:|:----|
-| rrlmgraph_tfidf  | rrlmgraph_ollama |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_tfidf  | full_files       |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_tfidf  | bm25_retrieval   |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_tfidf  | no_context       |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_tfidf  | random_k         |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_ollama | full_files       |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_ollama | bm25_retrieval   |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_ollama | no_context       |        NA |          NA |           NA |       NA | NA  |
-| rrlmgraph_ollama | random_k         |        NA |          NA |           NA |       NA | NA  |
-| full_files       | bm25_retrieval   |        NA |          NA |           NA |       NA | NA  |
-| full_files       | no_context       |        NA |          NA |           NA |       NA | NA  |
-| full_files       | random_k         |        NA |          NA |           NA |       NA | NA  |
-| bm25_retrieval   | no_context       |        NA |          NA |           NA |       NA | NA  |
-| bm25_retrieval   | random_k         |        NA |          NA |           NA |       NA | NA  |
-| no_context       | random_k         |        NA |          NA |           NA |       NA | NA  |
+| rrlmgraph_tfidf  | rrlmgraph_ollama |    0.0000 |      1.0000 |            1 |   0.0000 |     |
+| rrlmgraph_tfidf  | full_files       |   -0.3669 |      0.7165 |            1 |  -0.1340 |     |
+| rrlmgraph_tfidf  | bm25_retrieval   |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
+| rrlmgraph_tfidf  | no_context       |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
+| rrlmgraph_tfidf  | random_k         |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
+| rrlmgraph_ollama | full_files       |   -0.3669 |      0.7165 |            1 |  -0.1340 |     |
+| rrlmgraph_ollama | bm25_retrieval   |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
+| rrlmgraph_ollama | no_context       |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
+| rrlmgraph_ollama | random_k         |   -0.7559 |      0.4561 |            1 |  -0.2760 |     |
+| full_files       | bm25_retrieval   |   -0.3859 |      0.7025 |            1 |  -0.1409 |     |
+| full_files       | no_context       |   -0.3859 |      0.7025 |            1 |  -0.1409 |     |
+| full_files       | random_k         |   -0.3859 |      0.7025 |            1 |  -0.1409 |     |
+| bm25_retrieval   | no_context       |    0.0000 |      1.0000 |            1 |   0.0000 |     |
+| bm25_retrieval   | random_k         |    0.0000 |      1.0000 |            1 |   0.0000 |     |
+| no_context       | random_k         |    0.0000 |      1.0000 |            1 |   0.0000 |     |
 
 Pairwise Welch t-tests. \* p\<0.05; \*\* p\<0.01; \*\*\* p\<0.001
 (Bonferroni).
@@ -267,12 +267,12 @@ if ("task_id" %in% names(all_results)) {
 
 | strategy         | mini_ds | rpkg | shiny |
 |:-----------------|--------:|-----:|------:|
-| bm25_retrieval   |     0.5 |  0.5 |   0.5 |
-| full_files       |     0.5 |  0.5 |   0.5 |
-| no_context       |     0.5 |  0.5 |   0.5 |
-| random_k         |     0.5 |  0.5 |   0.5 |
-| rrlmgraph_ollama |     0.5 |  0.5 |   0.5 |
-| rrlmgraph_tfidf  |     0.5 |  0.5 |   0.5 |
+| bm25_retrieval   |    0.56 | 0.56 |  0.52 |
+| full_files       |    0.52 | 0.56 |  0.52 |
+| no_context       |    0.56 | 0.56 |  0.52 |
+| random_k         |    0.56 | 0.56 |  0.52 |
+| rrlmgraph_ollama |    0.52 | 0.52 |  0.52 |
+| rrlmgraph_tfidf  |    0.52 | 0.52 |  0.52 |
 
 Mean score disaggregated by fixture project.
 

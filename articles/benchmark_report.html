@@ -105,35 +105,31 @@ retrieval strategies for providing R coding context to an LLM:</p>
 </tr>
 </tbody>
 </table>
-<p>Results are loaded from a precomputed RDS file to allow the vignette
-to knit without an active LLM API key.</p>
+<p>Results are loaded from
+<code>inst/results/benchmark_results.rds</code>, regenerated
+automatically every Monday (and on demand) by the
+<code>run-benchmark</code> CI workflow using GitHub Models
+(<code>gpt-4o-mini</code>).</p>
 <hr>
 </div>
 <div class="section level2">
-<h2 id="load-precomputed-results">Load precomputed results<a class="anchor" aria-label="anchor" href="#load-precomputed-results"></a>
+<h2 id="results">Results<a class="anchor" aria-label="anchor" href="#results"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">results_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
 <span>  <span class="st">"results"</span>, <span class="st">"benchmark_results.rds"</span>,</span>
 <span>  package <span class="op">=</span> <span class="st">"rrlmgraphbench"</span></span>
 <span><span class="op">)</span></span>
-<span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">results_path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">results_path</span><span class="op">)</span></span>
-<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>  <span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_full_benchmark.html">run_full_benchmark</a></span><span class="op">(</span></span>
-<span>    output_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span>,</span>
-<span>    n_trials    <span class="op">=</span> <span class="fl">3L</span>,</span>
-<span>    .dry_run    <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">results_path</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"benchmark_results.rds not found -- trigger the run-benchmark workflow."</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
+<span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">results_path</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"task_id"</span>, <span class="st">"strategy"</span>, <span class="st">"trial"</span>, <span class="st">"score"</span>, <span class="st">"total_tokens"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">6</span><span class="op">)</span>,</span>
-<span>  caption <span class="op">=</span> <span class="st">"First 6 rows of results (dry-run: score = 0.5 placeholder)."</span></span>
+<span>  caption <span class="op">=</span> <span class="st">"First 6 rows of benchmark results."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>First 6 rows of results (dry-run: score = 0.5
-placeholder).</caption>
+<caption>First 6 rows of benchmark results.</caption>
 <thead><tr class="header">
 <th align="left">task_id</th>
 <th align="left">strategy</th>
@@ -146,43 +142,43 @@ placeholder).</caption>
 <td align="left">task_001_fm_mini_ds</td>
 <td align="left">rrlmgraph_tfidf</td>
 <td align="right">1</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-</tr>
-<tr class="even">
-<td align="left">task_001_fm_mini_ds</td>
-<td align="left">rrlmgraph_tfidf</td>
-<td align="right">2</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-</tr>
-<tr class="odd">
-<td align="left">task_001_fm_mini_ds</td>
-<td align="left">rrlmgraph_tfidf</td>
-<td align="right">3</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">0.4</td>
+<td align="right">320</td>
 </tr>
 <tr class="even">
 <td align="left">task_001_fm_mini_ds</td>
 <td align="left">rrlmgraph_ollama</td>
 <td align="right">1</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">0.4</td>
+<td align="right">327</td>
 </tr>
 <tr class="odd">
 <td align="left">task_001_fm_mini_ds</td>
-<td align="left">rrlmgraph_ollama</td>
-<td align="right">2</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="left">full_files</td>
+<td align="right">1</td>
+<td align="right">0.4</td>
+<td align="right">1585</td>
 </tr>
 <tr class="even">
 <td align="left">task_001_fm_mini_ds</td>
-<td align="left">rrlmgraph_ollama</td>
-<td align="right">3</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="left">bm25_retrieval</td>
+<td align="right">1</td>
+<td align="right">0.4</td>
+<td align="right">1508</td>
+</tr>
+<tr class="odd">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">no_context</td>
+<td align="right">1</td>
+<td align="right">0.4</td>
+<td align="right">252</td>
+</tr>
+<tr class="even">
+<td align="left">task_001_fm_mini_ds</td>
+<td align="left">random_k</td>
+<td align="right">1</td>
+<td align="right">0.4</td>
+<td align="right">1534</td>
 </tr>
 </tbody>
 </table>
@@ -227,62 +223,62 @@ strategy.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">45</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">15</td>
+<td align="right">0.520</td>
+<td align="right">0.101</td>
+<td align="right">0.467</td>
+<td align="right">0.560</td>
+<td align="right">526.333</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">45</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">15</td>
+<td align="right">0.520</td>
+<td align="right">0.101</td>
+<td align="right">0.467</td>
+<td align="right">0.573</td>
+<td align="right">524.733</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">full_files</td>
-<td align="right">45</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">15</td>
+<td align="right">0.533</td>
+<td align="right">0.098</td>
+<td align="right">0.493</td>
+<td align="right">0.573</td>
+<td align="right">3312.333</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">bm25_retrieval</td>
-<td align="right">45</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">15</td>
+<td align="right">0.547</td>
+<td align="right">0.092</td>
+<td align="right">0.493</td>
+<td align="right">0.587</td>
+<td align="right">3121.400</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">45</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">15</td>
+<td align="right">0.547</td>
+<td align="right">0.092</td>
+<td align="right">0.507</td>
+<td align="right">0.587</td>
+<td align="right">41.733</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">random_k</td>
-<td align="right">45</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0</td>
+<td align="right">15</td>
+<td align="right">0.547</td>
+<td align="right">0.092</td>
+<td align="right">0.507</td>
+<td align="right">0.587</td>
+<td align="right">3106.933</td>
 <td align="right">0</td>
 </tr>
 </tbody>
@@ -339,7 +335,28 @@ baseline.</caption>
 <th align="left">strategy</th>
 <th align="right">TER</th>
 </tr></thead>
-<tbody></tbody>
+<tbody>
+<tr class="odd">
+<td align="left">no_context</td>
+<td align="right">81.353</td>
+</tr>
+<tr class="even">
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">6.155</td>
+</tr>
+<tr class="odd">
+<td align="left">rrlmgraph_tfidf</td>
+<td align="right">6.136</td>
+</tr>
+<tr class="even">
+<td align="left">random_k</td>
+<td align="right">1.093</td>
+</tr>
+<tr class="odd">
+<td align="left">bm25_retrieval</td>
+<td align="right">1.088</td>
+</tr>
+</tbody>
 </table>
 <hr>
 </div>
@@ -464,137 +481,137 @@ p&lt;0.001 (Bonferroni).</caption>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">0.0000</td>
+<td align="right">1.0000</td>
+<td align="right">1</td>
+<td align="right">0.0000</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">full_files</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.3669</td>
+<td align="right">0.7165</td>
+<td align="right">1</td>
+<td align="right">-0.1340</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">bm25_retrieval</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.7559</td>
+<td align="right">0.4561</td>
+<td align="right">1</td>
+<td align="right">-0.2760</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">no_context</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.7559</td>
+<td align="right">0.4561</td>
+<td align="right">1</td>
+<td align="right">-0.2760</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">random_k</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.7559</td>
+<td align="right">0.4561</td>
+<td align="right">1</td>
+<td align="right">-0.2760</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_ollama</td>
 <td align="left">full_files</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.3669</td>
+<td align="right">0.7165</td>
+<td align="right">1</td>
+<td align="right">-0.1340</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_ollama</td>
 <td align="left">bm25_retrieval</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.7559</td>
+<td align="right">0.4561</td>
+<td align="right">1</td>
+<td align="right">-0.2760</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_ollama</td>
 <td align="left">no_context</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.7559</td>
+<td align="right">0.4561</td>
+<td align="right">1</td>
+<td align="right">-0.2760</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_ollama</td>
 <td align="left">random_k</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.7559</td>
+<td align="right">0.4561</td>
+<td align="right">1</td>
+<td align="right">-0.2760</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
 <td align="left">bm25_retrieval</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.3859</td>
+<td align="right">0.7025</td>
+<td align="right">1</td>
+<td align="right">-0.1409</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">full_files</td>
 <td align="left">no_context</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.3859</td>
+<td align="right">0.7025</td>
+<td align="right">1</td>
+<td align="right">-0.1409</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
 <td align="left">random_k</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">-0.3859</td>
+<td align="right">0.7025</td>
+<td align="right">1</td>
+<td align="right">-0.1409</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">bm25_retrieval</td>
 <td align="left">no_context</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">0.0000</td>
+<td align="right">1.0000</td>
+<td align="right">1</td>
+<td align="right">0.0000</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">bm25_retrieval</td>
 <td align="left">random_k</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">0.0000</td>
+<td align="right">1.0000</td>
+<td align="right">1</td>
+<td align="right">0.0000</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
 <td align="left">random_k</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="left">NA</td>
+<td align="right">0.0000</td>
+<td align="right">1.0000</td>
+<td align="right">1</td>
+<td align="right">0.0000</td>
+<td align="left"></td>
 </tr>
 </tbody>
 </table>
@@ -639,39 +656,39 @@ p&lt;0.001 (Bonferroni).</caption>
 <tbody>
 <tr class="odd">
 <td align="left">bm25_retrieval</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
+<td align="right">0.56</td>
+<td align="right">0.56</td>
+<td align="right">0.52</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
+<td align="right">0.52</td>
+<td align="right">0.56</td>
+<td align="right">0.52</td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
+<td align="right">0.56</td>
+<td align="right">0.56</td>
+<td align="right">0.52</td>
 </tr>
 <tr class="even">
 <td align="left">random_k</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
+<td align="right">0.56</td>
+<td align="right">0.56</td>
+<td align="right">0.52</td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
+<td align="right">0.52</td>
+<td align="right">0.52</td>
+<td align="right">0.52</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
-<td align="right">0.5</td>
+<td align="right">0.52</td>
+<td align="right">0.52</td>
+<td align="right">0.52</td>
 </tr>
 </tbody>
 </table>
