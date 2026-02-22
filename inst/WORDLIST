@@ -1,11 +1,13 @@
 anthropic
 artefacts
 AST
+benchmarked
 benchmarking
 BM25
 Bonferroni
 claude
 CI
+CMD
 Codecov
 Cohen
 dotchart
@@ -20,9 +22,11 @@ JSON
 knitr
 llama
 LLM
+Lifecycle
 NAMESPACE
 NDCG
 NSE
+normalised
 OpenAI
 Ollama
 ORCID
