@@ -58,18 +58,18 @@
 <img src="logo.svg" class="logo" alt=""><h1 id="rrlmgraphbench-">rrlmgraphbench <a class="anchor" aria-label="anchor" href="#rrlmgraphbench-"></a>
 </h1>
 </div>
-<blockquote>
-<p>Benchmark suite for evaluating <code>rrlmgraph</code> retrieval strategies against real R coding tasks.</p>
-</blockquote>
-<div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h2>
-<p><code>rrlmgraphbench</code> provides a reproducible benchmark that compares six context-retrieval strategies across 15 coding tasks spanning three fixture project types. It measures context quality through LLM-graded task scores, token efficiency, and hallucination rates.</p>
-</div>
+<!-- badges: start -->
+
+<!-- badges: end -->
+<p>The goal of <code>rrlmgraphbench</code> is to provide an objective, reproducible benchmark that measures whether <code>rrlmgraph</code> context retrieval actually helps LLMs solve real R coding tasks — and by how much, compared to simpler baselines. It runs a standard set of coding tasks against six retrieval strategies, scores each LLM response, and reports mean score, 95 % confidence intervals, token efficiency, and hallucination rates per strategy. Results are regenerated automatically every Monday and committed back to the repository so the GitHub Pages site always shows live data.</p>
 <div class="section level2">
 <h2 id="retrieval-strategies-compared">Retrieval strategies compared<a class="anchor" aria-label="anchor" href="#retrieval-strategies-compared"></a>
 </h2>
 <table class="table">
+<colgroup>
+<col width="27%">
+<col width="72%">
+</colgroup>
 <thead><tr class="header">
 <th>Strategy</th>
 <th>Description</th>
@@ -77,19 +77,19 @@
 <tbody>
 <tr class="odd">
 <td><code>rrlmgraph_tfidf</code></td>
-<td>rrlmgraph graph traversal + TF-IDF embeddings</td>
+<td>rrlmgraph graph traversal with TF-IDF embeddings</td>
 </tr>
 <tr class="even">
 <td><code>rrlmgraph_ollama</code></td>
-<td>rrlmgraph graph traversal + Ollama embeddings</td>
+<td>rrlmgraph graph traversal with Ollama embeddings</td>
 </tr>
 <tr class="odd">
 <td><code>full_files</code></td>
-<td>Entire source files verbatim (baseline)</td>
+<td>Entire source files dumped verbatim (baseline)</td>
 </tr>
 <tr class="even">
 <td><code>bm25_retrieval</code></td>
-<td>BM25 keyword retrieval (no graph)</td>
+<td>BM25 keyword retrieval, no graph</td>
 </tr>
 <tr class="odd">
 <td><code>no_context</code></td>
@@ -105,14 +105,125 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
+<p>You can install the development version of <code>rrlmgraphbench</code> from GitHub with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"davidrsch/rrlmgraph-bench"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+</h2>
+<div class="section level3">
+<h3 id="example-1-run-the-full-benchmark">Example 1: Run the full benchmark<a class="anchor" aria-label="anchor" href="#example-1-run-the-full-benchmark"></a>
+</h3>
+<p><code><a href="reference/run_full_benchmark.html">run_full_benchmark()</a></code> evaluates all six strategies across every task in the built-in task suite using an LLM of your choice. The <code>"github"</code> provider uses <code>GITHUB_PAT</code> (automatically set in GitHub Actions) — no extra secret needed.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/davidrsch/rrlmgraph-bench" class="external-link">rrlmgraphbench</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Full run: GitHub Models, 3 trials per task x strategy pair.</span></span>
+<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_full_benchmark.html">run_full_benchmark</a></span><span class="op">(</span></span>
+<span>  output_path  <span class="op">=</span> <span class="st">"results/benchmark_results.rds"</span>,</span>
+<span>  n_trials     <span class="op">=</span> <span class="fl">3L</span>,</span>
+<span>  llm_provider <span class="op">=</span> <span class="st">"github"</span>,</span>
+<span>  llm_model    <span class="op">=</span> <span class="st">"gpt-4.1-mini"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; ── rrlmgraphbench ──────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; ℹ Tasks   : 15  (5 × fix_method, 5 × new_feature, 5 × bug_diagnosis)</span></span>
+<span><span class="co">#&gt; ℹ Strategies: 6</span></span>
+<span><span class="co">#&gt; ℹ Trials  : 3  per strategy × task</span></span>
+<span><span class="co">#&gt; ───────────────────────────────────────────────────────────────────────────────</span></span>
+<span><span class="co">#&gt; ✔ [1/90]  rrlmgraph_tfidf  ×  task_001_fm_mini_ds  trial 1  (score 0.8, 1 234 tok, 2.3 s)</span></span>
+<span><span class="co">#&gt; ✔ [2/90]  rrlmgraph_tfidf  ×  task_001_fm_mini_ds  trial 2  (score 0.8, 1 198 tok, 2.1 s)</span></span>
+<span><span class="co">#&gt; ...</span></span>
+<span><span class="co">#&gt; ✔ [90/90] random_k  ×  task_015_doc_rpkg  trial 3  (score 0.4,  892 tok, 1.8 s)</span></span>
+<span><span class="co">#&gt; ✔ Results saved to results/benchmark_results.rds  (90 rows × 16 cols)</span></span>
+<span></span>
+<span><span class="co"># Quick integration check without calling an LLM (returns dummy 0.5 scores).</span></span>
+<span><span class="va">dry</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_full_benchmark.html">run_full_benchmark</a></span><span class="op">(</span></span>
+<span>  output_path <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span>,</span>
+<span>  .dry_run    <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">dry</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 90</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="example-2-compute-and-inspect-benchmark-statistics">Example 2: Compute and inspect benchmark statistics<a class="anchor" aria-label="anchor" href="#example-2-compute-and-inspect-benchmark-statistics"></a>
+</h3>
+<p><code><a href="reference/compute_benchmark_statistics.html">compute_benchmark_statistics()</a></code> aggregates per-trial scores into a summary table with 95 % confidence intervals, Token Efficiency Ratio (TER), and pairwise Welch <em>t</em>-tests with Bonferroni correction and Cohen’s <em>d</em>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/compute_benchmark_statistics.html">compute_benchmark_statistics</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Per-strategy summary (ordered by mean score).</span></span>
+<span><span class="va">stats</span><span class="op">$</span><span class="va">summary</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">stats</span><span class="op">$</span><span class="va">summary</span><span class="op">$</span><span class="va">mean_score</span><span class="op">)</span>,</span>
+<span>              <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strategy"</span>, <span class="st">"n"</span>, <span class="st">"mean_score"</span>, <span class="st">"ci_lo_95"</span>, <span class="st">"ci_hi_95"</span>,</span>
+<span>                <span class="st">"mean_total_tokens"</span>, <span class="st">"hallucination_rate"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;          strategy  n mean_score ci_lo_95 ci_hi_95 mean_total_tokens hallucination_rate</span></span>
+<span><span class="co">#&gt;  rrlmgraph_tfidf 45      0.743    0.702    0.784             3 821               0.044</span></span>
+<span><span class="co">#&gt; rrlmgraph_ollama 45      0.729    0.687    0.771            4 103               0.067</span></span>
+<span><span class="co">#&gt;    bm25_retrieval 45      0.651    0.608    0.694             6 440               0.111</span></span>
+<span><span class="co">#&gt;        full_files 45      0.638    0.594    0.682            18 274               0.156</span></span>
+<span><span class="co">#&gt;          random_k 45      0.547    0.502    0.592             2 108               0.133</span></span>
+<span><span class="co">#&gt;        no_context 45      0.423    0.378    0.468               187               0.200</span></span>
+<span></span>
+<span><span class="co"># Token Efficiency Ratio: score per token relative to full_files.</span></span>
+<span><span class="co"># TER &gt; 1 means better score at lower token cost.</span></span>
+<span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span></span>
+<span><span class="co">#&gt;  rrlmgraph_tfidf rrlmgraph_ollama   bm25_retrieval         random_k       no_context</span></span>
+<span><span class="co">#&gt;            3.544            2.953            0.977            2.517               NA</span></span></code></pre></div>
+<p>For pairwise statistical significance:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="va">stats</span><span class="op">$</span><span class="va">pairwise</span></span>
+<span><span class="va">pw</span><span class="op">[</span><span class="va">pw</span><span class="op">$</span><span class="va">p_bonferroni</span> <span class="op">&lt;</span> <span class="fl">0.05</span>,</span>
+<span>   <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"strategy_1"</span>, <span class="st">"strategy_2"</span>, <span class="st">"cohens_d"</span>, <span class="st">"p_bonferroni"</span>, <span class="st">"sig"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;         strategy_1    strategy_2 cohens_d p_bonferroni sig</span></span>
+<span><span class="co">#&gt;  rrlmgraph_tfidf    no_context    1.821       &lt;0.001  ***</span></span>
+<span><span class="co">#&gt; rrlmgraph_ollama    no_context    1.643       &lt;0.001  ***</span></span>
+<span><span class="co">#&gt;  rrlmgraph_tfidf    full_files    0.423        0.031    *</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="example-3-detect-hallucinations-in-llm-responses">Example 3: Detect hallucinations in LLM responses<a class="anchor" aria-label="anchor" href="#example-3-detect-hallucinations-in-llm-responses"></a>
+</h3>
+<p><code><a href="reference/count_hallucinations.html">count_hallucinations()</a></code> inspects generated R code for invented function names, invalid argument names, and wrong-namespace calls. The benchmark calls this automatically; you can also use it to audit any LLM-generated snippet.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Invented function and wrong package namespace in the same snippet.</span></span>
+<span><span class="va">code</span> <span class="op">&lt;-</span> <span class="st">'</span></span>
+<span><span class="st">  df &lt;- dplyr::filtrate(mtcars, cyl == 6)   # "filtrate" does not exist in dplyr</span></span>
+<span><span class="st">  result &lt;- xgboost::xgb_train(df)          # "xgb_train" is not exported by xgboost</span></span>
+<span><span class="st">'</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/count_hallucinations.html">count_hallucinations</a></span><span class="op">(</span><span class="va">code</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [[1]]</span></span>
+<span><span class="co">#&gt; [[1]]$type</span></span>
+<span><span class="co">#&gt; [1] "wrong_namespace"</span></span>
+<span><span class="co">#&gt; [[1]]$fn</span></span>
+<span><span class="co">#&gt; [1] "dplyr::filtrate"</span></span>
+<span><span class="co">#&gt; [[1]]$detail</span></span>
+<span><span class="co">#&gt; [1] "'filtrate' is not exported by the 'dplyr' package"</span></span>
+<span><span class="co">#&gt;</span></span>
+<span><span class="co">#&gt; [[2]]</span></span>
+<span><span class="co">#&gt; [[2]]$type</span></span>
+<span><span class="co">#&gt; [1] "wrong_namespace"</span></span>
+<span><span class="co">#&gt; [[2]]$fn</span></span>
+<span><span class="co">#&gt; [1] "xgboost::xgb_train"</span></span>
+<span><span class="co">#&gt; [[2]]$detail</span></span>
+<span><span class="co">#&gt; [1] "'xgb_train' is not exported by the 'xgboost' package"</span></span>
+<span></span>
+<span><span class="co"># Pass a graph to also trust project-internal functions.</span></span>
+<span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu">rrlmgraph</span><span class="fu">::</span><span class="fu">build_rrlm_graph</span><span class="op">(</span><span class="st">"path/to/mypkg"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/count_hallucinations.html">count_hallucinations</a></span><span class="op">(</span><span class="va">code</span>, graph <span class="op">=</span> <span class="va">g</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
 </h2>
-<p>See the <a href="articles/benchmark_report.html">Benchmark Report</a> vignette for a full reproducible analysis, and the <a href="reference/index.html">Reference</a> for function documentation.</p>
+<ul>
+<li>
+<a href="articles/benchmark_report.html">Benchmark Report</a> — live results from the latest automated run</li>
+<li>
+<a href="reference/index.html">Reference</a> — full function documentation</li>
+<li>
+<a href="https://github.com/davidrsch/rrlmgraph" class="external-link">rrlmgraph</a> — the package being benchmarked</li>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
