@@ -37,14 +37,14 @@ knitr::kable(
 )
 ```
 
-| task_id             | strategy         | trial | score | total_tokens |
-|:--------------------|:-----------------|------:|------:|-------------:|
-| task_001_fm_mini_ds | rrlmgraph_tfidf  |     1 |   0.4 |          320 |
-| task_001_fm_mini_ds | rrlmgraph_ollama |     1 |   0.4 |          327 |
-| task_001_fm_mini_ds | full_files       |     1 |   0.4 |         1585 |
-| task_001_fm_mini_ds | bm25_retrieval   |     1 |   0.4 |         1508 |
-| task_001_fm_mini_ds | no_context       |     1 |   0.4 |          252 |
-| task_001_fm_mini_ds | random_k         |     1 |   0.4 |         1534 |
+| task_id             | strategy        | trial |     score | total_tokens |
+|:--------------------|:----------------|------:|----------:|-------------:|
+| task_001_fm_mini_ds | rrlmgraph_tfidf |     1 | 0.0438938 |          314 |
+| task_001_fm_mini_ds | full_files      |     1 | 0.0667826 |         1890 |
+| task_001_fm_mini_ds | term_overlap    |     1 | 0.0606897 |          498 |
+| task_001_fm_mini_ds | bm25_retrieval  |     1 | 0.0605405 |         1848 |
+| task_001_fm_mini_ds | no_context      |     1 | 0.0581818 |          483 |
+| task_001_fm_mini_ds | random_k        |     1 | 0.0567273 |         1847 |
 
 First 6 rows of benchmark results.
 
@@ -67,14 +67,14 @@ knitr::kable(
 )
 ```
 
-| strategy         |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
-|:-----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
-| rrlmgraph_tfidf  |  15 |      0.520 |    0.101 |    0.467 |    0.560 |           526.333 |                  0 |
-| rrlmgraph_ollama |  15 |      0.520 |    0.101 |    0.467 |    0.573 |           524.733 |                  0 |
-| full_files       |  15 |      0.533 |    0.098 |    0.493 |    0.573 |          3312.333 |                  0 |
-| bm25_retrieval   |  15 |      0.547 |    0.092 |    0.493 |    0.587 |          3121.400 |                  0 |
-| no_context       |  15 |      0.547 |    0.092 |    0.507 |    0.587 |            41.733 |                  0 |
-| random_k         |  15 |      0.547 |    0.092 |    0.507 |    0.587 |          3106.933 |                  0 |
+| strategy        |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
+|:----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
+| rrlmgraph_tfidf |  30 |      0.451 |    0.240 |    0.362 |    0.541 |            75.167 |                  0 |
+| full_files      |  30 |      0.462 |    0.235 |    0.374 |    0.550 |          1747.567 |                  0 |
+| term_overlap    |  30 |      0.479 |    0.226 |    0.395 |    0.563 |          1944.800 |                  0 |
+| bm25_retrieval  |  30 |      0.498 |    0.209 |    0.420 |    0.576 |          1504.233 |                  0 |
+| no_context      |  30 |      0.477 |    0.229 |    0.391 |    0.562 |            67.433 |                  0 |
+| random_k        |  30 |      0.485 |    0.215 |    0.404 |    0.565 |          1804.800 |                  0 |
 
 Mean score, 95 % CI, token usage, and hallucination rate per strategy.
 
@@ -126,13 +126,13 @@ knitr::kable(ter_df,
 )
 ```
 
-| strategy         |    TER |
-|:-----------------|-------:|
-| no_context       | 81.353 |
-| rrlmgraph_ollama |  6.155 |
-| rrlmgraph_tfidf  |  6.136 |
-| random_k         |  1.093 |
-| bm25_retrieval   |  1.088 |
+| strategy        |    TER |
+|:----------------|-------:|
+| no_context      | 26.756 |
+| rrlmgraph_tfidf | 22.718 |
+| bm25_retrieval  |  1.253 |
+| random_k        |  1.016 |
+| term_overlap    |  0.931 |
 
 Token Efficiency Ratio relative to full_files baseline.
 
@@ -150,14 +150,14 @@ knitr::kable(hall_df,
 )
 ```
 
-| strategy         | hallucination_rate |
-|:-----------------|-------------------:|
-| rrlmgraph_tfidf  |                  0 |
-| rrlmgraph_ollama |                  0 |
-| full_files       |                  0 |
-| bm25_retrieval   |                  0 |
-| no_context       |                  0 |
-| random_k         |                  0 |
+| strategy        | hallucination_rate |
+|:----------------|-------------------:|
+| rrlmgraph_tfidf |                  0 |
+| full_files      |                  0 |
+| term_overlap    |                  0 |
+| bm25_retrieval  |                  0 |
+| no_context      |                  0 |
+| random_k        |                  0 |
 
 Fraction of responses containing at least one hallucination.
 
@@ -256,14 +256,14 @@ if ("task_id" %in% names(all_results)) {
 }
 ```
 
-| strategy         | mini_ds | rpkg | shiny |
-|:-----------------|--------:|-----:|------:|
-| bm25_retrieval   |    0.56 | 0.56 |  0.52 |
-| full_files       |    0.52 | 0.56 |  0.52 |
-| no_context       |    0.56 | 0.56 |  0.52 |
-| random_k         |    0.56 | 0.56 |  0.52 |
-| rrlmgraph_ollama |    0.52 | 0.52 |  0.52 |
-| rrlmgraph_tfidf  |    0.52 | 0.52 |  0.52 |
+| strategy        | mini_ds |  rpkg | shiny |
+|:----------------|--------:|------:|------:|
+| bm25_retrieval  |   0.493 | 0.553 | 0.448 |
+| full_files      |   0.495 | 0.443 | 0.447 |
+| no_context      |   0.432 | 0.553 | 0.445 |
+| random_k        |   0.452 | 0.553 | 0.448 |
+| rrlmgraph_tfidf |   0.470 | 0.438 | 0.445 |
+| term_overlap    |   0.493 | 0.495 | 0.448 |
 
 Mean score disaggregated by fixture project.
 
