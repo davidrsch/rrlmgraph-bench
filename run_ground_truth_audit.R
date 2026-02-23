@@ -35,17 +35,26 @@ pkg_root <- if (file.exists("DESCRIPTION")) {
   stop("Run from the rrlmgraphbench package root directory.")
 }
 
-tasks_dir     <- file.path(pkg_root, "inst", "tasks")
+tasks_dir <- file.path(pkg_root, "inst", "tasks")
 solutions_dir <- file.path(pkg_root, "inst", "ground_truth", "solutions")
 
-task_files <- sort(list.files(tasks_dir, pattern = "\\.json$", full.names = TRUE))
-if (!length(task_files)) stop("No task JSON files found in: ", tasks_dir)
+task_files <- sort(list.files(
+  tasks_dir,
+  pattern = "\\.json$",
+  full.names = TRUE
+))
+if (!length(task_files)) {
+  stop("No task JSON files found in: ", tasks_dir)
+}
 
 # ---- helpers ----------------------------------------------------------------
 
 .check_parse <- function(path) {
   result <- tryCatch(
-    { parse(file = path); TRUE },
+    {
+      parse(file = path)
+      TRUE
+    },
     error = function(e) conditionMessage(e)
   )
   result
@@ -54,20 +63,25 @@ if (!length(task_files)) stop("No task JSON files found in: ", tasks_dir)
 .extract_new_param <- function(description) {
   # Look for backtick-quoted identifiers that look like parameter names
   # e.g. "Add a `stratified` logical parameter" -> "stratified"
-  m <- regmatches(description, gregexpr("`[A-Za-z_.][A-Za-z_.0-9]*`", description))[[1L]]
+  m <- regmatches(
+    description,
+    gregexpr("`[A-Za-z_.][A-Za-z_.0-9]*`", description)
+  )[[1L]]
   if (length(m)) gsub("`", "", m[[1L]]) else NULL
 }
 
 .check_category <- function(task, solution_text) {
   cat_name <- task$category
-  desc     <- paste(task$description, collapse = " ")
+  desc <- paste(task$description, collapse = " ")
 
   if (cat_name == "function_modification") {
     param <- .extract_new_param(desc)
-    if (is.null(param)) return(list(ok = TRUE, note = "no param extracted from desc"))
+    if (is.null(param)) {
+      return(list(ok = TRUE, note = "no param extracted from desc"))
+    }
     found <- grepl(param, solution_text, fixed = TRUE)
     list(
-      ok   = found,
+      ok = found,
       note = if (found) {
         sprintf("new param '%s' present", param)
       } else {
@@ -77,11 +91,21 @@ if (!length(task_files)) stop("No task JSON files found in: ", tasks_dir)
   } else if (cat_name == "bug_detection") {
     # We just check that the solution is non-trivial (has at least one assignment)
     has_assign <- grepl("<-|=", solution_text)
-    list(ok = has_assign, note = if (has_assign) "assignment found" else "empty solution?")
+    list(
+      ok = has_assign,
+      note = if (has_assign) "assignment found" else "empty solution?"
+    )
   } else if (cat_name == "new_feature") {
     # Should define at least one function
     has_fn <- grepl("\\bfunction\\s*\\(", solution_text)
-    list(ok = has_fn, note = if (has_fn) "function definition found" else "no function definition")
+    list(
+      ok = has_fn,
+      note = if (has_fn) {
+        "function definition found"
+      } else {
+        "no function definition"
+      }
+    )
   } else if (cat_name == "refactor") {
     # Check that the file is non-trivial
     has_assign <- grepl("<-|=", solution_text)
@@ -92,14 +116,21 @@ if (!length(task_files)) stop("No task JSON files found in: ", tasks_dir)
     #   (b) package-level documentation with @name/@docType
     #   (c) inline comments explaining code (no roxygen at all)
     # Accept (a) OR (b) OR (c).
-    has_param_return_export <- grepl("@param",  solution_text) &&
+    has_param_return_export <- grepl("@param", solution_text) &&
       grepl("@return", solution_text) &&
       grepl("@export", solution_text)
-    has_pkg_doc  <- grepl("@name", solution_text) || grepl("@docType", solution_text)
-    has_inline   <- grepl("#\\s*\\(|#.*reactive|#.*comment|#.*explain|#.*note",
-                          solution_text, ignore.case = TRUE)
+    has_pkg_doc <- grepl("@name", solution_text) ||
+      grepl("@docType", solution_text)
+    has_inline <- grepl(
+      "#\\s*\\(|#.*reactive|#.*comment|#.*explain|#.*note",
+      solution_text,
+      ignore.case = TRUE
+    )
     has_any_comment <- grepl("^\\s*#", solution_text)
-    ok <- has_param_return_export || has_pkg_doc || has_inline || has_any_comment
+    ok <- has_param_return_export ||
+      has_pkg_doc ||
+      has_inline ||
+      has_any_comment
     note <- if (has_param_return_export) {
       "function roxygen tags present"
     } else if (has_pkg_doc) {
@@ -126,10 +157,10 @@ for (i in seq_along(task_files)) {
   )
   if (is.null(task)) {
     results[[i]] <- list(
-      task_id  = basename(task_files[[i]]),
+      task_id = basename(task_files[[i]]),
       parse_ok = FALSE,
-      cat_ok   = FALSE,
-      note     = "FAILED to parse task JSON"
+      cat_ok = FALSE,
+      note = "FAILED to parse task JSON"
     )
     next
   }
@@ -145,42 +176,42 @@ for (i in seq_along(task_files)) {
 
   if (!file.exists(sol_abs)) {
     results[[i]] <- list(
-      task_id  = task$task_id,
+      task_id = task$task_id,
       parse_ok = FALSE,
-      cat_ok   = FALSE,
-      note     = sprintf("solution file NOT FOUND: %s", sol_abs)
+      cat_ok = FALSE,
+      note = sprintf("solution file NOT FOUND: %s", sol_abs)
     )
     next
   }
 
   parse_result <- .check_parse(sol_abs)
-  parse_ok     <- isTRUE(parse_result)
+  parse_ok <- isTRUE(parse_result)
 
   solution_text <- paste(readLines(sol_abs, warn = FALSE), collapse = "\n")
-  cat_check     <- if (parse_ok) {
+  cat_check <- if (parse_ok) {
     .check_category(task, solution_text)
   } else {
     list(ok = FALSE, note = "skipped — parse failed")
   }
 
   results[[i]] <- list(
-    task_id   = task$task_id,
-    category  = task$category,
-    parse_ok  = parse_ok,
-    cat_ok    = cat_check$ok,
+    task_id = task$task_id,
+    category = task$category,
+    parse_ok = parse_ok,
+    cat_ok = cat_check$ok,
     parse_err = if (!parse_ok) parse_result else "",
-    note      = cat_check$note
+    note = cat_check$note
   )
 }
 
 # ---- report -----------------------------------------------------------------
 
-n_total    <- length(results)
+n_total <- length(results)
 parse_fail <- sum(!vapply(results, `[[`, logical(1L), "parse_ok"))
-cat_fail   <- sum(!vapply(results, `[[`, logical(1L), "cat_ok"))
-n_pass     <- sum(
+cat_fail <- sum(!vapply(results, `[[`, logical(1L), "cat_ok"))
+n_pass <- sum(
   vapply(results, `[[`, logical(1L), "parse_ok") &
-  vapply(results, `[[`, logical(1L), "cat_ok")
+    vapply(results, `[[`, logical(1L), "cat_ok")
 )
 
 cat("\n──────────────────────────────────────────\n")
@@ -208,7 +239,7 @@ if (parse_fail + cat_fail > 0L) {
         if (!r$parse_ok || !r$cat_ok) "FAIL" else " OK ",
         r$task_id,
         if (r$parse_ok) "OK" else "FAIL",
-        if (r$cat_ok)   "OK" else "FAIL",
+        if (r$cat_ok) "OK" else "FAIL",
         r$note
       ))
       if (!r$parse_ok && nzchar(r$parse_err)) {

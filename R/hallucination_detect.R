@@ -48,7 +48,7 @@ count_hallucinations <- function(code, graph = NULL) {
         "count_hallucinations: code failed to parse - ",
         conditionMessage(e)
       )
-      return(NULL)
+      NULL
     }
   )
   if (is.null(parsed)) {

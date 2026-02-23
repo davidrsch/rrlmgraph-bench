@@ -467,7 +467,7 @@ bm25_retrieve <- function(query, files, k = 5L, k1 = 1.5, b = 0.75) {
   if (avgdl == 0) {
     return(term_overlap_retrieve(query, files, k))
   }
-  N <- length(files)
+  n_docs <- length(files)
 
   tf_list <- lapply(doc_words, table)
 
@@ -479,7 +479,7 @@ bm25_retrieve <- function(query, files, k = 5L, k1 = 1.5, b = 0.75) {
     integer(1L)
   )
 
-  idf_vec <- log((N - df_vec + 0.5) / (df_vec + 0.5) + 1)
+  idf_vec <- log((n_docs - df_vec + 0.5) / (df_vec + 0.5) + 1)
 
   scores <- vapply(
     seq_along(files),

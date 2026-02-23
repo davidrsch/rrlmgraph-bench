@@ -24,6 +24,7 @@ skip_if_no_api_key <- function(var = "OPENAI_API_KEY") {
 
 # Helpers for AC9 - must be defined before the test_that() that calls them
 existsFunction_in_ns <- function(name, env) {
+  # nolint: object_name_linter.
   tryCatch(
     is.function(get(name, envir = env, inherits = FALSE)),
     error = function(e) FALSE
@@ -31,6 +32,7 @@ existsFunction_in_ns <- function(name, env) {
 }
 
 existsMethod_or_s3 <- function(generic, class) {
+  # nolint: object_name_linter.
   method_name <- paste0(generic, ".", class)
   env <- asNamespace("rrlmgraph")
   found_s3 <- existsFunction_in_ns(method_name, env)
@@ -215,5 +217,3 @@ test_that("AC9: plot.rrlm_graph and summary.rrlm_graph S3 methods are registered
     label = "summary.rrlm_graph exists"
   )
 })
-
-
