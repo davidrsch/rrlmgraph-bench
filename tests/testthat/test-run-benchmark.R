@@ -155,3 +155,56 @@ test_that("stops with informative error when tasks_dir has no JSON files", {
     regexp = "No task JSON files"
   )
 })
+
+# ---- rate-limit + checkpoint (bench#35) -----------------------------------------
+
+test_that("partial checkpoint RDS is written after each task block", {
+  tasks_dir <- make_task_dir()
+  output_path <- tempfile(fileext = ".rds")
+  partial_path <- sub("\\.rds$", "_partial.rds", output_path)
+  on.exit({
+    unlink(tasks_dir, recursive = TRUE)
+    if (file.exists(output_path)) unlink(output_path)
+    if (file.exists(partial_path)) unlink(partial_path)
+  })
+
+  suppressMessages(suppressWarnings(
+    run_full_benchmark(
+      tasks_dir = tasks_dir,
+      projects_dir = projects_dir,
+      output_path = output_path,
+      n_trials = 1L,
+      .dry_run = TRUE
+    )
+  ))
+
+  expect_true(
+    file.exists(partial_path),
+    info = "Partial checkpoint RDS should be created during a run"
+  )
+  partial <- readRDS(partial_path)
+  expect_s3_class(partial, "data.frame")
+  expect_gt(nrow(partial), 0L)
+})
+
+test_that("rate_limit_delay parameter is accepted without error", {
+  tasks_dir <- make_task_dir()
+  output_path <- tempfile(fileext = ".rds")
+  on.exit({
+    unlink(tasks_dir, recursive = TRUE)
+    if (file.exists(output_path)) unlink(output_path)
+  })
+
+  expect_no_error(
+    suppressMessages(suppressWarnings(
+      run_full_benchmark(
+        tasks_dir = tasks_dir,
+        projects_dir = projects_dir,
+        output_path = output_path,
+        n_trials = 1L,
+        rate_limit_delay = 0, # 0 to avoid sleeps in tests
+        .dry_run = TRUE
+      )
+    ))
+  )
+})

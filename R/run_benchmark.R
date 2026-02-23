@@ -93,6 +93,7 @@ run_full_benchmark <- function(
   llm_provider = c("github", "openai", "anthropic", "ollama"),
   llm_model = NULL,
   seed = 42L,
+  rate_limit_delay = 6,
   .dry_run = FALSE
 ) {
   llm_provider <- match.arg(llm_provider)
@@ -190,6 +191,7 @@ run_full_benchmark <- function(
           source_files = source_files,
           llm_provider = llm_provider,
           llm_model = llm_model,
+          rate_limit_delay = rate_limit_delay,
           .dry_run = .dry_run
         )
         results[[run_idx]] <- result_row
@@ -209,6 +211,24 @@ run_full_benchmark <- function(
         ))
       }
     }
+
+    # ---- Checkpoint save after each task block ----------------------------
+    # Allows resuming a partial run if the process is interrupted (bench#35).
+    partial_path <- sub("\\.rds$", "_partial.rds", output_path)
+    partial_df <- do.call(
+      rbind,
+      lapply(results[seq_len(run_idx)], as.data.frame, stringsAsFactors = FALSE)
+    )
+    rownames(partial_df) <- NULL
+    tryCatch(
+      saveRDS(partial_df, partial_path),
+      error = function(e) {
+        warning(
+          "[rrlmgraphbench] Could not write partial checkpoint: ",
+          e$message
+        )
+      }
+    )
   }
 
   all_results <- do.call(
@@ -676,6 +696,7 @@ run_single <- function(
   source_files,
   llm_provider = "github",
   llm_model = NULL,
+  rate_limit_delay = 6,
   .dry_run
 ) {
   ctx_result <- build_context(
@@ -765,12 +786,63 @@ run_single <- function(
         chat$chat(prompt)
       },
       error = function(e) {
-        message("[run_single] LLM call failed: ", conditionMessage(e))
-        ""
+        msg <- conditionMessage(e)
+        # 429 / rate-limit: wait 60s and retry once (bench#35)
+        if (grepl("429|rate.limit|quota", msg, ignore.case = TRUE)) {
+          message(
+            "[run_single] Rate-limit hit (429) — waiting 60s before retry..."
+          )
+          Sys.sleep(60)
+          tryCatch(
+            {
+              chat2 <- if (llm_provider == "github") {
+                gh_pat2 <- Sys.getenv(
+                  "GITHUB_PAT",
+                  Sys.getenv("GITHUB_TOKEN", "")
+                )
+                cred_fn2 <- (function(k) function() k)(gh_pat2)
+                ellmer::chat_openai_compatible(
+                  base_url = "https://models.github.ai/inference/",
+                  model = resolved_model,
+                  credentials = cred_fn2
+                )
+              } else {
+                chat_fn2 <- getExportedValue(
+                  "ellmer",
+                  switch(
+                    llm_provider,
+                    openai = "chat_openai",
+                    anthropic = "chat_anthropic",
+                    ollama = "chat_ollama"
+                  )
+                )
+                chat_fn2(model = resolved_model)
+              }
+              chat2$chat(prompt)
+            },
+            error = function(e2) {
+              message("[run_single] Retry failed: ", conditionMessage(e2))
+              NA_character_
+            }
+          )
+        } else {
+          message("[run_single] LLM call failed: ", msg)
+          ""
+        }
       }
     )
+    # Rate-limit polite delay between API calls (bench#35)
+    if (!.dry_run && rate_limit_delay > 0) {
+      Sys.sleep(rate_limit_delay)
+    }
     latency_sec <- proc.time()[["elapsed"]] - t1
-    response_code <- llm_result
+    response_code <- if (is.na(llm_result)) {
+      # 429 retry exhausted — mark trial as failed
+      score <- NA_real_
+      llm_result
+    } else {
+      llm_result
+    }
 
     # ---- Token counts: API-reported > tokenizers > nchar/4 (#26) ----------
     api_tokens <- tryCatch(
@@ -791,9 +863,11 @@ run_single <- function(
     }
 
     rubric <- score_response(response_code, task, source_files = source_files)
-    score <- rubric$score
-    syntax_valid <- rubric$syntax_valid
-    runs_ok <- rubric$runs_without_error
+    if (!is.na(response_code)) {
+      score <- rubric$score
+      syntax_valid <- rubric$syntax_valid
+      runs_ok <- rubric$runs_without_error
+    }
 
     halls <- count_hallucinations(response_code) # nolint: object_usage_linter.
     hall_count <- length(halls)
