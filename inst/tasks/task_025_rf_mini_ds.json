@@ -11,6 +11,6 @@
     "R/data_prep::clean_data"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_025_rf_mini_ds_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "medium"
 }

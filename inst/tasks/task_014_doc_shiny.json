@@ -1,4 +1,4 @@
-﻿{
+{
   "task_id": "task_014_doc_shiny",
   "category": "documentation",
   "project": "shiny_app_medium",
@@ -9,6 +9,6 @@
     "R/data::compute_summary_stats"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_014_doc_shiny_solution.R",
-  "evaluation_method": "roxygen_valid",
+  "evaluation_method": "ast_diff",
   "difficulty": "medium"
 }

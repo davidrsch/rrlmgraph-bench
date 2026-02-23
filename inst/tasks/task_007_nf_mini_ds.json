@@ -1,4 +1,4 @@
-﻿{
+{
   "task_id": "task_007_nf_mini_ds",
   "category": "new_function",
   "project": "mini_ds_project",
@@ -9,6 +9,6 @@
     "R/benchmark::format_results"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_007_nf_mini_ds_solution.R",
-  "evaluation_method": "exec_correct",
+  "evaluation_method": "ast_diff",
   "difficulty": "easy"
 }

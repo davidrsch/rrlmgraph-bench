@@ -9,6 +9,6 @@
     "R/data::load_survey_data"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_023_nf_shiny_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "medium"
 }

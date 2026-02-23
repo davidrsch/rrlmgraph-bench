@@ -9,6 +9,6 @@
     "R/server::server_logic"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_026_rf_shiny_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "medium"
 }

@@ -1,4 +1,4 @@
-﻿{
+{
   "task_id": "task_008_nf_shiny",
   "category": "new_function",
   "project": "shiny_app_medium",
@@ -9,6 +9,6 @@
     "R/server::build_download_handler"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_008_nf_shiny_solution.R",
-  "evaluation_method": "exec_correct",
+  "evaluation_method": "ast_diff",
   "difficulty": "medium"
 }
