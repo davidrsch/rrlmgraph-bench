@@ -1,4 +1,4 @@
-﻿{
+{
   "task_id": "task_004_bd_mini_ds",
   "category": "bug_diagnosis",
   "project": "mini_ds_project",
@@ -8,6 +8,6 @@
     "R/benchmark::calculate_mrr"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_004_bd_mini_ds_solution.R",
-  "evaluation_method": "test_pass",
+  "evaluation_method": "ast_diff",
   "difficulty": "easy"
 }

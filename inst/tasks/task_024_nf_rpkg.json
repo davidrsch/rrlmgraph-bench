@@ -9,6 +9,6 @@
     "R/constructors::new_model_result"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_024_nf_rpkg_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "easy"
 }

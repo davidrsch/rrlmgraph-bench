@@ -9,6 +9,6 @@
     "R/models::evaluate_model"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_028_doc_mini_ds_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "easy"
 }

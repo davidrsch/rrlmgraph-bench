@@ -10,6 +10,6 @@
     "R/exported_fns::cross_validate"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_030_doc_rpkg_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "easy"
 }

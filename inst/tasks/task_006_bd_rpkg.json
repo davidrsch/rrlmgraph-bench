@@ -1,4 +1,4 @@
-﻿{
+{
   "task_id": "task_006_bd_rpkg",
   "category": "bug_diagnosis",
   "project": "r_package_small",
@@ -9,6 +9,6 @@
     "R/exported_fns::fit_model_s4"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_006_bd_rpkg_solution.R",
-  "evaluation_method": "test_pass",
+  "evaluation_method": "ast_diff",
   "difficulty": "hard"
 }

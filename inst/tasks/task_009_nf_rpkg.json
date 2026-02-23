@@ -1,4 +1,4 @@
-﻿{
+{
   "task_id": "task_009_nf_rpkg",
   "category": "new_function",
   "project": "r_package_small",
@@ -10,6 +10,6 @@
     "R/methods-ModelResult::model_summary"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_009_nf_rpkg_solution.R",
-  "evaluation_method": "exec_correct",
+  "evaluation_method": "ast_diff",
   "difficulty": "hard"
 }

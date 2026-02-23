@@ -9,6 +9,6 @@
     "R/server::observe_reset"
   ],
   "ground_truth_file": "inst/ground_truth/solutions/task_029_doc_shiny_solution.R",
-  "evaluation_method": "rubric",
+  "evaluation_method": "ast_diff",
   "difficulty": "easy"
 }
