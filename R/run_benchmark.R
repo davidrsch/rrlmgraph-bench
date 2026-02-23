@@ -586,7 +586,10 @@ ast_diff_score <- function(response_code, ground_truth_code) {
   0.6 * call_j + 0.4 * tok_j
 }
 score_response <- function(response_code, task, source_files = NULL) {
-  # Rubric: syntax (0.3) + node presence / AST-diff (0.4) + runs (0.3)
+  # Rubric: syntax (0.25) + node presence / AST-diff (0.45) + runs (0.30)
+  # Rationale: syntax_ok is nearly subsumed by runs_ok (code that runs also
+  # parses), so its weight is reduced in favour of the primary quality signal
+  # (nodes_score). Weights sum to 1.0. See rrlmgraph-bench#32.
   syntax_ok <- tryCatch(
     {
       parse(text = response_code, keep.source = FALSE)
@@ -660,7 +663,7 @@ score_response <- function(response_code, task, source_files = NULL) {
     error = function(e) FALSE
   )
 
-  total <- 0.3 * syntax_ok + 0.4 * nodes_score + 0.3 * runs_ok
+  total <- 0.25 * syntax_ok + 0.45 * nodes_score + 0.30 * runs_ok
   list(score = total, syntax_valid = syntax_ok, runs_without_error = runs_ok)
 }
 

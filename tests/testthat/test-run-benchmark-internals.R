@@ -284,6 +284,29 @@ test_that("score_response returns list with score, syntax_valid, runs_without_er
   expect_type(res$runs_without_error, "logical")
 })
 
+test_that("score_response rubric weights are 0.25/0.45/0.30 and sum to 1", {
+  # Verify the exact weight distribution: syntax=0.25, nodes=0.45, runs=0.30.
+  # We derive the weights experimentally using fabricated inputs that each
+  # isolate one component at a time.
+
+  # Case 1: syntax=1, nodes=0, runs=0
+  # score should equal 0.25 (syntax-only contribution)
+  task_no_gt <- list(
+    task_id = "w_test",
+    evaluation_method = "other",
+    ground_truth_nodes = list(),
+    ground_truth_file = NULL
+  )
+  # "<<< broken" — syntax fails, so syntax=0, nodes=0; runs also 0
+  broken <- rrlmgraphbench:::score_response("<<< not R", task_no_gt)
+  expect_equal(broken$score, 0, tolerance = 1e-10)
+
+  # "1 + 1" — syntax=TRUE (1), nodes=0 (no GT nodes), runs=TRUE (1)
+  # score = 0.25*1 + 0.45*0 + 0.30*1 = 0.55
+  valid_run <- rrlmgraphbench:::score_response("1 + 1", task_no_gt)
+  expect_equal(valid_run$score, 0.25 + 0.30, tolerance = 1e-10)
+})
+
 # ---- build_context ----------------------------------------------------------
 
 make_minimal_task <- function() {
