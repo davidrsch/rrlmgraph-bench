@@ -8,4 +8,5 @@
 ^revdep$
 ^_pkgdown\.yml$
 ^pkgdown$
+^check_cov_detail\.R$
 ^index\.md$

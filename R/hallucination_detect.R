@@ -58,8 +58,9 @@ count_hallucinations <- function(code, graph = NULL) {
   # ---- 2. Build trusted-name sets ------------------------------------
   graph_names <- character(0L)
   if (!is.null(graph)) {
+    # rrlm_graph IS an igraph (class-prepended); accept plain igraph too.
     graph_names <- tryCatch(
-      names(igraph::V(graph$graph)),
+      names(igraph::V(graph)),
       error = function(e) character(0L)
     )
   }

@@ -223,10 +223,10 @@ run_full_benchmark <- function(
 
   # ---- Write benchmark_meta.json provenance record (#24) ---------------
   default_models_meta <- c(
-    github    = "gpt-4.1-mini",
-    openai    = "gpt-4.1-mini",
+    github = "gpt-4.1-mini",
+    openai = "gpt-4.1-mini",
     anthropic = "claude-3-5-haiku-latest",
-    ollama    = "llama3.2"
+    ollama = "llama3.2"
   )
   resolved_model_meta <- if (!is.null(llm_model)) {
     llm_model
@@ -234,28 +234,40 @@ run_full_benchmark <- function(
     default_models_meta[[llm_provider]]
   }
   meta <- list(
-    generated_at           = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
-    rrlmgraph_version      = as.character(utils::packageVersion("rrlmgraph")),
-    rrlmgraphbench_version = as.character(utils::packageVersion("rrlmgraphbench")),
-    rrlmgraphbench_sha     = tryCatch(
-      system2("git", c("rev-parse", "--short", "HEAD"),
-              stdout = TRUE, stderr = FALSE)[1L],
+    generated_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    rrlmgraph_version = as.character(utils::packageVersion("rrlmgraph")),
+    rrlmgraphbench_version = as.character(utils::packageVersion(
+      "rrlmgraphbench"
+    )),
+    rrlmgraphbench_sha = tryCatch(
+      system2(
+        "git",
+        c("rev-parse", "--short", "HEAD"),
+        stdout = TRUE,
+        stderr = FALSE
+      )[1L],
       error = function(e) NA_character_
     ),
-    n_tasks      = length(task_ids),
-    n_trials     = n_trials,
+    n_tasks = length(task_ids),
+    n_trials = n_trials,
     n_strategies = length(strategies),
-    strategies   = as.list(strategies),
+    strategies = as.list(strategies),
     llm_provider = llm_provider,
-    llm_model    = resolved_model_meta
+    llm_model = resolved_model_meta
   )
   meta_path <- file.path(dirname(output_path), "benchmark_meta.json")
-  tryCatch({
-    writeLines(jsonlite::toJSON(meta, auto_unbox = TRUE, pretty = TRUE), meta_path)
-    message("[rrlmgraphbench] Benchmark metadata written to: ", meta_path)
-  }, error = function(e) {
-    warning("Could not write benchmark_meta.json: ", conditionMessage(e))
-  })
+  tryCatch(
+    {
+      writeLines(
+        jsonlite::toJSON(meta, auto_unbox = TRUE, pretty = TRUE),
+        meta_path
+      )
+      message("[rrlmgraphbench] Benchmark metadata written to: ", meta_path)
+    },
+    error = function(e) {
+      warning("Could not write benchmark_meta.json: ", conditionMessage(e))
+    }
+  )
 
   invisible(all_results)
 }
@@ -283,7 +295,7 @@ build_context <- function(
   graph_ollama,
   source_files
 ) {
-  node_ids <- character(0L)  # populated by <<- inside rrlmgraph branches
+  node_ids <- character(0L) # populated by <<- inside rrlmgraph branches
 
   chunks <- switch(
     strategy,
@@ -298,8 +310,16 @@ build_context <- function(
               task$description,
               seed_node = task$seed_node
             )
-            node_ids <<- if (!is.null(ctx$nodes)) ctx$nodes$node_id else character(0L)
-            if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+            node_ids <<- if (!is.null(ctx$nodes)) {
+              ctx$nodes$node_id
+            } else {
+              character(0L)
+            }
+            if (is.null(ctx$context_string)) {
+              character(0L)
+            } else {
+              ctx$context_string
+            }
           },
           error = function(e) character(0L)
         )
@@ -316,8 +336,16 @@ build_context <- function(
               task$description,
               seed_node = task$seed_node
             )
-            node_ids <<- if (!is.null(ctx$nodes)) ctx$nodes$node_id else character(0L)
-            if (is.null(ctx$context_string)) character(0L) else ctx$context_string
+            node_ids <<- if (!is.null(ctx$nodes)) {
+              ctx$nodes$node_id
+            } else {
+              character(0L)
+            }
+            if (is.null(ctx$context_string)) {
+              character(0L)
+            } else {
+              ctx$context_string
+            }
           },
           error = function(e) character(0L)
         )
@@ -359,10 +387,14 @@ read_lines_safe <- function(path) {
 bm25_retrieve <- function(query, files, k = 5L, k1 = 1.5, b = 0.75) {
   # True BM25 (Best Match 25) -- Robertson & Zaragoza (2009) smooth variant.
   # IDF-weighted, length-normalised term frequency scoring; pure base R.
-  if (!length(files)) return(character(0L))
+  if (!length(files)) {
+    return(character(0L))
+  }
   query_terms <- unique(tolower(strsplit(query, "\\W+")[[1L]]))
   query_terms <- query_terms[nzchar(query_terms)]
-  if (!length(query_terms)) return(term_overlap_retrieve(query, files, k))
+  if (!length(query_terms)) {
+    return(term_overlap_retrieve(query, files, k))
+  }
 
   doc_words <- lapply(files, function(fp) {
     w <- strsplit(tolower(read_lines_safe(fp)), "\\W+")[[1L]]
@@ -370,30 +402,40 @@ bm25_retrieve <- function(query, files, k = 5L, k1 = 1.5, b = 0.75) {
   })
   doc_lengths <- vapply(doc_words, length, integer(1L))
   avgdl <- mean(doc_lengths)
-  if (avgdl == 0) return(term_overlap_retrieve(query, files, k))
+  if (avgdl == 0) {
+    return(term_overlap_retrieve(query, files, k))
+  }
   N <- length(files)
 
   tf_list <- lapply(doc_words, table)
 
-  df_vec <- vapply(query_terms, function(tm) {
-    sum(vapply(tf_list, function(tf) tm %in% names(tf), logical(1L)))
-  }, integer(1L))
+  df_vec <- vapply(
+    query_terms,
+    function(tm) {
+      sum(vapply(tf_list, function(tf) tm %in% names(tf), logical(1L)))
+    },
+    integer(1L)
+  )
 
   idf_vec <- log((N - df_vec + 0.5) / (df_vec + 0.5) + 1)
 
-  scores <- vapply(seq_along(files), function(i) {
-    tf  <- tf_list[[i]]
-    dl  <- doc_lengths[[i]]
-    sc  <- 0
-    for (j in seq_along(query_terms)) {
-      tm     <- query_terms[[j]]
-      tf_val <- if (tm %in% names(tf)) as.integer(tf[[tm]]) else 0L
-      bm_tf  <- (tf_val * (k1 + 1)) /
-                 (tf_val + k1 * (1 - b + b * dl / avgdl))
-      sc <- sc + idf_vec[[j]] * bm_tf
-    }
-    sc
-  }, numeric(1L))
+  scores <- vapply(
+    seq_along(files),
+    function(i) {
+      tf <- tf_list[[i]]
+      dl <- doc_lengths[[i]]
+      sc <- 0
+      for (j in seq_along(query_terms)) {
+        tm <- query_terms[[j]]
+        tf_val <- if (tm %in% names(tf)) as.integer(tf[[tm]]) else 0L
+        bm_tf <- (tf_val * (k1 + 1)) /
+          (tf_val + k1 * (1 - b + b * dl / avgdl))
+        sc <- sc + idf_vec[[j]] * bm_tf
+      }
+      sc
+    },
+    numeric(1L)
+  )
 
   top_k <- head(order(scores, decreasing = TRUE), k)
   vapply(files[top_k], read_lines_safe, character(1L))
@@ -445,9 +487,11 @@ format_prompt <- function(task, context_chunks) {
   # rank_vec: integer positions of GT nodes in retrieved list (NA = not retrieved)
   # Returns NDCG@k in [0, 1] or NA_real_ when no GT nodes are present.
   n_rel <- sum(!is.na(rank_vec))
-  if (n_rel == 0L) return(NA_real_)
+  if (n_rel == 0L) {
+    return(NA_real_)
+  }
   hits <- rank_vec[!is.na(rank_vec) & rank_vec <= k]
-  dcg  <- sum(1 / log2(hits + 1))
+  dcg <- sum(1 / log2(hits + 1))
   idcg <- sum(1 / log2(seq_len(min(n_rel, k)) + 1))
   if (idcg == 0) NA_real_ else dcg / idcg
 }
@@ -458,13 +502,20 @@ ast_diff_score <- function(response_code, ground_truth_code) {
   # Returns a score in [0, 1] based on structural AST similarity.
   # Metric: 0.6 * call-name Jaccard + 0.4 * word-token Jaccard.
   extract_calls <- function(code) {
-    ast <- tryCatch(parse(text = code, keep.source = FALSE), error = function(e) NULL)
-    if (is.null(ast)) return(character(0L))
+    ast <- tryCatch(
+      parse(text = code, keep.source = FALSE),
+      error = function(e) NULL
+    )
+    if (is.null(ast)) {
+      return(character(0L))
+    }
     calls <- character(0L)
     walk <- function(expr) {
       if (is.call(expr)) {
         fn <- tryCatch(as.character(expr[[1L]]), error = function(e) NULL)
-        if (length(fn) == 1L && nzchar(fn)) calls <<- c(calls, fn)
+        if (length(fn) == 1L && nzchar(fn)) {
+          calls <<- c(calls, fn)
+        }
         lapply(as.list(expr[-1L]), walk)
       } else if (is.recursive(expr)) {
         lapply(as.list(expr), walk)
@@ -479,7 +530,10 @@ ast_diff_score <- function(response_code, ground_truth_code) {
     if (uni == 0L) 0 else length(intersect(a, b)) / uni
   }
 
-  call_j <- jaccard(extract_calls(response_code), extract_calls(ground_truth_code))
+  call_j <- jaccard(
+    extract_calls(response_code),
+    extract_calls(ground_truth_code)
+  )
 
   word_tokens <- function(x) {
     w <- unique(strsplit(tolower(x), "\\W+")[[1L]])
@@ -508,13 +562,13 @@ score_response <- function(response_code, task, source_files = NULL) {
     nzchar(as.character(task$ground_truth_file))
 
   if (use_ast) {
-    gt_rel  <- sub("^inst/", "", task$ground_truth_file)
+    gt_rel <- sub("^inst/", "", task$ground_truth_file)
     gt_path <- system.file(gt_rel, package = "rrlmgraphbench")
     if (nzchar(gt_path) && file.exists(gt_path)) {
-      gt_code     <- paste(readLines(gt_path, warn = FALSE), collapse = "\n")
+      gt_code <- paste(readLines(gt_path, warn = FALSE), collapse = "\n")
       nodes_score <- ast_diff_score(response_code, gt_code)
     } else {
-      use_ast <- FALSE  # file not found -- fall through to regex
+      use_ast <- FALSE # file not found -- fall through to regex
     }
   }
 
@@ -579,19 +633,29 @@ run_single <- function(
   llm_model = NULL,
   .dry_run
 ) {
-  ctx_result    <- build_context(strategy, task, graph_tfidf, graph_ollama, source_files)
-  ctx_chunks    <- ctx_result$chunks
+  ctx_result <- build_context(
+    strategy,
+    task,
+    graph_tfidf,
+    graph_ollama,
+    source_files
+  )
+  ctx_chunks <- ctx_result$chunks
   retrieved_ids <- ctx_result$node_ids
-  ctx_text      <- paste(ctx_chunks, collapse = "\n")
+  ctx_text <- paste(ctx_chunks, collapse = "\n")
 
   # NDCG pre-computation --------------------------------------------------
-  gt_nodes <- if (!is.null(task$ground_truth_nodes)) task$ground_truth_nodes else character(0L)
+  gt_nodes <- if (!is.null(task$ground_truth_nodes)) {
+    task$ground_truth_nodes
+  } else {
+    character(0L)
+  }
   rank_vec <- if (length(retrieved_ids) && length(gt_nodes)) {
     match(gt_nodes, retrieved_ids)
   } else {
     rep(NA_integer_, length(gt_nodes))
   }
-  ndcg5  <- .ndcg_at_k(rank_vec, 5L)
+  ndcg5 <- .ndcg_at_k(rank_vec, 5L)
   ndcg10 <- .ndcg_at_k(rank_vec, 10L)
 
   # Token count defaults (nchar/4 heuristic -- overwritten below if API available)
@@ -669,13 +733,13 @@ run_single <- function(
       error = function(e) NULL
     )
     if (!is.null(api_tokens) && length(api_tokens) >= 2L) {
-      context_tokens  <- api_tokens[[1L]]
+      context_tokens <- api_tokens[[1L]]
       response_tokens <- api_tokens[[2L]]
     } else if (requireNamespace("tokenizers", quietly = TRUE)) {
       count_tok <- function(x) {
         as.integer(length(tokenizers::tokenize_words(x)[[1L]]))
       }
-      context_tokens  <- count_tok(ctx_text)
+      context_tokens <- count_tok(ctx_text)
       response_tokens <- count_tok(response_code)
     } else {
       response_tokens <- nchar(response_code) %/% 4L
@@ -709,7 +773,7 @@ run_single <- function(
     syntax_valid = syntax_valid,
     runs_without_error = runs_ok,
     retrieved_n = as.integer(length(retrieved_ids)),
-    ndcg5  = ndcg5,
+    ndcg5 = ndcg5,
     ndcg10 = ndcg10
   )
 }

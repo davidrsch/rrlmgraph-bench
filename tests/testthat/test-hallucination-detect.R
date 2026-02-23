@@ -96,8 +96,9 @@ test_that("does not flag correct namespace calls", {
 # ---- invalid arguments ------------------------------------------------------
 
 test_that("detects invalid argument to a known function", {
-  # 'mean' does not have a 'nonexistent_arg' parameter
-  code <- "mean(c(1, 2, 3), nonexistent_arg_xyz = TRUE)"
+  # nchar() formals: (x, type, allowNA, keepNA) -- no '...', so invalid args
+  # are detectable.  'mean' accepts '...' and would not be caught.
+  code <- "nchar('hello', nonexistent_arg_xyz = TRUE)"
   result <- count_hallucinations(code)
   types <- vapply(result, `[[`, character(1L), "type")
   expect_true("invalid_argument" %in% types)
@@ -107,7 +108,7 @@ test_that("detects invalid argument to a known function", {
 })
 
 test_that("valid named args to base R functions are not flagged as invalid", {
-  code <- "mean(c(1, 2, 3), na.rm = TRUE, trim = 0.1)"
+  code <- "nchar('hello', type = 'chars', allowNA = FALSE)"
   result <- count_hallucinations(code)
   types <- vapply(result, `[[`, character(1L), "type")
   expect_false("invalid_argument" %in% types)
