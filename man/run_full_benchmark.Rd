@@ -9,7 +9,10 @@ run_full_benchmark(
   projects_dir = system.file("projects", package = "rrlmgraphbench"),
   output_path,
   n_trials = 3L,
+  llm_provider = c("github", "openai", "anthropic", "ollama"),
+  llm_model = NULL,
   seed = 42L,
+  rate_limit_delay = 6,
   .dry_run = FALSE
 )
 }
@@ -27,8 +30,19 @@ saved as an RDS file.  Parent directories are created if needed.}
 \item{n_trials}{Integer(1). Number of independent trials per
 task x strategy pair.  Defaults to \code{3L}.}
 
+\item{llm_provider}{Character(1). LLM provider passed to \pkg{ellmer}.
+One of \code{"github"} (default), \code{"openai"}, \code{"anthropic"}, \code{"ollama"}.}
+
+\item{llm_model}{Character(1) or \code{NULL}. Model name.  When \code{NULL}
+a sensible per-provider default is used: \code{"gpt-4o-mini"} for
+\code{"github"} and \code{"openai"}, \code{"claude-3-5-haiku-latest"} for
+\code{"anthropic"}, \code{"llama3.2"} for \code{"ollama"}.}
+
 \item{seed}{Integer(1). Random seed passed to \code{\link[base:Random]{base::set.seed()}}
 before any stochastic operations.  Defaults to \code{42L}.}
+
+\item{rate_limit_delay}{Numeric(1). Seconds to wait between LLM API calls
+to avoid rate-limit errors.  Defaults to \code{6}.}
 
 \item{.dry_run}{Logical(1). When \code{TRUE} the LLM is not called;
 dummy scores of \code{0.5} are returned.  Useful for integration tests.}
@@ -41,18 +55,25 @@ invisibly) with one row per trial, containing columns:
 \item{\code{strategy}}{Character.}
 \item{\code{trial}}{Integer.}
 \item{\code{score}}{Numeric in [0, 1].}
-\item{\code{context_tokens}}{Integer.}
-\item{\code{response_tokens}}{Integer.}
+\item{\code{context_tokens}}{Integer. API-reported input token count when
+available; falls back to \code{tokenizers::count_words()} or \code{nchar/4}.}
+\item{\code{response_tokens}}{Integer. API-reported output token count;
+same fallback chain as \code{context_tokens}.}
 \item{\code{total_tokens}}{Integer.}
 \item{\code{latency_sec}}{Numeric.}
 \item{\code{hallucination_count}}{Integer.}
 \item{\code{hallucination_details}}{List column (character vectors).}
 \item{\code{syntax_valid}}{Logical.}
 \item{\code{runs_without_error}}{Logical.}
+\item{\code{retrieved_n}}{Integer. Nodes retrieved by rrlmgraph strategies;
+\code{0L} for non-graph strategies.}
+\item{\code{ndcg5}}{Numeric. NDCG\@5 against \code{ground_truth_nodes} for
+rrlmgraph strategies; \code{NA_real_} otherwise.}
+\item{\code{ndcg10}}{Numeric. NDCG\@10; same conditions as \code{ndcg5}.}
 }
 }
 \description{
-Evaluates six retrieval strategies across every task in \code{tasks_dir}
+Evaluates seven retrieval strategies across every task in \code{tasks_dir}
 using \code{n_trials} independent trials each, and persists the combined
 results to \code{output_path}.
 }
@@ -62,23 +83,36 @@ results to \code{output_path}.
    \code{rrlmgraph_tfidf} \tab rrlmgraph with TF-IDF node embeddings \cr
    \code{rrlmgraph_ollama} \tab rrlmgraph with Ollama-backed embeddings \cr
    \code{full_files} \tab Dump every source file in full (baseline) \cr
-   \code{bm25_retrieval} \tab BM25 keyword retrieval (no graph) \cr
+   \code{term_overlap} \tab Simple term-presence keyword retrieval (no graph) \cr
+   \code{bm25_retrieval} \tab True BM25 retrieval -- IDF-weighted, length-normalised \cr
    \code{no_context} \tab No context provided to the LLM \cr
    \code{random_k} \tab \emph{k} randomly sampled code chunks \cr
 }
 
 
-LLM calls are issued through \code{ellmer::parallel_chat()} for
-concurrency.  A progress message is emitted after each task x strategy
-combination together with a rolling time estimate.
+LLM calls are issued sequentially via \pkg{ellmer}.
+A progress message is emitted after each task x strategy combination
+together with a rolling time estimate.
 }
 }
+\section{Authentication}{
+
+\describe{
+\item{\code{"github"} (default)}{Uses \code{GITHUB_PAT} / \code{GITHUB_TOKEN}.
+In GitHub Actions this is set automatically as
+\code{secrets.GITHUB_TOKEN} -- no extra secret needed.}
+\item{\code{"openai"}}{Requires \code{OPENAI_API_KEY}.}
+\item{\code{"anthropic"}}{Requires \code{ANTHROPIC_API_KEY}.}
+\item{\code{"ollama"}}{No key needed (local daemon).}
+}
+}
+
 \examples{
 \dontrun{
+# Uses GitHub Models (GITHUB_TOKEN auto-set in Actions -- no secret needed)
 results <- run_full_benchmark(
   output_path = "inst/results/benchmark_results.rds",
-  n_trials    = 3L,
-  seed        = 42L
+  n_trials    = 3L
 )
 head(results)
 }

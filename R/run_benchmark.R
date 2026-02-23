@@ -46,6 +46,8 @@
 #'   `"anthropic"`, `"llama3.2"` for `"ollama"`.
 #' @param seed         Integer(1). Random seed passed to [base::set.seed()]
 #'   before any stochastic operations.  Defaults to `42L`.
+#' @param rate_limit_delay Numeric(1). Seconds to wait between LLM API calls
+#'   to avoid rate-limit errors.  Defaults to `6`.
 #' @param .dry_run     Logical(1). When `TRUE` the LLM is not called;
 #'   dummy scores of `0.5` are returned.  Useful for integration tests.
 #'
@@ -790,7 +792,7 @@ run_single <- function(
         # 429 / rate-limit: wait 60s and retry once (bench#35)
         if (grepl("429|rate.limit|quota", msg, ignore.case = TRUE)) {
           message(
-            "[run_single] Rate-limit hit (429) — waiting 60s before retry..."
+            "[run_single] Rate-limit hit (429) -- waiting 60s before retry..."
           )
           Sys.sleep(60)
           tryCatch(
@@ -837,7 +839,7 @@ run_single <- function(
     }
     latency_sec <- proc.time()[["elapsed"]] - t1
     response_code <- if (is.na(llm_result)) {
-      # 429 retry exhausted — mark trial as failed
+      # 429 retry exhausted -- mark trial as failed
       score <- NA_real_
       llm_result
     } else {
