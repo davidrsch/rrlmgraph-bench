@@ -345,6 +345,42 @@ test_that("build_context 'full_files' returns file contents", {
   expect_match(paste(result$chunks, collapse = " "), "a <- 1")
 })
 
+test_that("build_context 'full_files' respects budget_tokens and never truncates mid-file", {
+  tmp <- withr::local_tempdir()
+  # Each file is ~100 tokens; budget = 150 tokens => only 1 file admitted
+  big_text <- paste(rep("x <- function(a, b) { a + b }", 20L), collapse = "\n")
+  f1 <- make_r_file(tmp, "big1.R", big_text)
+  f2 <- make_r_file(tmp, "big2.R", big_text)
+
+  result <- rrlmgraphbench:::build_context(
+    strategy = "full_files",
+    task = make_minimal_task(),
+    graph_tfidf = NULL,
+    graph_ollama = NULL,
+    source_files = c(f1, f2),
+    budget_tokens = 150L
+  )
+  # Only as many complete files as fit within budget should be returned
+  total_chars <- sum(nchar(result$chunks))
+  # The budget is respected: total tokens estimate <= 150 * 4 chars/token
+  expect_lte(total_chars, 150L * 4L + 50L) # small tolerance for estimation
+  # Each returned chunk equals the full original file (no mid-file truncation)
+  for (chunk in result$chunks) {
+    expect_true(chunk == big_text)
+  }
+})
+
+test_that("build_context 'full_files' with empty source_files returns empty", {
+  result <- rrlmgraphbench:::build_context(
+    strategy = "full_files",
+    task = make_minimal_task(),
+    graph_tfidf = NULL,
+    graph_ollama = NULL,
+    source_files = character(0L)
+  )
+  expect_equal(result$chunks, character(0L))
+})
+
 test_that("build_context 'term_overlap' returns character results", {
   tmp <- withr::local_tempdir()
   f1 <- make_r_file(tmp, "a.R", "split_data <- function(x) x")

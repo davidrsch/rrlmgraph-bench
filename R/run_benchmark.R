@@ -288,12 +288,31 @@ list_r_files <- function(project_path) {
   }
 }
 
+# ---- Token estimation helper (mirrors rrlmgraph::.count_tokens) -------
+#' @keywords internal
+.bench_estimate_tokens <- function(text) {
+  if (!nzchar(text)) {
+    return(0L)
+  }
+  if (requireNamespace("tokenizers", quietly = TRUE)) {
+    words <- tokenizers::tokenize_words(
+      text,
+      lowercase = FALSE,
+      simplify = TRUE
+    )
+    as.integer(ceiling(length(words) * 1.3))
+  } else {
+    as.integer(ceiling(nchar(text) / 3.5))
+  }
+}
+
 build_context <- function(
   strategy,
   task,
   graph_tfidf,
   graph_ollama,
-  source_files
+  source_files,
+  budget_tokens = 6000L
 ) {
   node_ids <- character(0L) # populated by <<- inside rrlmgraph branches
 
@@ -352,7 +371,30 @@ build_context <- function(
       }
     },
     full_files = {
-      vapply(source_files, read_lines_safe, character(1L))
+      # Admit complete files (largest first) until the token budget is
+      # exhausted.  Never truncate mid-file: a partial file is syntactically
+      # invalid R and makes this baseline unfairly weak on large projects.
+      # Fixes: rrlmgraph-bench#33
+      if (!length(source_files)) {
+        character(0L)
+      } else {
+        file_texts <- vapply(source_files, read_lines_safe, character(1L))
+        file_costs <- vapply(file_texts, .bench_estimate_tokens, integer(1L))
+        # Sort by size descending so we fill the budget with fewer large files
+        ord <- order(file_costs, decreasing = TRUE)
+        admitted <- character(0L)
+        tokens_used <- 0L
+        for (i in ord) {
+          cost <- file_costs[[i]]
+          if (tokens_used + cost <= budget_tokens) {
+            admitted <- c(admitted, file_texts[[i]])
+            tokens_used <- tokens_used + cost
+          }
+          # Do not skip smaller files just because a large one didn't fit;
+          # continue to fill remaining budget.
+        }
+        admitted
+      }
     },
     term_overlap = {
       term_overlap_retrieve(task$description, source_files)
