@@ -1,0 +1,69 @@
+name: benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      n_trials:
+        description: "Number of trials per task (default: 3)"
+        required: false
+        default: "3"
+        type: string
+
+permissions:
+  contents: write      # needed to commit the results RDS
+  models: read         # needed for GitHub Models inference API
+
+jobs:
+  run-benchmark:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::ellmer
+            any::jsonlite
+            github::davidrsch/rrlmgraph
+            local::.
+          needs: local
+
+      - name: Run full benchmark
+        run: |
+          Rscript -e '
+            n <- as.integer(Sys.getenv("N_TRIALS", "3"))
+            results <- rrlmgraphbench::run_full_benchmark(
+              output_path  = "inst/results/benchmark_results.rds",
+              n_trials     = n,
+              llm_provider = "github",
+              llm_model    = "gpt-4.1-mini"
+            )
+            message("Benchmark complete. Rows: ", nrow(results))
+            message("Score summary: min=", min(results$score, na.rm = TRUE),
+                    " max=", max(results$score, na.rm = TRUE),
+                    " mean=", round(mean(results$score, na.rm = TRUE), 3))
+          '
+        env:
+          N_TRIALS: ${{ inputs.n_trials }}
+
+      - name: Commit results
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add inst/results/benchmark_results.rds
+          git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results [skip ci]"
+          git push
