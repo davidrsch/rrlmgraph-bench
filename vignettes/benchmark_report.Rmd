@@ -18,23 +18,56 @@ knitr::opts_chunk$set(
 library(rrlmgraphbench)
 ```
 
-## Overview
+## What this benchmark measures
 
-This vignette presents a reproducible benchmark comparing six retrieval
-strategies for providing R coding context to an LLM:
+This vignette evaluates how well different **context-retrieval strategies**
+help an LLM answer R coding tasks.  The benchmark asks:
 
-| Strategy | Description |
-|---|---|
-| `rrlmgraph_tfidf` | rrlmgraph graph traversal with TF-IDF embeddings |
-| `rrlmgraph_ollama` | rrlmgraph graph traversal with Ollama embeddings |
-| `full_files` | Entire source files dumped verbatim (baseline) |
-| `term_overlap` | Term-presence overlap retrieval (no graph) |
-| `no_context` | No context supplied |
-| `random_k` | Five randomly sampled code chunks |
+> *Given a natural-language task description and an R project, which
+> retrieval strategy gives an LLM the context it needs to produce
+> correct, runnable R code?*
 
-Results are loaded from `inst/results/benchmark_results.rds`, regenerated
-automatically every Monday (and on demand) by the `run-benchmark` CI workflow
-using GitHub Models (`gpt-4o-mini`).
+Each strategy is judged by how often the LLM's response:
+
+1. **Parses** as valid R syntax (`syntax_valid`)
+2. **Runs** without error when `eval(parse(...))` is called (`runs_without_error`)
+3. **Mentions the right functions** -- the fraction of ground-truth node names
+   found in the generated code (`nodes_score`)
+
+These three components are combined into a single **composite score**
+between 0 and 1:
+
+```
+score = 0.25 * syntax_valid
+      + 0.25 * runs_without_error
+      + 0.50 * nodes_score
+```
+
+A score of **1.0** means the response parsed, ran, and referenced every
+expected function/object.  A score of **0** means it failed on all three.
+
+---
+
+## Retrieval strategies compared
+
+| Strategy | How context is retrieved | Token cost |
+|---|---|---|
+| `rrlmgraph_tfidf` | Graph traversal: PageRank hubs + TF-IDF similarity to query | Low -- only relevant nodes |
+| `rrlmgraph_ollama` | Graph traversal: PageRank hubs + Ollama vector similarity | Low -- only relevant nodes |
+| `full_files` | Every source file in the project dumped verbatim (**upper baseline**) | Very high |
+| `term_overlap` | Files ranked by word overlap with the task description (no graph) | Medium |
+| `no_context` | No code context sent -- LLM must answer from training data alone (**lower baseline**) | Zero |
+| `random_k` | Five randomly sampled code chunks (random baseline) | Low |
+
+The two **baselines** to beat are:
+
+- `no_context` -- if a strategy cannot beat this, it is useless.
+- `full_files` -- if a strategy beats this at lower token cost, graph
+  retrieval is providing genuine value.
+
+Results are loaded from `inst/results/benchmark_results.rds`. They are
+regenerated automatically every Monday (and on demand) by the
+`run-benchmark` CI workflow using GitHub Models (`gpt-4o-mini`).
 
 ---
 
@@ -45,96 +78,171 @@ results_path <- system.file(
   "results", "benchmark_results.rds",
   package = "rrlmgraphbench"
 )
-if (!file.exists(results_path)) {
-  stop("benchmark_results.rds not found -- trigger the run-benchmark workflow.")
+results_available <- file.exists(results_path)
+if (!results_available) {
+  message(
+    "benchmark_results.rds not found.\n",
+    "Trigger the run-benchmark GitHub Actions workflow to generate results,\n",
+    "or run run_full_benchmark() locally with .dry_run = TRUE for a quick test."
+  )
+} else {
+  all_results <- readRDS(results_path)
+  knitr::kable(
+    head(all_results[, c(
+      "task_id", "strategy", "trial", "score",
+      "syntax_valid", "runs_without_error", "total_tokens"
+    )], 6),
+    caption = paste0(
+      "First 6 rows of raw results. 'score' is the composite 0-1 metric. ",
+      "'syntax_valid' and 'runs_without_error' are 0/1 indicators. ",
+      "'total_tokens' is the sum of input + output tokens billed."
+    )
+  )
 }
-all_results <- readRDS(results_path)
-knitr::kable(
-  head(all_results[, c("task_id", "strategy", "trial", "score", "total_tokens")], 6),
-  caption = "First 6 rows of benchmark results."
-)
 ```
 
 ---
 
 ## Summary statistics
 
+Each metric below is averaged across all tasks and trials for a given strategy.
+
+| Column | Meaning |
+|---|---|
+| `n` | Total trials (tasks x trials per task) |
+| `mean_score` | Average composite score (0-1); higher is better |
+| `sd_score` | Standard deviation of per-trial scores |
+| `ci_lo_95` / `ci_hi_95` | 95% confidence interval for the mean score |
+| `mean_total_tokens` | Average tokens consumed per trial (input + output) |
+| `hallucination_rate` | Fraction of trials where at least one invented function/argument was detected |
+
 ```{r summary-stats}
-stats <- compute_benchmark_statistics(all_results)
-knitr::kable(
-  stats$summary[, c(
-    "strategy", "n", "mean_score", "sd_score",
-    "ci_lo_95", "ci_hi_95", "mean_total_tokens", "hallucination_rate"
-  )],
-  digits = 3,
-  caption = "Mean score, 95 % CI, token usage, and hallucination rate per strategy."
-)
+if (results_available) {
+  stats <- compute_benchmark_statistics(all_results)
+  knitr::kable(
+    stats$summary[, c(
+      "strategy", "n", "mean_score", "sd_score",
+      "ci_lo_95", "ci_hi_95", "mean_total_tokens", "hallucination_rate"
+    )],
+    digits = 3,
+    caption = "Summary: mean score, 95% CI, token usage, and hallucination rate per strategy."
+  )
+}
 ```
 
 ---
 
-## Score distribution
+## Score distribution (with confidence intervals)
+
+The dot chart below shows each strategy's mean score.  Horizontal bars are
+95% confidence intervals.  Strategies are sorted best-to-worst.
+A strategy is significantly better than another only if the confidence
+intervals do not overlap.
 
 ```{r score-plot}
-# Base-R dot chart sorted by mean score
-summary_df <- stats$summary
-summary_df <- summary_df[order(summary_df$mean_score, decreasing = TRUE), ]
-
-dotchart(
-  summary_df$mean_score,
-  labels = summary_df$strategy,
-  xlab   = "Mean score (0–1)",
-  main   = "Strategy performance",
-  pch    = 19,
-  col    = "steelblue"
-)
-segments(
-  x0   = summary_df$ci_lo_95,
-  x1   = summary_df$ci_hi_95,
-  y0   = seq_len(nrow(summary_df)),
-  lwd  = 2,
-  col  = "steelblue"
-)
+if (results_available) {
+  summary_df <- stats$summary
+  summary_df <- summary_df[order(summary_df$mean_score, decreasing = FALSE), ]
+  n_s <- nrow(summary_df)
+  dotchart(
+    summary_df$mean_score,
+    labels = summary_df$strategy,
+    xlab   = "Mean composite score (0 = worst, 1 = best)",
+    main   = "Strategy performance with 95% CI",
+    pch    = 19,
+    col    = "steelblue",
+    xlim   = c(0, 1)
+  )
+  segments(
+    x0  = summary_df$ci_lo_95,
+    x1  = summary_df$ci_hi_95,
+    y0  = seq_len(n_s),
+    lwd = 2,
+    col = "steelblue"
+  )
+  abline(v = summary_df$mean_score[summary_df$strategy == "no_context"],
+         lty = 2, col = "tomato", lwd = 1)
+  abline(v = summary_df$mean_score[summary_df$strategy == "full_files"],
+         lty = 2, col = "darkgreen", lwd = 1)
+  legend("bottomright",
+    legend = c("no_context baseline", "full_files baseline"),
+    col    = c("tomato", "darkgreen"),
+    lty    = 2, lwd = 1, cex = 0.8
+  )
+}
 ```
 
 ---
 
 ## Token Efficiency Ratio (TER)
 
-TER measures score-per-token relative to the `full_files` baseline.
-A TER > 1 means the strategy achieves a higher score per token consumed.
+**TER** = (strategy mean score / strategy mean tokens) / (full_files mean
+score / full_files mean tokens).
+
+A **TER > 1** means the strategy delivers *more score per token* than
+dumping the entire project.  This is the key metric for assessing whether
+graph-based retrieval is worth deploying in production over the brute-force
+`full_files` approach.
 
 ```{r ter}
-ter_df <- data.frame(
-  strategy = names(stats$ter),
-  TER      = round(stats$ter, 3)
-)
-ter_df <- ter_df[!is.na(ter_df$TER), ]
-ter_df <- ter_df[order(ter_df$TER, decreasing = TRUE), ]
-knitr::kable(ter_df,
-  row.names = FALSE,
-  caption = "Token Efficiency Ratio relative to full_files baseline."
-)
+if (results_available) {
+  ter_df <- data.frame(
+    strategy    = names(stats$ter),
+    TER         = round(stats$ter, 3),
+    interpretation = ifelse(
+      is.na(stats$ter), "N/A (baseline)",
+      ifelse(stats$ter > 1,
+        "More efficient than full_files",
+        "Less efficient than full_files"
+      )
+    )
+  )
+  ter_df <- ter_df[order(ter_df$TER, decreasing = TRUE, na.last = TRUE), ]
+  knitr::kable(ter_df,
+    row.names = FALSE,
+    caption = paste0(
+      "Token Efficiency Ratio (TER) vs full_files baseline. ",
+      "TER > 1: strategy achieves higher score-per-token than full_files. ",
+      "TER < 1: strategy is less efficient."
+    )
+  )
+}
 ```
 
 ---
 
 ## Hallucination analysis
 
+A **hallucination** is any invented function name, invalid argument, or
+wrong package namespace in the LLM response.  Hallucinations make generated
+code fail silently or with confusing errors.
+
 ```{r hallucination}
-hall_df <- stats$summary[, c("strategy", "hallucination_rate")]
-hall_df$hallucination_rate <- round(hall_df$hallucination_rate, 3)
-hall_df <- hall_df[order(hall_df$hallucination_rate), ]
-knitr::kable(hall_df,
-  row.names = FALSE,
-  caption = "Fraction of responses containing at least one hallucination."
-)
+if (results_available) {
+  hall_df <- stats$summary[, c("strategy", "hallucination_rate")]
+  hall_df$hallucination_rate <- round(hall_df$hallucination_rate, 3)
+  hall_df <- hall_df[order(hall_df$hallucination_rate), ]
+  hall_df$verdict <- ifelse(
+    hall_df$hallucination_rate == 0, "None detected",
+    ifelse(hall_df$hallucination_rate < 0.1, "Low (< 10%)",
+      ifelse(hall_df$hallucination_rate < 0.25, "Moderate (10-25%)", "High (> 25%)")
+    )
+  )
+  knitr::kable(hall_df,
+    row.names = FALSE,
+    caption = paste0(
+      "Hallucination rate per strategy. ",
+      "Defined as: fraction of trials with >= 1 invented function, ",
+      "invalid argument, or wrong namespace."
+    )
+  )
+}
 ```
 
 Hallucination type breakdown (where available):
 
 ```{r hall-types}
-if ("hallucination_details" %in% names(all_results)) {
+if (results_available && "hallucination_details" %in% names(all_results)) {
   details_flat <- unlist(strsplit(
     all_results$hallucination_details[nzchar(all_results$hallucination_details)],
     "; "
@@ -147,12 +255,18 @@ if ("hallucination_details" %in% names(all_results)) {
     type_counts <- sort(table(type_pattern), decreasing = TRUE)
     barplot(
       type_counts,
-      main = "Hallucination types",
-      ylab = "Count",
-      col = c("tomato", "goldenrod", "steelblue"),
-      names.arg = c("invented\nfunction", "invalid\nargument", "wrong\nnamespace")[
-        match(names(type_counts), c("invented_function", "invalid_argument", "wrong_namespace"))
-      ]
+      main  = "Hallucination types across all strategies",
+      ylab  = "Count of occurrences",
+      xlab  = "Type",
+      col   = c("tomato", "goldenrod", "steelblue"),
+      names.arg = c(
+        "Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)",
+        "Invalid\nargument\n(e.g. wrong\nparam name)",
+        "Wrong\nnamespace\n(e.g. pkg1::fn\ninstead of pkg2::fn)"
+      )[match(
+        names(type_counts),
+        c("invented_function", "invalid_argument", "wrong_namespace")
+      )]
     )
   } else {
     message("No hallucinations detected in the loaded results.")
@@ -164,26 +278,40 @@ if ("hallucination_details" %in% names(all_results)) {
 
 ## Pairwise statistical tests
 
-Welch *t*-tests with Bonferroni correction and Cohen's *d*.
+Each pair of strategies is compared using a Welch *t*-test (robust to
+unequal variance).  P-values are Bonferroni-corrected for multiple
+comparisons.  **Cohen's *d*** measures practical effect size:
+|d| < 0.2 = negligible, 0.2-0.5 = small, 0.5-0.8 = medium, > 0.8 = large.
 
 ```{r pairwise}
-pw <- stats$pairwise
-if (!is.null(pw) && nrow(pw) > 0) {
-  pw$sig <- ifelse(pw$p_bonferroni < 0.001, "***",
-    ifelse(pw$p_bonferroni < 0.01, "**",
-      ifelse(pw$p_bonferroni < 0.05, "*", "")
+if (results_available) {
+  pw <- stats$pairwise
+  if (!is.null(pw) && nrow(pw) > 0) {
+    pw$sig <- ifelse(pw$p_bonferroni < 0.001, "***",
+      ifelse(pw$p_bonferroni < 0.01,  "**",
+        ifelse(pw$p_bonferroni < 0.05,  "*", "ns")
+      )
     )
-  )
-  knitr::kable(
-    pw[, c(
-      "strategy_1", "strategy_2", "statistic",
-      "p_value_raw", "p_bonferroni", "cohens_d", "sig"
-    )],
-    digits = 4,
-    caption = "Pairwise Welch t-tests. * p<0.05; ** p<0.01; *** p<0.001 (Bonferroni)."
-  )
-} else {
-  message("Pairwise tests not available (requires n_trials >= 2).")
+    pw$effect <- ifelse(abs(pw$cohens_d) < 0.2, "negligible",
+      ifelse(abs(pw$cohens_d) < 0.5, "small",
+        ifelse(abs(pw$cohens_d) < 0.8, "medium", "large")
+      )
+    )
+    knitr::kable(
+      pw[, c(
+        "strategy_1", "strategy_2", "statistic",
+        "p_value_raw", "p_bonferroni", "cohens_d", "sig", "effect"
+      )],
+      digits  = 4,
+      caption = paste0(
+        "Pairwise Welch t-tests (Bonferroni-corrected). ",
+        "sig: ns = not significant, * p<0.05, ** p<0.01, *** p<0.001. ",
+        "effect: Cohen's d magnitude."
+      )
+    )
+  } else {
+    message("Pairwise tests require n_trials >= 2 per strategy.")
+  }
 }
 ```
 
@@ -191,58 +319,58 @@ if (!is.null(pw) && nrow(pw) > 0) {
 
 ## Per-project breakdown
 
+The benchmark uses three fixture R projects of different types.  Breaking
+down scores by project shows whether a strategy is robust across project
+types or only works for specific ones.
+
+| Project | Type | Description |
+|---|---|---|
+| `mini_ds` | Data science script | Small data-wrangling project with dplyr / ggplot2 |
+| `shiny` | Shiny application | Reactive UI with server logic and modules |
+| `rpkg` | R package | Package with documented functions and tests |
+
 ```{r project-breakdown}
-if ("task_id" %in% names(all_results)) {
-  # Infer project from task_id (e.g. task_001_fm_mini_ds → mini_ds).
-  # Use regmatches() so unrecognised task_ids return NA rather than the
-  # original string (which would silently create a spurious project level).
+if (results_available && "task_id" %in% names(all_results)) {
   m <- regmatches(
     all_results$task_id,
     regexpr("mini_ds|shiny|rpkg", all_results$task_id)
   )
   all_results$project <- ifelse(
-    grepl("mini_ds|shiny|rpkg", all_results$task_id),
-    m, NA_character_
+    grepl("mini_ds|shiny|rpkg", all_results$task_id), m, NA_character_
   )
-  proj_summary <- aggregate(
-    score ~ strategy + project,
-    data = all_results,
-    FUN  = mean
-  )
-  proj_wide <- reshape(
-    proj_summary,
-    idvar = "strategy",
-    timevar = "project",
-    direction = "wide"
-  )
+  proj_summary <- aggregate(score ~ strategy + project, data = all_results, FUN = mean)
+  proj_wide    <- reshape(proj_summary, idvar = "strategy",
+    timevar = "project", direction = "wide")
   names(proj_wide) <- gsub("score\\.", "", names(proj_wide))
   knitr::kable(
     proj_wide,
     digits  = 3,
-    caption = "Mean score disaggregated by fixture project."
+    caption = paste0(
+      "Mean score per strategy per project type. ",
+      "A strategy with large differences across projects is not robust."
+    )
   )
 }
 ```
 
 ---
 
-## Recursive-improvement trajectory
+## Score trajectory across trials
 
-If multi-trial results are available, this plot shows whether score
-improves across successive trials (a proxy for benefit from context).
+Each task is run `n_trials` times independently.  If scores improve across
+trials it suggests the LLM benefits from the specific context being fed
+(learning effect within context window).  Flat lines indicate consistent
+performance; downward trends indicate instability.
 
 ```{r improvement-plot}
-if ("trial" %in% names(all_results)) {
-  trial_means <- aggregate(score ~ strategy + trial,
-    data = all_results, FUN = mean
-  )
-  strategies <- unique(trial_means$strategy)
-  cols <- rainbow(length(strategies))
-  plot(
-    range(trial_means$trial), c(0, 1),
-    type = "n",
-    xlab = "Trial", ylab = "Mean score",
-    main = "Score by trial"
+if (results_available && "trial" %in% names(all_results)) {
+  trial_means <- aggregate(score ~ strategy + trial, data = all_results, FUN = mean)
+  strategies  <- unique(trial_means$strategy)
+  cols        <- rainbow(length(strategies))
+  plot(range(trial_means$trial), c(0, 1), type = "n",
+    xlab = "Trial number (independent run)",
+    ylab = "Mean composite score (0-1)",
+    main = "Score across independent trials -- stability check"
   )
   for (i in seq_along(strategies)) {
     sub <- trial_means[trial_means$strategy == strategies[i], ]
