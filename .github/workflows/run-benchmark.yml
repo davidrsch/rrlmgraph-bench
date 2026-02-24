@@ -1,19 +1,19 @@
 on:
-  workflow_dispatch:        # run manually from the Actions tab
+  workflow_dispatch: # run manually from the Actions tab
   schedule:
-    - cron: "0 3 * * 1"    # every Monday at 03:00 UTC
+    - cron: "0 3 * * 1" # every Monday at 03:00 UTC
 
 name: run-benchmark
 
 permissions:
-  contents: write           # needed to commit the results RDS
-  models: read              # needed for GitHub Models inference API
+  contents: write # needed to commit the results RDS
+  models: read # needed for GitHub Models inference API
 
 jobs:
   benchmark:
     runs-on: ubuntu-latest
     env:
-      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}  # auto-set, no extra secret needed
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }} # auto-set, no extra secret needed
 
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +80,11 @@ jobs:
         # GitHub security prevents a GITHUB_TOKEN commit from auto-triggering
         # other workflows (anti-loop protection).  We dispatch pkgdown
         # explicitly here so the published site always reflects the new results.
-        if: success()
+        # continue-on-error: the GITHUB_TOKEN needs workflow scope; if that
+        # permission is absent the dispatch fails with 403 but the benchmark
+        # results have already been committed, so we must not fail the run.
+        if: always()
+        continue-on-error: true
         run: |
           gh workflow run pkgdown.yaml \
             --repo davidrsch/rrlmgraph-bench \

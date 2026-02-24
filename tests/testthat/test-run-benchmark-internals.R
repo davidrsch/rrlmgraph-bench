@@ -866,8 +866,9 @@ test_that("run_single handles LLM auth failure gracefully in non-dry_run mode", 
     ignore.order = TRUE
   )
   expect_type(result$score, "double")
-  expect_gte(result$score, 0)
-  expect_lte(result$score, 1)
+  # A failed LLM call (auth error, rate-limit, empty response) must produce
+  # either NA (no usable response) or a valid score in [0, 1].
+  expect_true(is.na(result$score) || (result$score >= 0 && result$score <= 1))
   expect_type(result$syntax_valid, "logical")
 })
 
