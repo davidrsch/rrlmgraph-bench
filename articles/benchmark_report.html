@@ -75,7 +75,7 @@ asks:</p>
 retrieval strategy gives an LLM the context it needs to produce correct,
 runnable R code?</em></p>
 </blockquote>
-<p>Each strategy is judged by how often the LLM’s response:</p>
+<p>Each strategy is judged by how often the LLM response:</p>
 <ol style="list-style-type: decimal">
 <li>
 <strong>Parses</strong> as valid R syntax
@@ -450,14 +450,18 @@ intervals do not overlap.</p>
 <span>    lwd <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>    col <span class="op">=</span> <span class="st">"steelblue"</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>v <span class="op">=</span> <span class="va">summary_df</span><span class="op">$</span><span class="va">mean_score</span><span class="op">[</span><span class="va">summary_df</span><span class="op">$</span><span class="va">strategy</span> <span class="op">==</span> <span class="st">"no_context"</span><span class="op">]</span>,</span>
-<span>         lty <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"tomato"</span>, lwd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span>v <span class="op">=</span> <span class="va">summary_df</span><span class="op">$</span><span class="va">mean_score</span><span class="op">[</span><span class="va">summary_df</span><span class="op">$</span><span class="va">strategy</span> <span class="op">==</span> <span class="st">"full_files"</span><span class="op">]</span>,</span>
-<span>         lty <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"darkgreen"</span>, lwd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span></span>
+<span>    v <span class="op">=</span> <span class="va">summary_df</span><span class="op">$</span><span class="va">mean_score</span><span class="op">[</span><span class="va">summary_df</span><span class="op">$</span><span class="va">strategy</span> <span class="op">==</span> <span class="st">"no_context"</span><span class="op">]</span>,</span>
+<span>    lty <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"tomato"</span>, lwd <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/abline.html" class="external-link">abline</a></span><span class="op">(</span></span>
+<span>    v <span class="op">=</span> <span class="va">summary_df</span><span class="op">$</span><span class="va">mean_score</span><span class="op">[</span><span class="va">summary_df</span><span class="op">$</span><span class="va">strategy</span> <span class="op">==</span> <span class="st">"full_files"</span><span class="op">]</span>,</span>
+<span>    lty <span class="op">=</span> <span class="fl">2</span>, col <span class="op">=</span> <span class="st">"darkgreen"</span>, lwd <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/graphics/legend.html" class="external-link">legend</a></span><span class="op">(</span><span class="st">"bottomright"</span>,</span>
 <span>    legend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"no_context baseline"</span>, <span class="st">"full_files baseline"</span><span class="op">)</span>,</span>
-<span>    col    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tomato"</span>, <span class="st">"darkgreen"</span><span class="op">)</span>,</span>
-<span>    lty    <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">1</span>, cex <span class="op">=</span> <span class="fl">0.8</span></span>
+<span>    col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tomato"</span>, <span class="st">"darkgreen"</span><span class="op">)</span>,</span>
+<span>    lty <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">1</span>, cex <span class="op">=</span> <span class="fl">0.8</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
 <p><img src="benchmark_report_files/figure-html/score-plot-1.png" class="r-plt" alt="" width="100%"></p>
@@ -475,8 +479,8 @@ production over the brute-force <code>full_files</code> approach.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">results_available</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">ter_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>    strategy    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span><span class="op">)</span>,</span>
-<span>    TER         <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>    strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span><span class="op">)</span>,</span>
+<span>    TER <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span>, <span class="fl">3</span><span class="op">)</span>,</span>
 <span>    interpretation <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span><span class="op">)</span>, <span class="st">"N/A (baseline)"</span>,</span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">ter</span> <span class="op">&gt;</span> <span class="fl">1</span>,</span>
@@ -623,10 +627,10 @@ namespace.</caption>
 <span>    <span class="va">type_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">type_pattern</span><span class="op">)</span>, decreasing <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span></span>
 <span>      <span class="va">type_counts</span>,</span>
-<span>      main  <span class="op">=</span> <span class="st">"Hallucination types across all strategies"</span>,</span>
-<span>      ylab  <span class="op">=</span> <span class="st">"Count of occurrences"</span>,</span>
-<span>      xlab  <span class="op">=</span> <span class="st">"Type"</span>,</span>
-<span>      col   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tomato"</span>, <span class="st">"goldenrod"</span>, <span class="st">"steelblue"</span><span class="op">)</span>,</span>
+<span>      main <span class="op">=</span> <span class="st">"Hallucination types across all strategies"</span>,</span>
+<span>      ylab <span class="op">=</span> <span class="st">"Count of occurrences"</span>,</span>
+<span>      xlab <span class="op">=</span> <span class="st">"Type"</span>,</span>
+<span>      col <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tomato"</span>, <span class="st">"goldenrod"</span>, <span class="st">"steelblue"</span><span class="op">)</span>,</span>
 <span>      names.arg <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>        <span class="st">"Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)"</span>,</span>
 <span>        <span class="st">"Invalid\nargument\n(e.g. wrong\nparam name)"</span>,</span>
@@ -656,8 +660,8 @@ practical effect size: |d| &lt; 0.2 = negligible, 0.2-0.5 = small,
 <span>  <span class="va">pw</span> <span class="op">&lt;-</span> <span class="va">stats</span><span class="op">$</span><span class="va">pairwise</span></span>
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">pw</span><span class="op">$</span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">pw</span><span class="op">$</span><span class="va">p_bonferroni</span> <span class="op">&lt;</span> <span class="fl">0.001</span>, <span class="st">"***"</span>,</span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">pw</span><span class="op">$</span><span class="va">p_bonferroni</span> <span class="op">&lt;</span> <span class="fl">0.01</span>,  <span class="st">"**"</span>,</span>
-<span>        <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">pw</span><span class="op">$</span><span class="va">p_bonferroni</span> <span class="op">&lt;</span> <span class="fl">0.05</span>,  <span class="st">"*"</span>, <span class="st">"ns"</span><span class="op">)</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">pw</span><span class="op">$</span><span class="va">p_bonferroni</span> <span class="op">&lt;</span> <span class="fl">0.01</span>, <span class="st">"**"</span>,</span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">pw</span><span class="op">$</span><span class="va">p_bonferroni</span> <span class="op">&lt;</span> <span class="fl">0.05</span>, <span class="st">"*"</span>, <span class="st">"ns"</span><span class="op">)</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
 <span>    <span class="va">pw</span><span class="op">$</span><span class="va">effect</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">pw</span><span class="op">$</span><span class="va">cohens_d</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.2</span>, <span class="st">"negligible"</span>,</span>
@@ -670,7 +674,7 @@ practical effect size: |d| &lt; 0.2 = negligible, 0.2-0.5 = small,
 <span>        <span class="st">"strategy_1"</span>, <span class="st">"strategy_2"</span>, <span class="st">"statistic"</span>,</span>
 <span>        <span class="st">"p_value_raw"</span>, <span class="st">"p_bonferroni"</span>, <span class="st">"cohens_d"</span>, <span class="st">"sig"</span>, <span class="st">"effect"</span></span>
 <span>      <span class="op">)</span><span class="op">]</span>,</span>
-<span>      digits  <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>      digits <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>      caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
 <span>        <span class="st">"Pairwise Welch t-tests (Bonferroni-corrected). "</span>,</span>
 <span>        <span class="st">"sig: ns = not significant, * p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001. "</span>,</span>
@@ -729,12 +733,14 @@ across project types or only works for specific ones.</p>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"mini_ds|shiny|rpkg"</span>, <span class="va">all_results</span><span class="op">$</span><span class="va">task_id</span><span class="op">)</span>, <span class="va">m</span>, <span class="cn">NA_character_</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="va">proj_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">score</span> <span class="op">~</span> <span class="va">strategy</span> <span class="op">+</span> <span class="va">project</span>, data <span class="op">=</span> <span class="va">all_results</span>, FUN <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
-<span>  <span class="va">proj_wide</span>    <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span><span class="va">proj_summary</span>, idvar <span class="op">=</span> <span class="st">"strategy"</span>,</span>
-<span>    timevar <span class="op">=</span> <span class="st">"project"</span>, direction <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span>
+<span>  <span class="va">proj_wide</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span><span class="va">proj_summary</span>,</span>
+<span>    idvar <span class="op">=</span> <span class="st">"strategy"</span>,</span>
+<span>    timevar <span class="op">=</span> <span class="st">"project"</span>, direction <span class="op">=</span> <span class="st">"wide"</span></span>
+<span>  <span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">proj_wide</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"score\\."</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">proj_wide</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
 <span>    <span class="va">proj_wide</span>,</span>
-<span>    digits  <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>    digits <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>    caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
 <span>      <span class="st">"Mean score per strategy per project type. "</span>,</span>
 <span>      <span class="st">"A strategy with large differences across projects is not robust."</span></span>
@@ -802,9 +808,10 @@ instability.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">results_available</span> <span class="op">&amp;&amp;</span> <span class="st">"trial"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">trial_means</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">score</span> <span class="op">~</span> <span class="va">strategy</span> <span class="op">+</span> <span class="va">trial</span>, data <span class="op">=</span> <span class="va">all_results</span>, FUN <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
-<span>  <span class="va">strategies</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">trial_means</span><span class="op">$</span><span class="va">strategy</span><span class="op">)</span></span>
-<span>  <span class="va">cols</span>        <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">rainbow</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">strategies</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">trial_means</span><span class="op">$</span><span class="va">trial</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"n"</span>,</span>
+<span>  <span class="va">strategies</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">trial_means</span><span class="op">$</span><span class="va">strategy</span><span class="op">)</span></span>
+<span>  <span class="va">cols</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/palettes.html" class="external-link">rainbow</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">strategies</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">trial_means</span><span class="op">$</span><span class="va">trial</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    type <span class="op">=</span> <span class="st">"n"</span>,</span>
 <span>    xlab <span class="op">=</span> <span class="st">"Trial number (independent run)"</span>,</span>
 <span>    ylab <span class="op">=</span> <span class="st">"Mean composite score (0-1)"</span>,</span>
 <span>    main <span class="op">=</span> <span class="st">"Score across independent trials -- stability check"</span></span>

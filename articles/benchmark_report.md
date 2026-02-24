@@ -9,7 +9,7 @@ strategies** help an LLM answer R coding tasks. The benchmark asks:
 > retrieval strategy gives an LLM the context it needs to produce
 > correct, runnable R code?*
 
-Each strategy is judged by how often the LLM’s response:
+Each strategy is judged by how often the LLM response:
 
 1.  **Parses** as valid R syntax (`syntax_valid`)
 2.  **Runs** without error when `eval(parse(...))` is called
@@ -170,14 +170,18 @@ if (results_available) {
     lwd = 2,
     col = "steelblue"
   )
-  abline(v = summary_df$mean_score[summary_df$strategy == "no_context"],
-         lty = 2, col = "tomato", lwd = 1)
-  abline(v = summary_df$mean_score[summary_df$strategy == "full_files"],
-         lty = 2, col = "darkgreen", lwd = 1)
+  abline(
+    v = summary_df$mean_score[summary_df$strategy == "no_context"],
+    lty = 2, col = "tomato", lwd = 1
+  )
+  abline(
+    v = summary_df$mean_score[summary_df$strategy == "full_files"],
+    lty = 2, col = "darkgreen", lwd = 1
+  )
   legend("bottomright",
     legend = c("no_context baseline", "full_files baseline"),
-    col    = c("tomato", "darkgreen"),
-    lty    = 2, lwd = 1, cex = 0.8
+    col = c("tomato", "darkgreen"),
+    lty = 2, lwd = 1, cex = 0.8
   )
 }
 ```
@@ -199,8 +203,8 @@ brute-force `full_files` approach.
 ``` r
 if (results_available) {
   ter_df <- data.frame(
-    strategy    = names(stats$ter),
-    TER         = round(stats$ter, 3),
+    strategy = names(stats$ter),
+    TER = round(stats$ter, 3),
     interpretation = ifelse(
       is.na(stats$ter), "N/A (baseline)",
       ifelse(stats$ter > 1,
@@ -292,10 +296,10 @@ if (results_available && "hallucination_details" %in% names(all_results)) {
     type_counts <- sort(table(type_pattern), decreasing = TRUE)
     barplot(
       type_counts,
-      main  = "Hallucination types across all strategies",
-      ylab  = "Count of occurrences",
-      xlab  = "Type",
-      col   = c("tomato", "goldenrod", "steelblue"),
+      main = "Hallucination types across all strategies",
+      ylab = "Count of occurrences",
+      xlab = "Type",
+      col = c("tomato", "goldenrod", "steelblue"),
       names.arg = c(
         "Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)",
         "Invalid\nargument\n(e.g. wrong\nparam name)",
@@ -326,8 +330,8 @@ if (results_available) {
   pw <- stats$pairwise
   if (!is.null(pw) && nrow(pw) > 0) {
     pw$sig <- ifelse(pw$p_bonferroni < 0.001, "***",
-      ifelse(pw$p_bonferroni < 0.01,  "**",
-        ifelse(pw$p_bonferroni < 0.05,  "*", "ns")
+      ifelse(pw$p_bonferroni < 0.01, "**",
+        ifelse(pw$p_bonferroni < 0.05, "*", "ns")
       )
     )
     pw$effect <- ifelse(abs(pw$cohens_d) < 0.2, "negligible",
@@ -340,7 +344,7 @@ if (results_available) {
         "strategy_1", "strategy_2", "statistic",
         "p_value_raw", "p_bonferroni", "cohens_d", "sig", "effect"
       )],
-      digits  = 4,
+      digits = 4,
       caption = paste0(
         "Pairwise Welch t-tests (Bonferroni-corrected). ",
         "sig: ns = not significant, * p<0.05, ** p<0.01, *** p<0.001. ",
@@ -378,12 +382,14 @@ if (results_available && "task_id" %in% names(all_results)) {
     grepl("mini_ds|shiny|rpkg", all_results$task_id), m, NA_character_
   )
   proj_summary <- aggregate(score ~ strategy + project, data = all_results, FUN = mean)
-  proj_wide    <- reshape(proj_summary, idvar = "strategy",
-    timevar = "project", direction = "wide")
+  proj_wide <- reshape(proj_summary,
+    idvar = "strategy",
+    timevar = "project", direction = "wide"
+  )
   names(proj_wide) <- gsub("score\\.", "", names(proj_wide))
   knitr::kable(
     proj_wide,
-    digits  = 3,
+    digits = 3,
     caption = paste0(
       "Mean score per strategy per project type. ",
       "A strategy with large differences across projects is not robust."
@@ -416,9 +422,10 @@ consistent performance; downward trends indicate instability.
 ``` r
 if (results_available && "trial" %in% names(all_results)) {
   trial_means <- aggregate(score ~ strategy + trial, data = all_results, FUN = mean)
-  strategies  <- unique(trial_means$strategy)
-  cols        <- rainbow(length(strategies))
-  plot(range(trial_means$trial), c(0, 1), type = "n",
+  strategies <- unique(trial_means$strategy)
+  cols <- rainbow(length(strategies))
+  plot(range(trial_means$trial), c(0, 1),
+    type = "n",
     xlab = "Trial number (independent run)",
     ylab = "Mean composite score (0-1)",
     main = "Score across independent trials -- stability check"
