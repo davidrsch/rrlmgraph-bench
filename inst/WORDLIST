@@ -25,6 +25,7 @@ JSON
 knitr
 llama
 LLM
+LLMs
 Lifecycle
 NAMESPACE
 NDCG
@@ -34,6 +35,7 @@ OpenAI
 Ollama
 ORCID
 pairwise
+PageRank
 pkgdown
 precomputed
 RDS
@@ -42,6 +44,7 @@ resamples
 RHS
 rrlmgraph
 rrlmgraphbench
+runnable
 rmarkdown
 Roxygen
 SD
@@ -49,6 +52,7 @@ TER
 TF
 testthat
 TFIDF
+UI
 tidyverse
 Welch
 withr
