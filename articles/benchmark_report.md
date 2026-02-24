@@ -84,12 +84,12 @@ if (!results_available) {
 
 | task_id             | strategy        | trial |     score | syntax_valid | runs_without_error | total_tokens |
 |:--------------------|:----------------|------:|----------:|:-------------|:-------------------|-------------:|
-| task_001_fm_mini_ds | rrlmgraph_tfidf |     1 | 0.0438938 | FALSE        | FALSE              |          314 |
-| task_001_fm_mini_ds | full_files      |     1 | 0.0667826 | FALSE        | FALSE              |         1890 |
-| task_001_fm_mini_ds | term_overlap    |     1 | 0.0606897 | FALSE        | FALSE              |          498 |
-| task_001_fm_mini_ds | bm25_retrieval  |     1 | 0.0605405 | FALSE        | FALSE              |         1848 |
-| task_001_fm_mini_ds | no_context      |     1 | 0.0581818 | FALSE        | FALSE              |          483 |
-| task_001_fm_mini_ds | random_k        |     1 | 0.0567273 | FALSE        | FALSE              |         1847 |
+| task_001_fm_mini_ds | rrlmgraph_tfidf |     1 | 0.0504673 | FALSE        | FALSE              |          597 |
+| task_001_fm_mini_ds | full_files      |     1 | 0.0683333 | FALSE        | FALSE              |         1844 |
+| task_001_fm_mini_ds | term_overlap    |     1 | 0.0647368 | FALSE        | FALSE              |          459 |
+| task_001_fm_mini_ds | bm25_retrieval  |     1 | 0.0579130 | FALSE        | FALSE              |         1834 |
+| task_001_fm_mini_ds | no_context      |     1 | 0.0470270 | FALSE        | FALSE              |          346 |
+| task_001_fm_mini_ds | random_k        |     1 | 0.0716667 | FALSE        | FALSE              |         1855 |
 
 First 6 rows of raw results. ‘score’ is the composite 0-1 metric.
 ‘syntax_valid’ and ‘runs_without_error’ are 0/1 indicators.
@@ -130,12 +130,12 @@ if (results_available) {
 
 | strategy        |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
 |:----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
-| rrlmgraph_tfidf |  30 |      0.451 |    0.240 |    0.362 |    0.541 |            75.167 |                  0 |
-| full_files      |  30 |      0.462 |    0.235 |    0.374 |    0.550 |          1747.567 |                  0 |
-| term_overlap    |  30 |      0.479 |    0.226 |    0.395 |    0.563 |          1944.800 |                  0 |
-| bm25_retrieval  |  30 |      0.498 |    0.209 |    0.420 |    0.576 |          1504.233 |                  0 |
-| no_context      |  30 |      0.477 |    0.229 |    0.391 |    0.562 |            67.433 |                  0 |
-| random_k        |  30 |      0.485 |    0.215 |    0.404 |    0.565 |          1804.800 |                  0 |
+| rrlmgraph_tfidf |  30 |      0.194 |    0.219 |    0.112 |    0.276 |           566.833 |                  0 |
+| full_files      |  30 |      0.179 |    0.209 |    0.101 |    0.257 |          1356.200 |                  0 |
+| term_overlap    |  30 |      0.194 |    0.219 |    0.112 |    0.275 |          2181.567 |                  0 |
+| bm25_retrieval  |  30 |      0.211 |    0.226 |    0.127 |    0.296 |          1798.200 |                  0 |
+| no_context      |  30 |      0.200 |    0.234 |    0.112 |    0.287 |           171.967 |                  0 |
+| random_k        |  30 |      0.227 |    0.233 |    0.139 |    0.314 |          2118.733 |                  0 |
 
 Summary: mean score, 95% CI, token usage, and hallucination rate per
 strategy.
@@ -225,14 +225,14 @@ if (results_available) {
 }
 ```
 
-| strategy        |    TER | interpretation                 |
-|:----------------|-------:|:-------------------------------|
-| no_context      | 26.756 | More efficient than full_files |
-| rrlmgraph_tfidf | 22.718 | More efficient than full_files |
-| bm25_retrieval  |  1.253 | More efficient than full_files |
-| random_k        |  1.016 | More efficient than full_files |
-| term_overlap    |  0.931 | Less efficient than full_files |
-| full_files      |     NA | N/A (baseline)                 |
+| strategy        |   TER | interpretation                 |
+|:----------------|------:|:-------------------------------|
+| no_context      | 8.805 | More efficient than full_files |
+| rrlmgraph_tfidf | 2.596 | More efficient than full_files |
+| bm25_retrieval  | 0.891 | Less efficient than full_files |
+| random_k        | 0.810 | Less efficient than full_files |
+| term_overlap    | 0.673 | Less efficient than full_files |
+| full_files      |    NA | N/A (baseline)                 |
 
 Token Efficiency Ratio (TER) vs full_files baseline. TER \> 1: strategy
 achieves higher score-per-token than full_files. TER \< 1: strategy is
@@ -400,12 +400,12 @@ if (results_available && "task_id" %in% names(all_results)) {
 
 | strategy        | mini_ds |  rpkg | shiny |
 |:----------------|--------:|------:|------:|
-| bm25_retrieval  |   0.493 | 0.553 | 0.448 |
-| full_files      |   0.495 | 0.443 | 0.447 |
-| no_context      |   0.432 | 0.553 | 0.445 |
-| random_k        |   0.452 | 0.553 | 0.448 |
-| rrlmgraph_tfidf |   0.470 | 0.438 | 0.445 |
-| term_overlap    |   0.493 | 0.495 | 0.448 |
+| bm25_retrieval  |   0.120 | 0.261 | 0.253 |
+| full_files      |   0.120 | 0.263 | 0.154 |
+| no_context      |   0.108 | 0.247 | 0.244 |
+| random_k        |   0.166 | 0.259 | 0.254 |
+| rrlmgraph_tfidf |   0.160 | 0.260 | 0.163 |
+| term_overlap    |   0.119 | 0.261 | 0.201 |
 
 Mean score per strategy per project type. A strategy with large
 differences across projects is not robust.
