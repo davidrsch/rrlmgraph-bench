@@ -11,6 +11,7 @@ CMD
 Codecov
 Cohen
 dotchart
+dplyr
 ellmer
 embeddings
 formals
