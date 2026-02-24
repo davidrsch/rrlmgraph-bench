@@ -349,10 +349,11 @@ build_context <- function(
             ctx <- rrlmgraph::query_context(
               graph_tfidf,
               task$description,
-              seed_node = task$seed_node
+              seed_node = task$seed_node,
+              budget_tokens = budget_tokens
             )
-            node_ids <<- if (!is.null(ctx$nodes)) {
-              ctx$nodes$node_id
+            node_ids <<- if (length(ctx$nodes) > 0L) {
+              ctx$nodes
             } else {
               character(0L)
             }
@@ -375,10 +376,11 @@ build_context <- function(
             ctx <- rrlmgraph::query_context(
               graph_ollama,
               task$description,
-              seed_node = task$seed_node
+              seed_node = task$seed_node,
+              budget_tokens = budget_tokens
             )
-            node_ids <<- if (!is.null(ctx$nodes)) {
-              ctx$nodes$node_id
+            node_ids <<- if (length(ctx$nodes) > 0L) {
+              ctx$nodes
             } else {
               character(0L)
             }
