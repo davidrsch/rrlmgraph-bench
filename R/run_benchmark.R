@@ -791,8 +791,16 @@ run_single <- function(
       },
       error = function(e) {
         msg <- conditionMessage(e)
-        # 429 / rate-limit: wait 60s and retry once (bench#35)
-        if (grepl("429|rate.limit|quota", msg, ignore.case = TRUE)) {
+        # 429 / rate-limit: wait 60s and retry once (bench#35).
+        # GitHub Models returns "Too many requests" plain-text on 429;
+        # httr2 req_error() then throws a JSON-parse error whose message
+        # still contains the original body text -- match it explicitly.
+        is_rate_limit <- grepl(
+          "429|rate.limit|quota|too many request",
+          msg,
+          ignore.case = TRUE
+        )
+        if (is_rate_limit) {
           message(
             "[run_single] Rate-limit hit (429) -- waiting 60s before retry..."
           )
@@ -840,10 +848,15 @@ run_single <- function(
       Sys.sleep(rate_limit_delay)
     }
     latency_sec <- proc.time()[["elapsed"]] - t1
-    response_code <- if (is.na(llm_result)) {
-      # 429 retry exhausted -- mark trial as failed
+    response_code <- if (
+      is.na(llm_result) ||
+        !nzchar(trimws(as.character(llm_result)))
+    ) {
+      # NA  = 429 retry exhausted
+      # "" = undetected error (e.g. JSON-parse failure hiding a rate-limit)
+      # Either way there is no usable LLM response -- mark trial as failed.
       score <- NA_real_
-      llm_result
+      NA_character_
     } else {
       llm_result
     }
