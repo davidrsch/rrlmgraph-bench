@@ -13,6 +13,8 @@ run_full_benchmark(
   llm_model = NULL,
   seed = 42L,
   rate_limit_delay = 6,
+  strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap",
+    "bm25_retrieval", "no_context"),
   .dry_run = FALSE
 )
 }
@@ -43,6 +45,11 @@ before any stochastic operations.  Defaults to \code{42L}.}
 
 \item{rate_limit_delay}{Numeric(1). Seconds to wait between LLM API calls
 to avoid rate-limit errors.  Defaults to \code{6}.}
+
+\item{strategies}{Character vector. Subset of strategies to run.  Defaults
+to five strategies (\code{rrlmgraph_tfidf}, \code{full_files}, \code{term_overlap},
+\code{bm25_retrieval}, \code{no_context}), yielding exactly 150 LLM calls for
+30 tasks, which fits within the GitHub Models free-tier quota.}
 
 \item{.dry_run}{Logical(1). When \code{TRUE} the LLM is not called;
 dummy scores of \code{0.5} are returned.  Useful for integration tests.}
