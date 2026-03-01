@@ -20,6 +20,7 @@ ggplot2
 gpt
 haiku
 hallucination
+hardcoded
 IDF
 JSON
 knitr
@@ -40,6 +41,7 @@ pkgdown
 precomputed
 RDS
 reprex
+req
 resamples
 RHS
 rrlmgraph
