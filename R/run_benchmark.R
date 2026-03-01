@@ -1,10 +1,12 @@
 #' Run the full rrlmgraph benchmark
 #'
-#' Evaluates seven retrieval strategies across every task in `tasks_dir`
+#' Evaluates retrieval strategies across every task in `tasks_dir`
 #' using `n_trials` independent trials each, and persists the combined
-#' results to `output_path`.
+#' results to `output_path`.  By default five strategies are run (150 total
+#' LLM calls for 30 tasks × 1 trial), which fits within the GitHub Models
+#' free-tier quota of ~150 requests / day.
 #'
-#' ## Strategies
+#' ## Strategies (all supported values for the `strategies` argument)
 #' | Label | Description |
 #' |---|---|
 #' | `rrlmgraph_tfidf` | rrlmgraph with TF-IDF node embeddings |
@@ -48,6 +50,13 @@
 #'   before any stochastic operations.  Defaults to `42L`.
 #' @param rate_limit_delay Numeric(1). Seconds to wait between LLM API calls
 #'   to avoid rate-limit errors.  Defaults to `6`.
+#' @param strategies   Character vector. Subset of strategies to run.  Defaults
+#'   to all six non-Ollama strategies.  Useful for reducing the total number of
+#'   LLM API calls when the provider enforces a daily request quota (e.g.
+#'   GitHub Models free tier allows ~150 requests/day; with 30 tasks and the
+#'   default 5 strategies that is exactly 150 calls).  Ollama strategies are
+#'   silently skipped regardless of this argument when the Ollama daemon is
+#'   unavailable.
 #' @param .dry_run     Logical(1). When `TRUE` the LLM is not called;
 #'   dummy scores of `0.5` are returned.  Useful for integration tests.
 #'
@@ -96,6 +105,13 @@ run_full_benchmark <- function(
   llm_model = NULL,
   seed = 42L,
   rate_limit_delay = 6,
+  strategies = c(
+    "rrlmgraph_tfidf",
+    "full_files",
+    "term_overlap",
+    "bm25_retrieval",
+    "no_context"
+  ),
   .dry_run = FALSE
 ) {
   llm_provider <- match.arg(llm_provider)
@@ -107,7 +123,8 @@ run_full_benchmark <- function(
   on.exit(options(ellmer_max_tries = old_max_tries), add = TRUE)
   options(ellmer_max_tries = 1L)
 
-  strategies <- c(
+  # Validate strategies
+  allowed_strategies <- c(
     "rrlmgraph_tfidf",
     "rrlmgraph_ollama",
     "full_files",
@@ -116,12 +133,16 @@ run_full_benchmark <- function(
     "no_context",
     "random_k"
   )
+  unknown <- setdiff(strategies, allowed_strategies)
+  if (length(unknown)) {
+    stop("Unknown strategies: ", paste(unknown, collapse = ", "))
+  }
 
   # Skip Ollama-backed strategy when the local daemon is not running.
   # In CI Ollama is never available, so without this guard the
   # rrlmgraph_ollama results are identical to no_context and mislead
   # readers of the published report. (see bench#18)
-  if (!rrlmgraph::ollama_available()) {
+  if ("rrlmgraph_ollama" %in% strategies && !rrlmgraph::ollama_available()) {
     cli::cli_warn(c(
       "!" = "Ollama daemon unavailable -- skipping {.val rrlmgraph_ollama} strategy.",
       "i" = "Results will be collected for {length(strategies) - 1L} strategies."
@@ -609,6 +630,37 @@ ast_diff_score <- function(response_code, ground_truth_code) {
 
   0.6 * call_j + 0.4 * tok_j
 }
+
+# Strip markdown code fences that LLMs add around their responses.
+# Handles ```r, ```R, ``` and any other language tag.
+# Returns the original string unchanged if no fences are detected.
+strip_code_fences <- function(code) {
+  if (
+    !is.character(code) ||
+      length(code) != 1L ||
+      is.na(code) ||
+      !nzchar(trimws(code))
+  ) {
+    return(code)
+  }
+  if (!grepl("```", code, fixed = TRUE)) {
+    return(code)
+  }
+  # Match a fenced block: opening ``` with optional language tag, then
+  # any content (including newlines), then closing ```.
+  m <- regmatches(
+    code,
+    regexpr("(?s)```[A-Za-z0-9]*\\s*\n?(.*?)\n?\\s*```", code, perl = TRUE)
+  )
+  if (length(m) == 0L) {
+    return(code)
+  }
+  # Remove the opening fence line and the closing fence
+  stripped <- sub("^```[A-Za-z0-9]*\\s*\n?", "", m[[1L]], perl = TRUE)
+  stripped <- sub("\n?\\s*```\\s*$", "", stripped, perl = TRUE)
+  trimws(stripped, which = "right")
+}
+
 score_response <- function(response_code, task, source_files = NULL) {
   # Rubric: syntax (0.25) + node presence / AST-diff (0.45) + runs (0.30)
   # Rationale: syntax_ok is nearly subsumed by runs_ok (code that runs also
@@ -858,7 +910,10 @@ run_single <- function(
       score <- NA_real_
       NA_character_
     } else {
-      llm_result
+      # Strip markdown code fences (```r ... ```) that LLMs add to their
+      # responses even when asked for raw code.  Without this, parse() fails
+      # on every response and syntax_valid is always FALSE (bench#36).
+      strip_code_fences(as.character(llm_result))
     }
 
     # ---- Token counts: API-reported > tokenizers > nchar/4 (#26) ----------

@@ -228,6 +228,38 @@ test_that("ast_diff_score returns 0 for two empty strings", {
   expect_equal(score, 0)
 })
 
+# ---- strip_code_fences -------------------------------------------------------
+
+test_that("strip_code_fences removes ```r fences", {
+  result <- rrlmgraphbench:::strip_code_fences("```r\nx <- 5\nprint(x)\n```")
+  expect_equal(result, "x <- 5\nprint(x)")
+})
+
+test_that("strip_code_fences removes ``` fences with no language tag", {
+  result <- rrlmgraphbench:::strip_code_fences("```\nx <- 5\n```")
+  expect_equal(result, "x <- 5")
+})
+
+test_that("strip_code_fences passes through code with no fences unchanged", {
+  code <- "x <- 1 + 1"
+  expect_equal(rrlmgraphbench:::strip_code_fences(code), code)
+})
+
+test_that("strip_code_fences handles preamble text before fence", {
+  result <- rrlmgraphbench:::strip_code_fences(
+    "Here is the code:\n```r\nx <- 5\n```"
+  )
+  expect_equal(result, "x <- 5")
+})
+
+test_that("strip_code_fences passes through NA unchanged", {
+  expect_equal(rrlmgraphbench:::strip_code_fences(NA_character_), NA_character_)
+})
+
+test_that("strip_code_fences passes through empty string unchanged", {
+  expect_equal(rrlmgraphbench:::strip_code_fences(""), "")
+})
+
 # ---- score_response ---------------------------------------------------------
 
 test_that("score_response marks syntactically valid R as syntax_valid=TRUE", {
