@@ -11,12 +11,12 @@ Source:
 [`DESCRIPTION`](https://github.com/davidrsch/rrlmgraph-bench/blob/main/DESCRIPTION)
 
 Díaz D (2026). *rrlmgraphbench: Benchmark Suite for rrlmgraph*. R
-package version 0.1.0, <https://github.com/davidrsch/rrlmgraph-bench>.
+package version 0.1.1, <https://github.com/davidrsch/rrlmgraph-bench>.
 
     @Manual{,
       title = {rrlmgraphbench: Benchmark Suite for rrlmgraph},
       author = {David Díaz},
       year = {2026},
-      note = {R package version 0.1.0},
+      note = {R package version 0.1.1},
       url = {https://github.com/davidrsch/rrlmgraph-bench},
     }

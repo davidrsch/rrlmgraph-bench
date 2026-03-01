@@ -1,5 +1,30 @@
 # Changelog
 
+## rrlmgraphbench 0.1.1
+
+#### Bug fixes
+
+- `run_single()`: LLM responses are now stripped of markdown code fences
+  (```` ```r ... ``` ````) before scoring. Without this fix
+  `parse(text = response_code)` failed on every GPT-4.1-mini response,
+  causing `syntax_valid = FALSE` and `runs_without_error = FALSE` for
+  all 146 non-NA benchmark rows; scores were consequently ~0.06 instead
+  of the true ~0.3+ range. Adds a new internal helper
+  `strip_code_fences()`. (bench#36)
+
+#### Improvements
+
+- [`run_full_benchmark()`](https://davidrsch.github.io/rrlmgraph-bench/reference/run_full_benchmark.md):
+  new `strategies` parameter (character vector, defaults to five
+  strategies: `rrlmgraph_tfidf`, `full_files`, `term_overlap`,
+  `bm25_retrieval`, `no_context`). The previous hardcoded list of six
+  non-Ollama strategies produced 180 LLM calls per benchmark run,
+  exhausting the GitHub Models free-tier quota (~150 req/day) and
+  leaving tasks 026-030 as `NA` in every CI run. The new default of five
+  strategies yields exactly 150 calls (30 tasks × 5), staying within the
+  free-tier limit. Callers can override `strategies` to run any subset,
+  including `"random_k"` when a higher quota is available.
+
 ## rrlmgraphbench 0.1.0
 
 First release.

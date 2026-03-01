@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rrlmgraphbench</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,19 @@
       <small>Source: <a href="https://github.com/davidrsch/rrlmgraph-bench/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="rrlmgraphbench-011">rrlmgraphbench 0.1.1<a class="anchor" aria-label="anchor" href="#rrlmgraphbench-011"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-0-1-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-1"></a></h4>
+<ul><li>
+<code>run_single()</code>: LLM responses are now stripped of markdown code fences (<code>```r ... ```</code>) before scoring. Without this fix <code>parse(text = response_code)</code> failed on every GPT-4.1-mini response, causing <code>syntax_valid = FALSE</code> and <code>runs_without_error = FALSE</code> for all 146 non-NA benchmark rows; scores were consequently ~0.06 instead of the true ~0.3+ range. Adds a new internal helper <code>strip_code_fences()</code>. (bench#36)</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-0-1-1">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-1"></a></h4>
+<ul><li>
+<code><a href="../reference/run_full_benchmark.html">run_full_benchmark()</a></code>: new <code>strategies</code> parameter (character vector, defaults to five strategies: <code>rrlmgraph_tfidf</code>, <code>full_files</code>, <code>term_overlap</code>, <code>bm25_retrieval</code>, <code>no_context</code>). The previous hardcoded list of six non-Ollama strategies produced 180 LLM calls per benchmark run, exhausting the GitHub Models free-tier quota (~150 req/day) and leaving tasks 026-030 as <code>NA</code> in every CI run. The new default of five strategies yields exactly 150 calls (30 tasks × 5), staying within the free-tier limit. Callers can override <code>strategies</code> to run any subset, including <code>"random_k"</code> when a higher quota is available.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="rrlmgraphbench-010">rrlmgraphbench 0.1.0<a class="anchor" aria-label="anchor" href="#rrlmgraphbench-010"></a></h2>
 <p>First release.</p>

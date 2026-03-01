@@ -11,7 +11,7 @@ results to output_path."><meta property="og:image" content="https://davidrsch.gi
 
     <a class="navbar-brand me-2" href="../index.html">rrlmgraphbench</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,6 +54,8 @@ results to <code>output_path</code>.</p>
 <span>  llm_model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42L</span>,</span>
 <span>  rate_limit_delay <span class="op">=</span> <span class="fl">6</span>,</span>
+<span>  strategies <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rrlmgraph_tfidf"</span>, <span class="st">"full_files"</span>, <span class="st">"term_overlap"</span>,</span>
+<span>    <span class="st">"bm25_retrieval"</span>, <span class="st">"no_context"</span><span class="op">)</span>,</span>
 <span>  .dry_run <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -103,6 +105,13 @@ before any stochastic operations.  Defaults to <code>42L</code>.</p></dd>
 <dt id="arg-rate-limit-delay">rate_limit_delay<a class="anchor" aria-label="anchor" href="#arg-rate-limit-delay"></a></dt>
 <dd><p>Numeric(1). Seconds to wait between LLM API calls
 to avoid rate-limit errors.  Defaults to <code>6</code>.</p></dd>
+
+
+<dt id="arg-strategies">strategies<a class="anchor" aria-label="anchor" href="#arg-strategies"></a></dt>
+<dd><p>Character vector. Subset of strategies to run.  Defaults
+to five strategies (<code>rrlmgraph_tfidf</code>, <code>full_files</code>, <code>term_overlap</code>,
+<code>bm25_retrieval</code>, <code>no_context</code>), yielding exactly 150 LLM calls for
+30 tasks, which fits within the GitHub Models free-tier quota.</p></dd>
 
 
 <dt id="arg--dry-run">.dry_run<a class="anchor" aria-label="anchor" href="#arg--dry-run"></a></dt>
