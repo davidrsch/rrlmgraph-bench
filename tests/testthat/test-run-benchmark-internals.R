@@ -540,7 +540,7 @@ test_that("build_context 'rrlmgraph_tfidf' returns context on successful query_c
 
   fake_graph <- structure(list(), class = c("rrlm_graph", "igraph"))
   mock_ctx <- list(
-    nodes = c("pkg::fn1", "pkg::fn2"),  # character vector, as returned by query_context()
+    nodes = c("pkg::fn1", "pkg::fn2"), # character vector, as returned by query_context()
     context_string = "fn1 does X; fn2 does Y"
   )
 
@@ -963,5 +963,191 @@ test_that("run_full_benchmark warns gracefully when benchmark_meta.json cannot b
       )
     ),
     regexp = "benchmark_meta\\.json"
+  )
+})
+# ---- build_context: rrlmgraph_mcp strategy (bench#30) --------------------
+
+test_that("build_context 'rrlmgraph_mcp' with NULL mcp_state returns empty chunks and node_ids", {
+  result <- rrlmgraphbench:::build_context(
+    strategy = "rrlmgraph_mcp",
+    task = make_minimal_task(),
+    graph_tfidf = NULL,
+    graph_ollama = NULL,
+    source_files = character(0L),
+    mcp_state = NULL
+  )
+  expect_equal(result$chunks, character(0L))
+  expect_equal(result$node_ids, character(0L))
+})
+
+test_that("build_context 'rrlmgraph_mcp' result has chunks and node_ids keys", {
+  result <- rrlmgraphbench:::build_context(
+    strategy = "rrlmgraph_mcp",
+    task = make_minimal_task(),
+    graph_tfidf = NULL,
+    graph_ollama = NULL,
+    source_files = character(0L),
+    mcp_state = NULL
+  )
+  expect_true("chunks" %in% names(result))
+  expect_true("node_ids" %in% names(result))
+})
+
+# ---- run_full_benchmark: rrlmgraph_mcp skipped without mcp_server_dir -----
+
+test_that("run_full_benchmark warns and skips rrlmgraph_mcp when mcp_server_dir not set", {
+  skip_if_not_installed("cli")
+
+  tasks_dir <- withr::local_tempdir()
+  task <- list(
+    task_id = "t_mcp_skip",
+    category = "test",
+    project = "mini_ds_project",
+    description = "A task.",
+    seed_node = NULL,
+    ground_truth_nodes = list(),
+    ground_truth_file = NULL,
+    evaluation_method = "other",
+    difficulty = "easy"
+  )
+  jsonlite::write_json(task, file.path(tasks_dir, "t.json"), auto_unbox = TRUE)
+  projects_dir <- system.file("projects", package = "rrlmgraphbench")
+
+  # Ensure RRLMGRAPH_MCP_DIR is unset so the env-var fallback also misses
+  warns <- character(0L)
+  result <- NULL
+  withr::with_envvar(c(RRLMGRAPH_MCP_DIR = ""), {
+    withCallingHandlers(
+      {
+        result <- suppressMessages(
+          run_full_benchmark(
+            tasks_dir = tasks_dir,
+            projects_dir = projects_dir,
+            output_path = tempfile(fileext = ".rds"),
+            n_trials = 1L,
+            strategies = c("rrlmgraph_mcp", "no_context"),
+            mcp_server_dir = NULL,
+            seed = 1L,
+            .dry_run = TRUE
+          )
+        )
+      },
+      warning = function(w) {
+        warns <<- c(warns, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+  })
+  # At least one warning should mention the skipped strategy
+  expect_true(any(grepl("rrlmgraph_mcp", warns, fixed = TRUE)))
+  # rrlmgraph_mcp should not appear in results (skipped)
+  expect_false("rrlmgraph_mcp" %in% unique(result$strategy))
+  # no_context should still run
+  expect_true("no_context" %in% unique(result$strategy))
+})
+
+# ---- resume: version stamp is written into partial checkpoint (bench#30) --
+
+test_that("partial checkpoint gets a .bench_stamp attribute after a dry run", {
+  tasks_dir <- withr::local_tempdir()
+  task <- list(
+    task_id = "t_stamp",
+    category = "test",
+    project = "mini_ds_project",
+    description = "A task.",
+    seed_node = NULL,
+    ground_truth_nodes = list(),
+    ground_truth_file = NULL,
+    evaluation_method = "other",
+    difficulty = "easy"
+  )
+  jsonlite::write_json(task, file.path(tasks_dir, "t.json"), auto_unbox = TRUE)
+  projects_dir <- system.file("projects", package = "rrlmgraphbench")
+  out_path <- file.path(withr::local_tempdir(), "results.rds")
+
+  suppressMessages(suppressWarnings(
+    run_full_benchmark(
+      tasks_dir = tasks_dir,
+      projects_dir = projects_dir,
+      output_path = out_path,
+      n_trials = 1L,
+      strategies = "no_context",
+      seed = 1L,
+      .dry_run = TRUE
+    )
+  ))
+
+  partial_path <- sub("\\.rds$", "_partial.rds", out_path)
+  expect_true(file.exists(partial_path))
+  partial <- readRDS(partial_path)
+  stamp <- attr(partial, ".bench_stamp")
+  expect_true(!is.null(stamp))
+  expect_true(!is.null(stamp$rrlmgraph_version))
+  expect_true(!is.null(stamp$rrlmgraphbench_version))
+  expect_true(!is.null(stamp$created_at))
+})
+
+test_that("resume emits a warning when partial checkpoint has a different rrlmgraph version", {
+  skip_if_not_installed("cli")
+
+  tasks_dir <- withr::local_tempdir()
+  task <- list(
+    task_id = "t_ver",
+    category = "test",
+    project = "mini_ds_project",
+    description = "A task.",
+    seed_node = NULL,
+    ground_truth_nodes = list(),
+    ground_truth_file = NULL,
+    evaluation_method = "other",
+    difficulty = "easy"
+  )
+  jsonlite::write_json(task, file.path(tasks_dir, "t.json"), auto_unbox = TRUE)
+  projects_dir <- system.file("projects", package = "rrlmgraphbench")
+
+  tmp <- withr::local_tempdir()
+  out_path <- file.path(tmp, "results.rds")
+  partial_path <- sub("\\.rds$", "_partial.rds", out_path)
+
+  # Write a partial RDS stamped with a deliberately wrong rrlmgraph version
+  df <- data.frame(
+    task_id = "t_ver",
+    strategy = "no_context",
+    trial = 1L,
+    score = 0.5,
+    context_tokens = 0L,
+    response_tokens = 0L,
+    total_tokens = 0L,
+    latency_sec = 0,
+    hallucination_count = 0L,
+    hallucination_details = "",
+    syntax_valid = TRUE,
+    runs_without_error = TRUE,
+    retrieved_n = 0L,
+    ndcg5 = NA_real_,
+    ndcg10 = NA_real_,
+    stringsAsFactors = FALSE
+  )
+  attr(df, ".bench_stamp") <- list(
+    rrlmgraph_version = "0.0.0",
+    rrlmgraphbench_version = "0.0.0",
+    created_at = "2020-01-01T00:00:00Z"
+  )
+  saveRDS(df, partial_path)
+
+  expect_warning(
+    suppressMessages(
+      run_full_benchmark(
+        tasks_dir = tasks_dir,
+        projects_dir = projects_dir,
+        output_path = out_path,
+        n_trials = 1L,
+        strategies = "no_context",
+        resume = TRUE,
+        seed = 1L,
+        .dry_run = TRUE
+      )
+    ),
+    regexp = "0\\.0\\.0"
   )
 })

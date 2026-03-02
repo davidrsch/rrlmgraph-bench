@@ -16,6 +16,7 @@ run_full_benchmark(
   strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap", "bm25_retrieval",
     "no_context"),
   resume = FALSE,
+  mcp_server_dir = NULL,
   .dry_run = FALSE
 )
 }
@@ -48,18 +49,24 @@ before any stochastic operations.  Defaults to \code{42L}.}
 to avoid rate-limit errors.  Defaults to \code{6}.}
 
 \item{strategies}{Character vector. Subset of strategies to run.  Defaults
-to all six non-Ollama strategies.  Useful for reducing the total number of
-LLM API calls when the provider enforces a daily request quota (e.g.
-GitHub Models free tier allows ~150 requests/day; with 30 tasks and the
-default 5 strategies that is exactly 150 calls).  Ollama strategies are
-silently skipped regardless of this argument when the Ollama daemon is
-unavailable.}
+to all five non-Ollama, non-MCP strategies.  Useful for reducing the total
+number of LLM API calls when the provider enforces a daily request quota
+(e.g. GitHub Models free tier allows ~150 requests/day; with 30 tasks and
+the default 5 strategies that is exactly 150 calls).  Ollama and MCP
+strategies are silently skipped when their prerequisites are unavailable.}
 
 \item{resume}{Logical(1). When \code{TRUE}, check for an existing
 partial checkpoint file (\code{output_path} with \verb{_partial} suffix) and
 skip any (task, strategy, trial) combinations already recorded there.
 Useful when a previous run was interrupted by a daily rate-limit quota
 wall.  Defaults to \code{FALSE}.}
+
+\item{mcp_server_dir}{Character(1) or \code{NULL}. Path to the rrlmgraph-mcp
+package directory containing a built \code{dist/index.js}.  When \code{NULL}
+(default), the environment variable \code{RRLMGRAPH_MCP_DIR} is consulted.
+Required when \code{"rrlmgraph_mcp"} is included in \code{strategies}; the strategy
+is silently skipped (with a warning) if no path is found or Node.js is
+not installed.}
 
 \item{.dry_run}{Logical(1). When \code{TRUE} the LLM is not called;
 dummy scores of \code{0.5} are returned.  Useful for integration tests.}
@@ -101,6 +108,7 @@ free-tier quota of ~150 requests / day.
    Label \tab Description \cr
    \code{rrlmgraph_tfidf} \tab rrlmgraph with TF-IDF node embeddings \cr
    \code{rrlmgraph_ollama} \tab rrlmgraph with Ollama-backed embeddings \cr
+   \code{rrlmgraph_mcp} \tab rrlmgraph via the MCP server (stdio JSON-RPC) \cr
    \code{full_files} \tab Dump every source file in full (baseline) \cr
    \code{term_overlap} \tab Simple term-presence keyword retrieval (no graph) \cr
    \code{bm25_retrieval} \tab True BM25 retrieval -- IDF-weighted, length-normalised \cr

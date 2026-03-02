@@ -23,6 +23,7 @@ Imports:
     ellmer,
     igraph,
     jsonlite,
+    processx,
     rrlmgraph,
     stats
 Suggests:
