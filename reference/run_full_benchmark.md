@@ -1,8 +1,10 @@
 # Run the full rrlmgraph benchmark
 
-Evaluates seven retrieval strategies across every task in `tasks_dir`
-using `n_trials` independent trials each, and persists the combined
-results to `output_path`.
+Evaluates retrieval strategies across every task in `tasks_dir` using
+`n_trials` independent trials each, and persists the combined results to
+`output_path`. By default five strategies are run (150 total LLM calls
+for 30 tasks × 1 trial), which fits within the GitHub Models free-tier
+quota of ~150 requests / day.
 
 ## Usage
 
@@ -16,8 +18,9 @@ run_full_benchmark(
   llm_model = NULL,
   seed = 42L,
   rate_limit_delay = 6,
-  strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap",
-    "bm25_retrieval", "no_context"),
+  strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap", "bm25_retrieval",
+    "no_context"),
+  resume = FALSE,
   .dry_run = FALSE
 )
 ```
@@ -69,10 +72,20 @@ run_full_benchmark(
 
 - strategies:
 
-  Character vector. Subset of strategies to run. Defaults to five
-  strategies (`rrlmgraph_tfidf`, `full_files`, `term_overlap`,
-  `bm25_retrieval`, `no_context`), yielding exactly 150 LLM calls for 30
-  tasks, which fits within the GitHub Models free-tier quota.
+  Character vector. Subset of strategies to run. Defaults to all six
+  non-Ollama strategies. Useful for reducing the total number of LLM API
+  calls when the provider enforces a daily request quota (e.g. GitHub
+  Models free tier allows ~150 requests/day; with 30 tasks and the
+  default 5 strategies that is exactly 150 calls). Ollama strategies are
+  silently skipped regardless of this argument when the Ollama daemon is
+  unavailable.
+
+- resume:
+
+  Logical(1). When `TRUE`, check for an existing partial checkpoint file
+  (`output_path` with `_partial` suffix) and skip any (task, strategy,
+  trial) combinations already recorded there. Useful when a previous run
+  was interrupted by a daily rate-limit quota wall. Defaults to `FALSE`.
 
 - .dry_run:
 
@@ -151,7 +164,7 @@ one row per trial, containing columns:
 
 ## Details
 
-### Strategies
+### Strategies (all supported values for the `strategies` argument)
 
 |                    |                                                       |
 |--------------------|-------------------------------------------------------|
