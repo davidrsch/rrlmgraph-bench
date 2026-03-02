@@ -57,6 +57,11 @@
 #'   default 5 strategies that is exactly 150 calls).  Ollama strategies are
 #'   silently skipped regardless of this argument when the Ollama daemon is
 #'   unavailable.
+#' @param resume       Logical(1). When `TRUE`, check for an existing
+#'   partial checkpoint file (`output_path` with `_partial` suffix) and
+#'   skip any (task, strategy, trial) combinations already recorded there.
+#'   Useful when a previous run was interrupted by a daily rate-limit quota
+#'   wall.  Defaults to `FALSE`.
 #' @param .dry_run     Logical(1). When `TRUE` the LLM is not called;
 #'   dummy scores of `0.5` are returned.  Useful for integration tests.
 #'
@@ -112,6 +117,7 @@ run_full_benchmark <- function(
     "bm25_retrieval",
     "no_context"
   ),
+  resume = FALSE,
   .dry_run = FALSE
 ) {
   llm_provider <- match.arg(llm_provider)
@@ -159,9 +165,41 @@ run_full_benchmark <- function(
   tasks <- lapply(task_files, function(fp) {
     jsonlite::fromJSON(fp, simplifyVector = TRUE)
   })
+  # Shuffle execution order so that quota exhaustion hits different tasks on
+  # different runs, rather than always truncating the last task alphabetically.
+  tasks <- tasks[sample(length(tasks))]
   task_ids <- vapply(tasks, `[[`, character(1L), "task_id")
 
   n_combos <- length(task_ids) * length(strategies) * n_trials
+
+  # ---- Resume from partial checkpoint ----------------------------------
+  # 30 tasks x 5 strategies x 1 trial = 150 calls = daily quota ceiling.
+  # Without resume a quota-exhausted run permanently loses the last N rows.
+  partial_path <- sub("\\.rds$", "_partial.rds", output_path)
+  completed_rows <- list()
+  skip_keys <- character(0L)
+  if (isTRUE(resume) && file.exists(partial_path)) {
+    prev <- tryCatch(readRDS(partial_path), error = function(e) NULL)
+    if (!is.null(prev) && nrow(prev) > 0L) {
+      skip_keys <- paste(
+        prev$task_id,
+        prev$strategy,
+        as.integer(prev$trial),
+        sep = "|"
+      )
+      completed_rows <- lapply(
+        seq_len(nrow(prev)),
+        function(i) prev[i, , drop = FALSE]
+      )
+      message(sprintf(
+        "[rrlmgraphbench] Resume: %d completed row(s) loaded; %d new run(s) remaining.",
+        length(skip_keys),
+        n_combos - length(skip_keys)
+      ))
+    }
+  }
+  n_new <- n_combos - length(skip_keys)
+
   message(sprintf(
     paste0(
       "[rrlmgraphbench] Starting benchmark: ",
@@ -174,7 +212,7 @@ run_full_benchmark <- function(
   ))
 
   t0 <- proc.time()[["elapsed"]]
-  results <- vector("list", n_combos)
+  results <- list()
   run_idx <- 0L
 
   for (task in tasks) {
@@ -203,6 +241,15 @@ run_full_benchmark <- function(
 
     for (strategy in strategies) {
       for (trial in seq_len(n_trials)) {
+        combo_key <- paste(
+          task$task_id,
+          strategy,
+          as.integer(trial),
+          sep = "|"
+        )
+        if (combo_key %in% skip_keys) {
+          next
+        }
         run_idx <- run_idx + 1L
 
         result_row <- run_single(
@@ -217,15 +264,15 @@ run_full_benchmark <- function(
           rate_limit_delay = rate_limit_delay,
           .dry_run = .dry_run
         )
-        results[[run_idx]] <- result_row
+        results[[length(results) + 1L]] <- result_row
 
         elapsed <- proc.time()[["elapsed"]] - t0
         per_run <- elapsed / run_idx
-        remaining <- (n_combos - run_idx) * per_run
+        remaining <- (n_new - run_idx) * per_run
         message(sprintf(
-          "[%d/%d] task=%s strategy=%-20s trial=%d | score=%.3f | est. %.0fs",
+          "[%d/%d new] task=%s strategy=%-20s trial=%d | score=%.3f | est. %.0fs",
           run_idx,
-          n_combos,
+          n_new,
           task$task_id,
           strategy,
           trial,
@@ -236,11 +283,14 @@ run_full_benchmark <- function(
     }
 
     # ---- Checkpoint save after each task block ----------------------------
-    # Allows resuming a partial run if the process is interrupted (bench#35).
-    partial_path <- sub("\\.rds$", "_partial.rds", output_path)
+    # Merges previously loaded rows (resume) with new rows so the partial
+    # file always reflects full combined progress across all runs.
     partial_df <- do.call(
       rbind,
-      lapply(results[seq_len(run_idx)], as.data.frame, stringsAsFactors = FALSE)
+      c(
+        completed_rows,
+        lapply(results, as.data.frame, stringsAsFactors = FALSE)
+      )
     )
     rownames(partial_df) <- NULL
     tryCatch(
@@ -256,7 +306,7 @@ run_full_benchmark <- function(
 
   all_results <- do.call(
     rbind,
-    lapply(results, as.data.frame, stringsAsFactors = FALSE)
+    c(completed_rows, lapply(results, as.data.frame, stringsAsFactors = FALSE))
   )
   rownames(all_results) <- NULL
 
@@ -373,7 +423,7 @@ build_context <- function(
               seed_node = task$seed_node,
               budget_tokens = budget_tokens
             )
-            node_ids <<- if (length(ctx$nodes) > 0L) {
+            node_ids <- if (length(ctx$nodes) > 0L) {
               ctx$nodes
             } else {
               character(0L)
@@ -400,7 +450,7 @@ build_context <- function(
               seed_node = task$seed_node,
               budget_tokens = budget_tokens
             )
-            node_ids <<- if (length(ctx$nodes) > 0L) {
+            node_ids <- if (length(ctx$nodes) > 0L) {
               ctx$nodes
             } else {
               character(0L)

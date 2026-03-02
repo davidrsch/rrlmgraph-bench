@@ -13,8 +13,9 @@ run_full_benchmark(
   llm_model = NULL,
   seed = 42L,
   rate_limit_delay = 6,
-  strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap",
-    "bm25_retrieval", "no_context"),
+  strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap", "bm25_retrieval",
+    "no_context"),
+  resume = FALSE,
   .dry_run = FALSE
 )
 }
@@ -47,9 +48,18 @@ before any stochastic operations.  Defaults to \code{42L}.}
 to avoid rate-limit errors.  Defaults to \code{6}.}
 
 \item{strategies}{Character vector. Subset of strategies to run.  Defaults
-to five strategies (\code{rrlmgraph_tfidf}, \code{full_files}, \code{term_overlap},
-\code{bm25_retrieval}, \code{no_context}), yielding exactly 150 LLM calls for
-30 tasks, which fits within the GitHub Models free-tier quota.}
+to all six non-Ollama strategies.  Useful for reducing the total number of
+LLM API calls when the provider enforces a daily request quota (e.g.
+GitHub Models free tier allows ~150 requests/day; with 30 tasks and the
+default 5 strategies that is exactly 150 calls).  Ollama strategies are
+silently skipped regardless of this argument when the Ollama daemon is
+unavailable.}
+
+\item{resume}{Logical(1). When \code{TRUE}, check for an existing
+partial checkpoint file (\code{output_path} with \verb{_partial} suffix) and
+skip any (task, strategy, trial) combinations already recorded there.
+Useful when a previous run was interrupted by a daily rate-limit quota
+wall.  Defaults to \code{FALSE}.}
 
 \item{.dry_run}{Logical(1). When \code{TRUE} the LLM is not called;
 dummy scores of \code{0.5} are returned.  Useful for integration tests.}
@@ -80,12 +90,14 @@ rrlmgraph strategies; \code{NA_real_} otherwise.}
 }
 }
 \description{
-Evaluates seven retrieval strategies across every task in \code{tasks_dir}
+Evaluates retrieval strategies across every task in \code{tasks_dir}
 using \code{n_trials} independent trials each, and persists the combined
-results to \code{output_path}.
+results to \code{output_path}.  By default five strategies are run (150 total
+LLM calls for 30 tasks × 1 trial), which fits within the GitHub Models
+free-tier quota of ~150 requests / day.
 }
 \details{
-\subsection{Strategies}{\tabular{ll}{
+\subsection{Strategies (all supported values for the \code{strategies} argument)}{\tabular{ll}{
    Label \tab Description \cr
    \code{rrlmgraph_tfidf} \tab rrlmgraph with TF-IDF node embeddings \cr
    \code{rrlmgraph_ollama} \tab rrlmgraph with Ollama-backed embeddings \cr

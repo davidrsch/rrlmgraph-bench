@@ -540,10 +540,7 @@ test_that("build_context 'rrlmgraph_tfidf' returns context on successful query_c
 
   fake_graph <- structure(list(), class = c("rrlm_graph", "igraph"))
   mock_ctx <- list(
-    nodes = data.frame(
-      node_id = c("pkg::fn1", "pkg::fn2"),
-      stringsAsFactors = FALSE
-    ),
+    nodes = c("pkg::fn1", "pkg::fn2"),  # character vector, as returned by query_context()
     context_string = "fn1 does X; fn2 does Y"
   )
 
