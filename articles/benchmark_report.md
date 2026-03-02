@@ -68,6 +68,13 @@ if (!results_available) {
   )
 } else {
   all_results <- readRDS(results_path)
+  # Drop rows where the LLM call failed (e.g. rate-limit exhaustion at end of
+  # daily quota). These NA scores would propagate through statistics and plots.
+  n_na <- sum(is.na(all_results$score))
+  if (n_na > 0L) {
+    message(n_na, " row(s) with NA score dropped (rate-limit failures).")
+    all_results <- all_results[!is.na(all_results$score), ]
+  }
   knitr::kable(
     head(all_results[, c(
       "task_id", "strategy", "trial", "score",
@@ -84,12 +91,12 @@ if (!results_available) {
 
 | task_id             | strategy        | trial |     score | syntax_valid | runs_without_error | total_tokens |
 |:--------------------|:----------------|------:|----------:|:-------------|:-------------------|-------------:|
-| task_001_fm_mini_ds | rrlmgraph_tfidf |     1 | 0.0509434 | FALSE        | FALSE              |          568 |
-| task_001_fm_mini_ds | full_files      |     1 | 0.0646154 | FALSE        | FALSE              |         1902 |
-| task_001_fm_mini_ds | term_overlap    |     1 | 0.0663934 | FALSE        | FALSE              |          491 |
-| task_001_fm_mini_ds | bm25_retrieval  |     1 | 0.0744828 | FALSE        | FALSE              |         1931 |
-| task_001_fm_mini_ds | no_context      |     1 | 0.0538318 | FALSE        | FALSE              |          308 |
-| task_001_fm_mini_ds | random_k        |     1 | 0.0787500 | FALSE        | FALSE              |         1879 |
+| task_001_fm_mini_ds | rrlmgraph_tfidf |     1 | 0.8563655 | TRUE         | TRUE               |          642 |
+| task_001_fm_mini_ds | full_files      |     1 | 0.8016129 | TRUE         | TRUE               |         1854 |
+| task_001_fm_mini_ds | term_overlap    |     1 | 0.8083578 | TRUE         | TRUE               |          455 |
+| task_001_fm_mini_ds | bm25_retrieval  |     1 | 0.8568571 | TRUE         | TRUE               |         1865 |
+| task_001_fm_mini_ds | no_context      |     1 | 0.7824445 | TRUE         | TRUE               |          356 |
+| task_002_fm_shiny   | rrlmgraph_tfidf |     1 | 0.8822222 | TRUE         | TRUE               |          687 |
 
 First 6 rows of raw results. ‘score’ is the composite 0-1 metric.
 ‘syntax_valid’ and ‘runs_without_error’ are 0/1 indicators.
@@ -130,12 +137,11 @@ if (results_available) {
 
 | strategy        |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
 |:----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
-| rrlmgraph_tfidf |  30 |      0.063 |    0.015 |    0.057 |    0.069 |           634.267 |                  0 |
-| full_files      |  30 |      0.069 |    0.020 |    0.062 |    0.077 |          1220.500 |                  0 |
-| term_overlap    |  30 |      0.065 |    0.021 |    0.057 |    0.073 |          2150.600 |                  0 |
-| bm25_retrieval  |  30 |      0.065 |    0.021 |    0.057 |    0.073 |          2036.533 |                  0 |
-| no_context      |  30 |      0.046 |    0.020 |    0.039 |    0.054 |           210.867 |                  0 |
-| random_k        |  30 |      0.066 |    0.025 |    0.057 |    0.075 |          2569.400 |                  0 |
+| rrlmgraph_tfidf |  30 |      0.794 |    0.116 |    0.751 |    0.838 |           733.833 |              0.400 |
+| full_files      |  29 |      0.773 |    0.147 |    0.716 |    0.821 |          1284.966 |              0.379 |
+| term_overlap    |  29 |      0.785 |    0.117 |    0.741 |    0.825 |          2654.000 |              0.448 |
+| bm25_retrieval  |  29 |      0.778 |    0.148 |    0.723 |    0.827 |          2531.241 |              0.414 |
+| no_context      |  29 |      0.702 |    0.163 |    0.640 |    0.759 |           277.690 |              0.276 |
 
 Summary: mean score, 95% CI, token usage, and hallucination rate per
 strategy.
@@ -227,11 +233,10 @@ if (results_available) {
 
 | strategy        |   TER | interpretation                 |
 |:----------------|------:|:-------------------------------|
-| no_context      | 3.871 | More efficient than full_files |
-| rrlmgraph_tfidf | 1.749 | More efficient than full_files |
-| bm25_retrieval  | 0.559 | Less efficient than full_files |
-| term_overlap    | 0.532 | Less efficient than full_files |
-| random_k        | 0.453 | Less efficient than full_files |
+| no_context      | 4.201 | More efficient than full_files |
+| rrlmgraph_tfidf | 1.799 | More efficient than full_files |
+| bm25_retrieval  | 0.510 | Less efficient than full_files |
+| term_overlap    | 0.492 | Less efficient than full_files |
 | full_files      |    NA | N/A (baseline)                 |
 
 Token Efficiency Ratio (TER) vs full_files baseline. TER \> 1: strategy
@@ -270,12 +275,11 @@ if (results_available) {
 
 | strategy        | hallucination_rate | verdict       |
 |:----------------|-------------------:|:--------------|
-| rrlmgraph_tfidf |                  0 | None detected |
-| full_files      |                  0 | None detected |
-| term_overlap    |                  0 | None detected |
-| bm25_retrieval  |                  0 | None detected |
-| no_context      |                  0 | None detected |
-| random_k        |                  0 | None detected |
+| no_context      |              0.276 | High (\> 25%) |
+| full_files      |              0.379 | High (\> 25%) |
+| rrlmgraph_tfidf |              0.400 | High (\> 25%) |
+| bm25_retrieval  |              0.414 | High (\> 25%) |
+| term_overlap    |              0.448 | High (\> 25%) |
 
 Hallucination rate per strategy. Defined as: fraction of trials with \>=
 1 invented function, invalid argument, or wrong namespace.
@@ -284,36 +288,44 @@ Hallucination type breakdown (where available):
 
 ``` r
 if (results_available && "hallucination_details" %in% names(all_results)) {
-  details_flat <- unlist(strsplit(
-    all_results$hallucination_details[nzchar(all_results$hallucination_details)],
-    "; "
-  ))
+  # Use keepNA = FALSE so NA entries in hallucination_details are excluded,
+  # preventing NA propagation into strsplit / regmatches / barplot names.arg.
+  non_empty <- !is.na(all_results$hallucination_details) &
+    nzchar(all_results$hallucination_details)
+  details_flat <- unlist(strsplit(all_results$hallucination_details[non_empty], "; "))
+  details_flat <- details_flat[!is.na(details_flat) & nzchar(details_flat)]
   if (length(details_flat) > 0) {
+    known_types <- c("invented_function", "invalid_argument", "wrong_namespace")
     type_pattern <- regmatches(
       details_flat,
-      regexpr("invented_function|invalid_argument|wrong_namespace", details_flat)
+      regexpr(paste(known_types, collapse = "|"), details_flat)
     )
     type_counts <- sort(table(type_pattern), decreasing = TRUE)
-    barplot(
-      type_counts,
-      main = "Hallucination types across all strategies",
-      ylab = "Count of occurrences",
-      xlab = "Type",
-      col = c("tomato", "goldenrod", "steelblue"),
-      names.arg = c(
-        "Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)",
-        "Invalid\nargument\n(e.g. wrong\nparam name)",
-        "Wrong\nnamespace\n(e.g. pkg1::fn\ninstead of pkg2::fn)"
-      )[match(
-        names(type_counts),
-        c("invented_function", "invalid_argument", "wrong_namespace")
-      )]
-    )
+    # Only plot understood types; skip any unknown category gracefully.
+    keep <- names(type_counts) %in% known_types
+    type_counts <- type_counts[keep]
+    if (length(type_counts) > 0L) {
+      label_map <- c(
+        invented_function = "Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)",
+        invalid_argument  = "Invalid\nargument\n(e.g. wrong\nparam name)",
+        wrong_namespace   = "Wrong\nnamespace\n(e.g. pkg1::fn\ninstead of pkg2::fn)"
+      )
+      barplot(
+        type_counts,
+        main = "Hallucination types across all strategies",
+        ylab = "Count of occurrences",
+        xlab = "Type",
+        col = c("tomato", "goldenrod", "steelblue")[seq_along(type_counts)],
+        names.arg = label_map[names(type_counts)]
+      )
+    } else {
+      message("No known hallucination types detected in the loaded results.")
+    }
   } else {
     message("No hallucinations detected in the loaded results.")
   }
 }
-#> No hallucinations detected in the loaded results.
+#> No known hallucination types detected in the loaded results.
 ```
 
 ------------------------------------------------------------------------
@@ -381,7 +393,10 @@ if (results_available && "task_id" %in% names(all_results)) {
   all_results$project <- ifelse(
     grepl("mini_ds|shiny|rpkg", all_results$task_id), m, NA_character_
   )
-  proj_summary <- aggregate(score ~ strategy + project, data = all_results, FUN = mean)
+  proj_summary <- aggregate(score ~ strategy + project,
+    data = all_results,
+    FUN = function(x) mean(x, na.rm = TRUE)
+  )
   proj_wide <- reshape(proj_summary,
     idvar = "strategy",
     timevar = "project", direction = "wide"
@@ -400,12 +415,11 @@ if (results_available && "task_id" %in% names(all_results)) {
 
 | strategy        | mini_ds |  rpkg | shiny |
 |:----------------|--------:|------:|------:|
-| bm25_retrieval  |   0.076 | 0.063 | 0.055 |
-| full_files      |   0.074 | 0.065 | 0.069 |
-| no_context      |   0.060 | 0.040 | 0.039 |
-| random_k        |   0.079 | 0.061 | 0.058 |
-| rrlmgraph_tfidf |   0.063 | 0.063 | 0.063 |
-| term_overlap    |   0.076 | 0.065 | 0.054 |
+| bm25_retrieval  |   0.853 | 0.747 | 0.730 |
+| full_files      |   0.839 | 0.748 | 0.731 |
+| no_context      |   0.791 | 0.653 | 0.657 |
+| rrlmgraph_tfidf |   0.815 | 0.759 | 0.809 |
+| term_overlap    |   0.841 | 0.786 | 0.730 |
 
 Mean score per strategy per project type. A strategy with large
 differences across projects is not robust.
@@ -421,7 +435,10 @@ consistent performance; downward trends indicate instability.
 
 ``` r
 if (results_available && "trial" %in% names(all_results)) {
-  trial_means <- aggregate(score ~ strategy + trial, data = all_results, FUN = mean)
+  trial_means <- aggregate(score ~ strategy + trial,
+    data = all_results,
+    FUN = function(x) mean(x, na.rm = TRUE)
+  )
   strategies <- unique(trial_means$strategy)
   cols <- rainbow(length(strategies))
   plot(range(trial_means$trial), c(0, 1),
