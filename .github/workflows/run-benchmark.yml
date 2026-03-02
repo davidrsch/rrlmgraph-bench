@@ -62,10 +62,12 @@ jobs:
               llm_model    = "gpt-4.1-mini"
             )
             message("Benchmark complete. Rows: ", nrow(results))
-            message("Score summary: min=", min(results$score),
-                    " max=", max(results$score),
-                    " mean=", round(mean(results$score), 3))
-            message("Total tokens: ", sum(results$total_tokens))
+            n_na <- sum(is.na(results$score))
+            if (n_na > 0) message("  WARNING: ", n_na, " NA score(s) -- likely rate-limit failures")
+            message("Score summary: min=", min(results$score, na.rm = TRUE),
+                    " max=", max(results$score, na.rm = TRUE),
+                    " mean=", round(mean(results$score, na.rm = TRUE), 3))
+            message("Total tokens: ", sum(results$total_tokens, na.rm = TRUE))
           '
 
       - name: Commit results
