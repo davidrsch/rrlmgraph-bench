@@ -79,14 +79,31 @@ compute_benchmark_statistics <- function(all_results) {
   # ---- 1. Summary table ----------------------------------------------
   summary_rows <- lapply(strategies, function(s) {
     sub_df <- all_results[all_results$strategy == s, , drop = FALSE]
-    scores <- sub_df$score
-    n <- length(scores)
-    mu <- mean(scores, na.rm = TRUE)
-    sigma <- sd(scores, na.rm = TRUE)
+    # Drop NA scores (e.g. rate-limit failures) before all statistics so
+    # that a handful of missing rows don't cascade into NA CI / SD.
+    scores <- as.numeric(na.omit(sub_df$score))
+    n_total <- nrow(sub_df) # for reporting
+    n <- length(scores) # effective observations
+    if (n == 0L) {
+      return(data.frame(
+        strategy = s,
+        n = n_total,
+        mean_score = NA_real_,
+        sd_score = NA_real_,
+        ci_lo_95 = NA_real_,
+        ci_hi_95 = NA_real_,
+        mean_total_tokens = mean(sub_df$total_tokens, na.rm = TRUE),
+        hallucination_rate = NA_real_,
+        ci_method = "none",
+        stringsAsFactors = FALSE
+      ))
+    }
+    mu <- mean(scores)
+    sigma <- sd(scores)
 
     # CI selection
     use_bootstrap <- FALSE
-    if (n < 30) {
+    if (n < 30L) {
       sw_p <- tryCatch(
         stats::shapiro.test(scores)$p.value,
         error = function(e) 1
@@ -110,7 +127,7 @@ compute_benchmark_statistics <- function(all_results) {
 
     data.frame(
       strategy = s,
-      n = n,
+      n = n_total,
       mean_score = mu,
       sd_score = sigma,
       ci_lo_95 = ci_lo,
@@ -151,10 +168,10 @@ compute_benchmark_statistics <- function(all_results) {
   # Requires variance, so skip when n_trials < 2.
   if (n_trials_detected < 2L) {
     return(list(
-      summary  = summary_df,
-      ter      = ter,
+      summary = summary_df,
+      ter = ter,
       pairwise = NULL,
-      ndcg     = NULL
+      ndcg = NULL
     ))
   }
 
@@ -162,14 +179,14 @@ compute_benchmark_statistics <- function(all_results) {
   pairwise_rows <- lapply(pairs, function(p) {
     s1 <- p[1L]
     s2 <- p[2L]
-    x1 <- all_results$score[all_results$strategy == s1]
-    x2 <- all_results$score[all_results$strategy == s2]
+    x1 <- as.numeric(na.omit(all_results$score[all_results$strategy == s1]))
+    x2 <- as.numeric(na.omit(all_results$score[all_results$strategy == s2]))
     tt <- tryCatch(
       stats::t.test(x1, x2),
       error = function(e) list(p.value = NA_real_, statistic = NA_real_)
     )
     pooled_sd <- sqrt((stats::var(x1) + stats::var(x2)) / 2)
-    cohens_d <- if (pooled_sd > 0) {
+    cohens_d <- if (!is.na(pooled_sd) && pooled_sd > 0) {
       (mean(x1) - mean(x2)) / pooled_sd
     } else {
       NA_real_
@@ -197,10 +214,20 @@ compute_benchmark_statistics <- function(all_results) {
   # legacy rank/relevant columns so that new and old result files both work.
   ndcg <- NULL
   if (all(c("ndcg5", "ndcg10") %in% names(all_results))) {
-    ndcg5_mean  <- tapply(all_results$ndcg5,  all_results$strategy, mean, na.rm = TRUE)
-    ndcg10_mean <- tapply(all_results$ndcg10, all_results$strategy, mean, na.rm = TRUE)
+    ndcg5_mean <- tapply(
+      all_results$ndcg5,
+      all_results$strategy,
+      mean,
+      na.rm = TRUE
+    )
+    ndcg10_mean <- tapply(
+      all_results$ndcg10,
+      all_results$strategy,
+      mean,
+      na.rm = TRUE
+    )
     ndcg <- list(
-      ndcg5  = ndcg5_mean[strategies],
+      ndcg5 = ndcg5_mean[strategies],
       ndcg10 = ndcg10_mean[strategies]
     )
   } else if (all(c("rank", "relevant") %in% names(all_results))) {

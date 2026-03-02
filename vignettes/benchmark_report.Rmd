@@ -87,6 +87,13 @@ if (!results_available) {
   )
 } else {
   all_results <- readRDS(results_path)
+  # Drop rows where the LLM call failed (e.g. rate-limit exhaustion at end of
+  # daily quota). These NA scores would propagate through statistics and plots.
+  n_na <- sum(is.na(all_results$score))
+  if (n_na > 0L) {
+    message(n_na, " row(s) with NA score dropped (rate-limit failures).")
+    all_results <- all_results[!is.na(all_results$score), ]
+  }
   knitr::kable(
     head(all_results[, c(
       "task_id", "strategy", "trial", "score",
@@ -342,7 +349,10 @@ if (results_available && "task_id" %in% names(all_results)) {
   all_results$project <- ifelse(
     grepl("mini_ds|shiny|rpkg", all_results$task_id), m, NA_character_
   )
-  proj_summary <- aggregate(score ~ strategy + project, data = all_results, FUN = mean)
+  proj_summary <- aggregate(score ~ strategy + project,
+    data = all_results,
+    FUN = function(x) mean(x, na.rm = TRUE)
+  )
   proj_wide <- reshape(proj_summary,
     idvar = "strategy",
     timevar = "project", direction = "wide"
@@ -370,7 +380,10 @@ performance; downward trends indicate instability.
 
 ```{r improvement-plot}
 if (results_available && "trial" %in% names(all_results)) {
-  trial_means <- aggregate(score ~ strategy + trial, data = all_results, FUN = mean)
+  trial_means <- aggregate(score ~ strategy + trial,
+    data = all_results,
+    FUN = function(x) mean(x, na.rm = TRUE)
+  )
   strategies <- unique(trial_means$strategy)
   cols <- rainbow(length(strategies))
   plot(range(trial_means$trial), c(0, 1),
