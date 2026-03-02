@@ -12,6 +12,10 @@
 <url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/compute_benchmark_statistics.html</loc></url>
 <url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/count_hallucinations.html</loc></url>
 <url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/index.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/mcp_query_context.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/mcp_read_response.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/mcp_start_server.html</loc></url>
+<url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/mcp_write_msg.html</loc></url>
 <url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/rrlmgraphbench-package.html</loc></url>
 <url><loc>https://davidrsch.github.io/rrlmgraph-bench/reference/run_full_benchmark.html</loc></url>
 </urlset>

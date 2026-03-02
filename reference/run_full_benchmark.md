@@ -21,6 +21,7 @@ run_full_benchmark(
   strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap", "bm25_retrieval",
     "no_context"),
   resume = FALSE,
+  mcp_server_dir = NULL,
   .dry_run = FALSE
 )
 ```
@@ -72,12 +73,12 @@ run_full_benchmark(
 
 - strategies:
 
-  Character vector. Subset of strategies to run. Defaults to all six
-  non-Ollama strategies. Useful for reducing the total number of LLM API
-  calls when the provider enforces a daily request quota (e.g. GitHub
-  Models free tier allows ~150 requests/day; with 30 tasks and the
-  default 5 strategies that is exactly 150 calls). Ollama strategies are
-  silently skipped regardless of this argument when the Ollama daemon is
+  Character vector. Subset of strategies to run. Defaults to all five
+  non-Ollama, non-MCP strategies. Useful for reducing the total number
+  of LLM API calls when the provider enforces a daily request quota
+  (e.g. GitHub Models free tier allows ~150 requests/day; with 30 tasks
+  and the default 5 strategies that is exactly 150 calls). Ollama and
+  MCP strategies are silently skipped when their prerequisites are
   unavailable.
 
 - resume:
@@ -86,6 +87,15 @@ run_full_benchmark(
   (`output_path` with `_partial` suffix) and skip any (task, strategy,
   trial) combinations already recorded there. Useful when a previous run
   was interrupted by a daily rate-limit quota wall. Defaults to `FALSE`.
+
+- mcp_server_dir:
+
+  Character(1) or `NULL`. Path to the rrlmgraph-mcp package directory
+  containing a built `dist/index.js`. When `NULL` (default), the
+  environment variable `RRLMGRAPH_MCP_DIR` is consulted. Required when
+  `"rrlmgraph_mcp"` is included in `strategies`; the strategy is
+  silently skipped (with a warning) if no path is found or Node.js is
+  not installed.
 
 - .dry_run:
 
@@ -171,6 +181,7 @@ one row per trial, containing columns:
 | Label              | Description                                           |
 | `rrlmgraph_tfidf`  | rrlmgraph with TF-IDF node embeddings                 |
 | `rrlmgraph_ollama` | rrlmgraph with Ollama-backed embeddings               |
+| `rrlmgraph_mcp`    | rrlmgraph via the MCP server (stdio JSON-RPC)         |
 | `full_files`       | Dump every source file in full (baseline)             |
 | `term_overlap`     | Simple term-presence keyword retrieval (no graph)     |
 | `bm25_retrieval`   | True BM25 retrieval – IDF-weighted, length-normalised |
