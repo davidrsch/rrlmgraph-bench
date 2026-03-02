@@ -254,31 +254,39 @@ Hallucination type breakdown (where available):
 
 ```{r hall-types}
 if (results_available && "hallucination_details" %in% names(all_results)) {
-  details_flat <- unlist(strsplit(
-    all_results$hallucination_details[nzchar(all_results$hallucination_details)],
-    "; "
-  ))
+  # Use keepNA = FALSE so NA entries in hallucination_details are excluded,
+  # preventing NA propagation into strsplit / regmatches / barplot names.arg.
+  non_empty <- !is.na(all_results$hallucination_details) &
+    nzchar(all_results$hallucination_details)
+  details_flat <- unlist(strsplit(all_results$hallucination_details[non_empty], "; "))
+  details_flat <- details_flat[!is.na(details_flat) & nzchar(details_flat)]
   if (length(details_flat) > 0) {
+    known_types <- c("invented_function", "invalid_argument", "wrong_namespace")
     type_pattern <- regmatches(
       details_flat,
-      regexpr("invented_function|invalid_argument|wrong_namespace", details_flat)
+      regexpr(paste(known_types, collapse = "|"), details_flat)
     )
     type_counts <- sort(table(type_pattern), decreasing = TRUE)
-    barplot(
-      type_counts,
-      main = "Hallucination types across all strategies",
-      ylab = "Count of occurrences",
-      xlab = "Type",
-      col = c("tomato", "goldenrod", "steelblue"),
-      names.arg = c(
-        "Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)",
-        "Invalid\nargument\n(e.g. wrong\nparam name)",
-        "Wrong\nnamespace\n(e.g. pkg1::fn\ninstead of pkg2::fn)"
-      )[match(
-        names(type_counts),
-        c("invented_function", "invalid_argument", "wrong_namespace")
-      )]
-    )
+    # Only plot understood types; skip any unknown category gracefully.
+    keep <- names(type_counts) %in% known_types
+    type_counts <- type_counts[keep]
+    if (length(type_counts) > 0L) {
+      label_map <- c(
+        invented_function = "Invented\nfunction\n(e.g. foo::bar\nthat doesn't exist)",
+        invalid_argument  = "Invalid\nargument\n(e.g. wrong\nparam name)",
+        wrong_namespace   = "Wrong\nnamespace\n(e.g. pkg1::fn\ninstead of pkg2::fn)"
+      )
+      barplot(
+        type_counts,
+        main = "Hallucination types across all strategies",
+        ylab = "Count of occurrences",
+        xlab = "Type",
+        col = c("tomato", "goldenrod", "steelblue")[seq_along(type_counts)],
+        names.arg = label_map[names(type_counts)]
+      )
+    } else {
+      message("No known hallucination types detected in the loaded results.")
+    }
   } else {
     message("No hallucinations detected in the loaded results.")
   }
