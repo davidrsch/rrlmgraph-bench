@@ -52,10 +52,10 @@
 #' @param rate_limit_delay Numeric(1). Seconds to wait between LLM API calls
 #'   to avoid rate-limit errors.  Defaults to `6`.
 #' @param strategies   Character vector. Subset of strategies to run.  Defaults
-#'   to all five non-Ollama, non-MCP strategies.  Useful for reducing the total
+#'   to all non-Ollama, non-MCP strategies.  Useful for reducing the total
 #'   number of LLM API calls when the provider enforces a daily request quota
-#'   (e.g. GitHub Models free tier allows ~150 requests/day; with 30 tasks and
-#'   the default 5 strategies that is exactly 150 calls).  Ollama and MCP
+#'   (e.g. GitHub Models free tier allows ~180 requests/day; with 30 tasks and
+#'   6 CI-eligible strategies that is exactly 180 calls).  Ollama and MCP
 #'   strategies are silently skipped when their prerequisites are unavailable.
 #' @param resume       Logical(1). When `TRUE`, check for an existing
 #'   partial checkpoint file (`output_path` with `_partial` suffix) and
@@ -118,10 +118,12 @@ run_full_benchmark <- function(
   rate_limit_delay = 6,
   strategies = c(
     "rrlmgraph_tfidf",
+    "rrlmgraph_ollama",
     "full_files",
     "term_overlap",
     "bm25_retrieval",
-    "no_context"
+    "no_context",
+    "rrlmgraph_mcp"
   ),
   resume = FALSE,
   mcp_server_dir = NULL,
@@ -213,7 +215,8 @@ run_full_benchmark <- function(
   n_combos <- length(task_ids) * length(strategies) * n_trials
 
   # ---- Resume from partial checkpoint ----------------------------------
-  # 30 tasks x 5 strategies x 1 trial = 150 calls = daily quota ceiling.
+  # 30 tasks x 6 CI-eligible strategies x 1 trial = 180 calls = daily quota ceiling.
+  # (rrlmgraph_ollama auto-skips when Ollama is unavailable, giving 6 strategies in CI.)
   # Without resume a quota-exhausted run permanently loses the last N rows.
   partial_path <- sub("\\.rds$", "_partial.rds", output_path)
   completed_rows <- list()
