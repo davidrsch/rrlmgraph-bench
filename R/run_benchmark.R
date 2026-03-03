@@ -54,8 +54,8 @@
 #' @param strategies   Character vector. Subset of strategies to run.  Defaults
 #'   to all non-Ollama, non-MCP strategies.  Useful for reducing the total
 #'   number of LLM API calls when the provider enforces a daily request quota
-#'   (e.g. GitHub Models free tier allows ~180 requests/day; with 30 tasks and
-#'   6 CI-eligible strategies that is exactly 180 calls).  Ollama and MCP
+#'   (e.g. GitHub Models free tier allows ~210 requests/day; with 30 tasks and
+#'   all 7 strategies that is exactly 210 calls).  Ollama and MCP
 #'   strategies are silently skipped when their prerequisites are unavailable.
 #' @param resume       Logical(1). When `TRUE`, check for an existing
 #'   partial checkpoint file (`output_path` with `_partial` suffix) and
@@ -155,8 +155,8 @@ run_full_benchmark <- function(
   }
 
   # Skip Ollama-backed strategy when the local daemon is not running.
-  # In CI Ollama is never available, so without this guard the
-  # rrlmgraph_ollama results are identical to no_context and mislead
+  # In CI the Ollama daemon is started by the workflow before this script runs;
+  # the guard remains as a safety net in case setup failed.
   # readers of the published report. (see bench#18)
   if ("rrlmgraph_ollama" %in% strategies && !rrlmgraph::ollama_available()) {
     cli::cli_warn(c(
@@ -215,8 +215,9 @@ run_full_benchmark <- function(
   n_combos <- length(task_ids) * length(strategies) * n_trials
 
   # ---- Resume from partial checkpoint ----------------------------------
-  # 30 tasks x 6 CI-eligible strategies x 1 trial = 180 calls = daily quota ceiling.
-  # (rrlmgraph_ollama auto-skips when Ollama is unavailable, giving 6 strategies in CI.)
+  # 30 tasks x 7 strategies x 1 trial = 210 calls = daily quota ceiling.
+  # (rrlmgraph_ollama uses nomic-embed-text for embeddings only; LLM scoring
+  #  still goes through the llm_provider.  Ollama auto-skips if daemon is down.)
   # Without resume a quota-exhausted run permanently loses the last N rows.
   partial_path <- sub("\\.rds$", "_partial.rds", output_path)
   completed_rows <- list()

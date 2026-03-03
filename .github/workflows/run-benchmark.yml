@@ -38,6 +38,26 @@ jobs:
         run: npm run build
         working-directory: rrlmgraph-mcp
 
+      # Install Ollama so rrlmgraph_ollama (embedding strategy) can run.
+      # nomic-embed-text is ~274 MB; downloads in ~30 s on GitHub-hosted runners.
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama daemon
+        run: ollama serve &
+
+      - name: Wait for Ollama to be ready
+        run: |
+          for i in $(seq 1 30); do
+            curl -s http://localhost:11434/api/tags > /dev/null 2>&1 && echo "Ollama ready" && exit 0
+            echo "Waiting for Ollama... ($i/30)"
+            sleep 2
+          done
+          echo "ERROR: Ollama did not start in time" && exit 1
+
+      - name: Pull nomic-embed-text model
+        run: ollama pull nomic-embed-text
+
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
