@@ -274,20 +274,32 @@ run_full_benchmark <- function(
         }
       }
 
+      # Only treat non-NA rows as done; NA rows (rate-limit failures etc.)
+      # are re-queued so the next run can fill them in automatically.
+      non_na_mask <- !is.na(prev$score)
+      prev_done <- prev[non_na_mask, , drop = FALSE]
+      prev_retry <- prev[!non_na_mask, , drop = FALSE]
+      n_retry <- nrow(prev_retry)
+
       skip_keys <- paste(
-        prev$task_id,
-        prev$strategy,
-        as.integer(prev$trial),
+        prev_done$task_id,
+        prev_done$strategy,
+        as.integer(prev_done$trial),
         sep = "|"
       )
       completed_rows <- lapply(
-        seq_len(nrow(prev)),
-        function(i) prev[i, , drop = FALSE]
+        seq_len(nrow(prev_done)),
+        function(i) prev_done[i, , drop = FALSE]
       )
       message(sprintf(
-        "[rrlmgraphbench] Resume: %d completed row(s) loaded; %d new run(s) remaining.",
+        "[rrlmgraphbench] Resume: %d completed row(s) loaded; %d new run(s) remaining%s.",
         length(skip_keys),
-        n_combos - length(skip_keys)
+        n_combos - length(skip_keys),
+        if (n_retry > 0L) {
+          sprintf(" (%d NA row(s) will be retried)", n_retry)
+        } else {
+          ""
+        }
       ))
     }
   }

@@ -1151,3 +1151,82 @@ test_that("resume emits a warning when partial checkpoint has a different rrlmgr
     regexp = "0\\.0\\.0"
   )
 })
+# ---- resume: NA rows in partial checkpoint are retried, not skipped ----------
+test_that("resume re-queues NA-scored rows from partial checkpoint", {
+  skip_if_not_installed("withr")
+
+  tasks_dir <- withr::local_tempdir()
+  task <- list(
+    task_id = "t_na_retry",
+    category = "test",
+    project = "mini_ds_project",
+    description = "NA retry task.",
+    seed_node = NULL,
+    ground_truth_nodes = list(),
+    ground_truth_file = NULL,
+    evaluation_method = "other",
+    difficulty = "easy"
+  )
+  jsonlite::write_json(task, file.path(tasks_dir, "t.json"), auto_unbox = TRUE)
+  projects_dir <- system.file("projects", package = "rrlmgraphbench")
+
+  tmp <- withr::local_tempdir()
+  out_path <- file.path(tmp, "results.rds")
+  partial_path <- sub("\\.rds$", "_partial.rds", out_path)
+
+  # Write a partial RDS where the one row has NA score (simulates rate-limit)
+  df_na <- data.frame(
+    task_id = "t_na_retry",
+    strategy = "no_context",
+    trial = 1L,
+    score = NA_real_,
+    context_tokens = 0L,
+    response_tokens = 0L,
+    total_tokens = 0L,
+    latency_sec = 0,
+    hallucination_count = 0L,
+    hallucination_details = "",
+    syntax_valid = TRUE,
+    runs_without_error = TRUE,
+    retrieved_n = 0L,
+    ndcg5 = NA_real_,
+    ndcg10 = NA_real_,
+    stringsAsFactors = FALSE
+  )
+  attr(df_na, ".bench_stamp") <- list(
+    rrlmgraph_version = as.character(utils::packageVersion("rrlmgraph")),
+    rrlmgraphbench_version = as.character(utils::packageVersion(
+      "rrlmgraphbench"
+    )),
+    created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+  )
+  saveRDS(df_na, partial_path)
+
+  # With .dry_run = TRUE scoring always succeeds; the NA row must be retried and
+  # the final result should have a non-NA score for t_na_retry/no_context/1.
+  result <- suppressMessages(
+    suppressWarnings(
+      run_full_benchmark(
+        tasks_dir = tasks_dir,
+        projects_dir = projects_dir,
+        output_path = out_path,
+        n_trials = 1L,
+        strategies = "no_context",
+        resume = TRUE,
+        seed = 1L,
+        .dry_run = TRUE
+      )
+    )
+  )
+
+  row <- result[
+    result$task_id == "t_na_retry" &
+      result$strategy == "no_context" &
+      result$trial == 1L,
+  ]
+  expect_equal(nrow(row), 1L)
+  expect_false(
+    is.na(row$score),
+    info = "NA-scored row should have been retried and filled in"
+  )
+})
