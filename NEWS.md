@@ -1,3 +1,31 @@
+# rrlmgraphbench (development version)
+
+### Bug fixes
+
+- `run_full_benchmark()`: the `rrlmgraph_mcp` strategy now starts a fresh
+  MCP server **per task** rather than one global server per run.  The
+  previous design called `mcp_start_server()` with `projects_dir` (the
+  parent of all task project directories) as `project_path`, but
+  `better-sqlite3` could not create `graph.sqlite` there on read-only CI
+  paths, causing a silent crash before the JSON-RPC initialize handshake
+  completed.  Each task now: (1) exports its TF-IDF graph to a temporary
+  SQLite file via `rrlmgraph::export_to_sqlite()`, (2) starts an MCP
+  server with the correct per-task `--project-path` and `--db-path`, and
+  (3) kills the server and deletes the temp file after all trials complete.
+  Fixes the `rrlmgraph_mcp` strategy being silently dropped from all CI
+  benchmark runs. (bench#30)
+
+- `run_full_benchmark()` workflow: bumped `n_trials` from 1 to 2 so the
+  paired Wilcoxon test has 60 task-pairs instead of 30, making it possible
+  to reach statistical significance (p < 0.05).
+
+### Improvements
+
+- `mcp_start_server()`: added `db_path` parameter.  When supplied,
+  `--db-path <db_path>` is passed to the Node.js process, allowing the
+  caller to point the MCP server at a pre-built SQLite export rather than
+  the default `<project_path>/.rrlmgraph/graph.sqlite` location.
+
 # rrlmgraphbench 0.1.1
 
 ### Bug fixes
