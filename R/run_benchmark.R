@@ -168,32 +168,41 @@ run_full_benchmark <- function(
 
   # ---- MCP server setup (rrlmgraph_mcp strategy, bench#30) ---------------
   # Resolve mcp_server_dir from parameter, then env var RRLMGRAPH_MCP_DIR.
-  mcp_state <- NULL
+  # A fresh server is started per task (not globally) so that each task gets
+  # a SQLite export of *its own* graph.  We do a preflight check here to
+  # drop the strategy early when Node.js or the built dist is missing.
+  resolved_mcp_dir <- NULL
   if ("rrlmgraph_mcp" %in% strategies) {
-    resolved_mcp_dir <- if (
-      !is.null(mcp_server_dir) && nzchar(mcp_server_dir)
-    ) {
+    candidate_dir <- if (!is.null(mcp_server_dir) && nzchar(mcp_server_dir)) {
       mcp_server_dir
     } else {
       Sys.getenv("RRLMGRAPH_MCP_DIR", unset = "")
     }
-    if (!nzchar(resolved_mcp_dir)) {
+    if (!nzchar(candidate_dir)) {
       cli::cli_warn(c(
         "!" = "No MCP server directory -- skipping {.val rrlmgraph_mcp} strategy.",
         "i" = "Set {.envvar RRLMGRAPH_MCP_DIR} or pass {.arg mcp_server_dir} to {.fn run_full_benchmark}."
       ))
       strategies <- setdiff(strategies, "rrlmgraph_mcp")
-    } else if (!.dry_run) {
-      # Start one MCP server process per run; reused across all tasks.
-      # mcp_start_server() returns NULL and warns if Node.js is absent.
-      mcp_state <- mcp_start_server(resolved_mcp_dir, projects_dir)
-      if (is.null(mcp_state)) {
+    } else if (!nzchar(Sys.which("node"))) {
+      cli::cli_warn(c(
+        "!" = "Node.js not found -- skipping {.val rrlmgraph_mcp} strategy.",
+        "i" = "Install Node.js to enable the MCP strategy."
+      ))
+      strategies <- setdiff(strategies, "rrlmgraph_mcp")
+    } else {
+      index_js <- file.path(candidate_dir, "dist", "index.js")
+      if (!file.exists(index_js)) {
+        cli::cli_warn(c(
+          "!" = "rrlmgraph-mcp dist not found at {.path {index_js}} -- skipping {.val rrlmgraph_mcp}.",
+          "i" = "Run {.code npm run build} in the MCP directory."
+        ))
         strategies <- setdiff(strategies, "rrlmgraph_mcp")
       } else {
-        on.exit(
-          tryCatch(mcp_state$proc$kill(), error = function(e) NULL),
-          add = TRUE
-        )
+        resolved_mcp_dir <- candidate_dir
+        cli::cli_inform(c(
+          "v" = "rrlmgraph-mcp: per-task server mode enabled ({.path {resolved_mcp_dir}})."
+        ))
       }
     }
   }
@@ -348,6 +357,46 @@ run_full_benchmark <- function(
       source_files <- list_r_files(project_path)
     }
 
+    # ---- Per-task MCP server (bench#30) ----------------------------------
+    # Export this task's tfidf graph to a temp SQLite file and start a fresh
+    # MCP server pointing to it.  The server is killed after all trials for
+    # this task complete, and the temp file is deleted.
+    task_mcp_state <- NULL
+    mcp_tmp_db <- NULL
+    if (
+      "rrlmgraph_mcp" %in% strategies && !is.null(resolved_mcp_dir) && !.dry_run
+    ) {
+      if (!is.null(graph_tfidf)) {
+        mcp_tmp_db <- tempfile(fileext = ".sqlite")
+        export_ok <- tryCatch(
+          {
+            rrlmgraph::export_to_sqlite(graph_tfidf, mcp_tmp_db)
+            TRUE
+          },
+          error = function(e) {
+            cli::cli_warn(c(
+              "!" = "export_to_sqlite failed for {task$task_id}: {conditionMessage(e)}",
+              "i" = "rrlmgraph_mcp will yield empty context for this task."
+            ))
+            FALSE
+          }
+        )
+        if (export_ok) {
+          task_mcp_state <- mcp_start_server(
+            mcp_dir = resolved_mcp_dir,
+            project_path = project_path,
+            db_path = mcp_tmp_db
+          )
+          if (is.null(task_mcp_state)) {
+            cli::cli_warn(c(
+              "!" = "MCP server failed to start for {task$task_id}.",
+              "i" = "rrlmgraph_mcp will yield empty context for this task."
+            ))
+          }
+        }
+      }
+    }
+
     for (strategy in strategies) {
       for (trial in seq_len(n_trials)) {
         combo_key <- paste(
@@ -371,7 +420,7 @@ run_full_benchmark <- function(
           llm_provider = llm_provider,
           llm_model = llm_model,
           rate_limit_delay = rate_limit_delay,
-          mcp_state = mcp_state,
+          mcp_state = task_mcp_state,
           .dry_run = .dry_run
         )
         results[[length(results) + 1L]] <- result_row
@@ -418,6 +467,16 @@ run_full_benchmark <- function(
         )
       }
     )
+
+    # ---- Per-task MCP cleanup -------------------------------------------
+    if (!is.null(task_mcp_state)) {
+      tryCatch(task_mcp_state$proc$kill(), error = function(e) NULL)
+      task_mcp_state <- NULL
+    }
+    if (!is.null(mcp_tmp_db)) {
+      unlink(mcp_tmp_db)
+      mcp_tmp_db <- NULL
+    }
   }
 
   all_results <- do.call(

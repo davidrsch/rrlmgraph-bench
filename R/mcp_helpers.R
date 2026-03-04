@@ -64,8 +64,24 @@ mcp_read_response <- function(proc, id, timeout_ms = 30000L) {
 #' \code{$next_id}.  Returns \code{NULL} with a \code{cli_warn()} if
 #' Node.js is absent, the \code{dist/index.js} file is missing, or the
 #' initialization handshake times out.
+#'
+#' @param mcp_dir Path to the rrlmgraph-mcp checkout (must contain
+#'   \code{dist/index.js}).
+#' @param project_path Path to the R project root (passed as
+#'   \code{--project-path}).
+#' @param db_path Optional path to a pre-built \file{graph.sqlite}.  When
+#'   supplied it is passed as \code{--db-path}, overriding the default
+#'   \code{<project_path>/.rrlmgraph/graph.sqlite} lookup.  Use this to
+#'   supply a temporary SQLite export created by
+#'   \code{rrlmgraph::export_to_sqlite()} for per-task benchmarking.
+#' @param timeout_ms Handshake timeout in milliseconds (default 10 000).
 #' @keywords internal
-mcp_start_server <- function(mcp_dir, project_path, timeout_ms = 10000L) {
+mcp_start_server <- function(
+  mcp_dir,
+  project_path,
+  db_path = NULL,
+  timeout_ms = 10000L
+) {
   node_path <- Sys.which("node")
   if (!nzchar(node_path)) {
     cli::cli_warn(c(
@@ -83,10 +99,15 @@ mcp_start_server <- function(mcp_dir, project_path, timeout_ms = 10000L) {
     return(NULL)
   }
 
+  node_args <- c(index_js, "--project-path", project_path)
+  if (!is.null(db_path) && nzchar(db_path)) {
+    node_args <- c(node_args, "--db-path", db_path)
+  }
+
   proc <- tryCatch(
     processx::process$new(
       command = node_path,
-      args = c(index_js, "--project-path", project_path),
+      args = node_args,
       stdin = "|",
       stdout = "|",
       stderr = "|"
