@@ -42,7 +42,7 @@ test_that("returns a list with summary, ter, pairwise, ndcg elements", {
   expect_type(result, "list")
   expect_named(
     result,
-    c("summary", "ter", "pairwise", "ndcg"),
+    c("summary", "ter", "pairwise", "ndcg", "wilcoxon"),
     ignore.order = TRUE
   )
 })
@@ -193,4 +193,46 @@ test_that("uses bootstrap CI when n < 30 and distribution is non-normal", {
   ci_methods <- result$summary$ci_method
   # At least one strategy used bootstrap (small n + bimodal)
   expect_true(any(ci_methods %in% c("bootstrap", "t")))
+})
+# ---- Paired Wilcoxon test (bench#38) ----------------------------------------
+
+test_that("wilcoxon is NULL when bm25_retrieval absent", {
+  df <- make_mock_results(strategies = c("rrlmgraph_tfidf", "full_files"))
+  result <- suppressWarnings(compute_benchmark_statistics(df))
+  expect_null(result$wilcoxon)
+})
+
+test_that("wilcoxon has expected columns when bm25_retrieval present", {
+  df <- make_mock_results(
+    strategies = c("rrlmgraph_tfidf", "bm25_retrieval", "full_files"),
+    n = 10L
+  )
+  result <- suppressWarnings(compute_benchmark_statistics(df))
+  expect_false(is.null(result$wilcoxon))
+  expected_cols <- c(
+    "strategy",
+    "reference",
+    "V",
+    "p_value",
+    "n_pairs",
+    "wins",
+    "ties",
+    "losses"
+  )
+  expect_true(all(expected_cols %in% names(result$wilcoxon)))
+  # bm25 should not appear as a row (it is the reference)
+  expect_false("bm25_retrieval" %in% result$wilcoxon$strategy)
+})
+
+test_that("wilcoxon p_value is in [0, 1]", {
+  df <- make_mock_results(
+    strategies = c("rrlmgraph_tfidf", "bm25_retrieval"),
+    n = 10L
+  )
+  result <- suppressWarnings(compute_benchmark_statistics(df))
+  expect_true(all(
+    result$wilcoxon$p_value >= 0 &
+      result$wilcoxon$p_value <= 1,
+    na.rm = TRUE
+  ))
 })

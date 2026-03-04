@@ -33,8 +33,16 @@
 #'     \item{`summary`}{`data.frame` with one row per strategy.}
 #'     \item{`ter`}{Named numeric vector. TER values; `NA` for the
 #'       baseline strategy.}
-#'     \item{`pairwise`}{`data.frame` of pairwise test results.}
+#'     \item{`pairwise`}{`data.frame` of pairwise Welch t-test results.}
 #'     \item{`ndcg`}{Named numeric or `NULL` if rank data absent.}
+#'     \item{`wilcoxon`}{`data.frame` of one-sided paired Wilcoxon
+#'       signed-rank tests, comparing each strategy against
+#'       \code{"bm25_retrieval"} on a per-task basis (mean score
+#'       across trials per task).  Columns: \code{strategy},
+#'       \code{reference}, \code{V} (test statistic), \code{p_value},
+#'       \code{n_pairs}, \code{wins}, \code{ties}, \code{losses}.
+#'       \code{NULL} if \code{"bm25_retrieval"} is absent or
+#'       \code{task_id} column is missing.}
 #'   }
 #'
 #' @examples
@@ -45,7 +53,7 @@
 #' stats$summary
 #' }
 #'
-#' @importFrom stats sd qt t.test shapiro.test quantile setNames
+#' @importFrom stats sd qt t.test shapiro.test quantile setNames wilcox.test
 #' @importFrom utils combn
 #' @export
 compute_benchmark_statistics <- function(all_results) {
@@ -266,10 +274,85 @@ compute_benchmark_statistics <- function(all_results) {
     )
   }
 
+  # ---- 5. Paired Wilcoxon signed-rank test vs bm25_retrieval (bench#38) --
+  # For each strategy, compare per-task mean score against bm25_retrieval
+  # using a one-sided paired Wilcoxon signed-rank test (alternative = "greater").
+  # Scores are averaged across trials per task to obtain one value per task
+  # per strategy.  Only tasks present in both strategies are paired.
+  wilcoxon_df <- NULL
+  wilcoxon_ref <- "bm25_retrieval"
+  if (
+    wilcoxon_ref %in%
+      strategies &&
+      "task_id" %in% names(all_results) &&
+      n_trials_detected >= 1L
+  ) {
+    ref_task_means <- tapply(
+      as.numeric(all_results$score[all_results$strategy == wilcoxon_ref]),
+      all_results$task_id[all_results$strategy == wilcoxon_ref],
+      mean,
+      na.rm = TRUE
+    )
+    wilcoxon_rows <- lapply(setdiff(strategies, wilcoxon_ref), function(s) {
+      s_scores <- all_results[all_results$strategy == s, , drop = FALSE]
+      s_task_means <- tapply(
+        as.numeric(s_scores$score),
+        s_scores$task_id,
+        mean,
+        na.rm = TRUE
+      )
+      common_tasks <- intersect(names(s_task_means), names(ref_task_means))
+      n_pairs <- length(common_tasks)
+      if (n_pairs < 2L) {
+        return(data.frame(
+          strategy = s,
+          reference = wilcoxon_ref,
+          V = NA_real_,
+          p_value = NA_real_,
+          n_pairs = n_pairs,
+          wins = NA_integer_,
+          ties = NA_integer_,
+          losses = NA_integer_,
+          stringsAsFactors = FALSE
+        ))
+      }
+      x <- as.numeric(s_task_means[common_tasks])
+      y <- as.numeric(ref_task_means[common_tasks])
+      diff_vec <- x - y
+      wins <- sum(diff_vec > 0, na.rm = TRUE)
+      ties <- sum(diff_vec == 0, na.rm = TRUE)
+      losses <- sum(diff_vec < 0, na.rm = TRUE)
+      wt <- tryCatch(
+        stats::wilcox.test(x, y, paired = TRUE, alternative = "greater"),
+        error = function(e) list(statistic = NA_real_, p.value = NA_real_)
+      )
+      data.frame(
+        strategy = s,
+        reference = wilcoxon_ref,
+        V = as.numeric(wt$statistic),
+        p_value = wt$p.value,
+        n_pairs = n_pairs,
+        wins = wins,
+        ties = ties,
+        losses = losses,
+        stringsAsFactors = FALSE
+      )
+    })
+    wilcoxon_df <- if (length(wilcoxon_rows) > 0L) {
+      do.call(rbind, wilcoxon_rows)
+    } else {
+      NULL
+    }
+    if (!is.null(wilcoxon_df)) {
+      rownames(wilcoxon_df) <- NULL
+    }
+  }
+
   list(
     summary = summary_df,
     ter = ter,
     pairwise = pairwise_df,
-    ndcg = ndcg
+    ndcg = ndcg,
+    wilcoxon = wilcoxon_df
   )
 }
