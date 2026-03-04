@@ -125,6 +125,7 @@ jobs:
             git add inst/results/benchmark_results_partial.rds
           fi
           git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results"
+          git pull --rebase origin main
           git push
 
       - name: Trigger pkgdown rebuild
