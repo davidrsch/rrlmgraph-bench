@@ -351,7 +351,7 @@ rate per strategy.</caption>
 <col width="9%">
 <col width="9%">
 <col width="9%">
-<col width="19%">
+<col width="18%">
 <col width="20%">
 </colgroup>
 <thead><tr class="header">
@@ -367,53 +367,63 @@ rate per strategy.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">29</td>
-<td align="right">0.802</td>
-<td align="right">0.117</td>
-<td align="right">0.758</td>
-<td align="right">0.840</td>
-<td align="right">726.586</td>
-<td align="right">0.379</td>
+<td align="right">30</td>
+<td align="right">0.797</td>
+<td align="right">0.118</td>
+<td align="right">0.753</td>
+<td align="right">0.841</td>
+<td align="right">725.500</td>
+<td align="right">0.367</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
-<td align="right">29</td>
-<td align="right">0.786</td>
-<td align="right">0.123</td>
-<td align="right">0.741</td>
-<td align="right">0.827</td>
-<td align="right">1172.000</td>
-<td align="right">0.379</td>
+<td align="right">30</td>
+<td align="right">0.770</td>
+<td align="right">0.147</td>
+<td align="right">0.715</td>
+<td align="right">0.825</td>
+<td align="right">1278.533</td>
+<td align="right">0.367</td>
 </tr>
 <tr class="odd">
 <td align="left">term_overlap</td>
-<td align="right">29</td>
-<td align="right">0.766</td>
-<td align="right">0.123</td>
-<td align="right">0.721</td>
-<td align="right">0.807</td>
-<td align="right">2421.552</td>
-<td align="right">0.414</td>
+<td align="right">30</td>
+<td align="right">0.751</td>
+<td align="right">0.147</td>
+<td align="right">0.696</td>
+<td align="right">0.806</td>
+<td align="right">2395.233</td>
+<td align="right">0.400</td>
 </tr>
 <tr class="even">
 <td align="left">bm25_retrieval</td>
-<td align="right">29</td>
-<td align="right">0.791</td>
-<td align="right">0.119</td>
-<td align="right">0.746</td>
-<td align="right">0.830</td>
-<td align="right">2320.379</td>
-<td align="right">0.448</td>
+<td align="right">30</td>
+<td align="right">0.774</td>
+<td align="right">0.146</td>
+<td align="right">0.720</td>
+<td align="right">0.829</td>
+<td align="right">2298.267</td>
+<td align="right">0.433</td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">29</td>
-<td align="right">0.700</td>
-<td align="right">0.146</td>
-<td align="right">0.645</td>
-<td align="right">0.750</td>
-<td align="right">269.517</td>
-<td align="right">0.276</td>
+<td align="right">30</td>
+<td align="right">0.688</td>
+<td align="right">0.159</td>
+<td align="right">0.628</td>
+<td align="right">0.747</td>
+<td align="right">264.800</td>
+<td align="right">0.267</td>
+</tr>
+<tr class="even">
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">30</td>
+<td align="right">0.784</td>
+<td align="right">0.130</td>
+<td align="right">0.735</td>
+<td align="right">0.832</td>
+<td align="right">748.100</td>
+<td align="right">0.433</td>
 </tr>
 </tbody>
 </table>
@@ -508,25 +518,30 @@ strategy is less efficient.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">3.874</td>
+<td align="right">4.309</td>
 <td align="left">More efficient than full_files</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">1.646</td>
+<td align="right">1.822</td>
 <td align="left">More efficient than full_files</td>
 </tr>
 <tr class="odd">
-<td align="left">bm25_retrieval</td>
-<td align="right">0.508</td>
-<td align="left">Less efficient than full_files</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">1.739</td>
+<td align="left">More efficient than full_files</td>
 </tr>
 <tr class="even">
-<td align="left">term_overlap</td>
-<td align="right">0.472</td>
+<td align="left">bm25_retrieval</td>
+<td align="right">0.559</td>
 <td align="left">Less efficient than full_files</td>
 </tr>
 <tr class="odd">
+<td align="left">term_overlap</td>
+<td align="right">0.520</td>
+<td align="left">Less efficient than full_files</td>
+</tr>
+<tr class="even">
 <td align="left">full_files</td>
 <td align="right">NA</td>
 <td align="left">N/A (baseline)</td>
@@ -574,27 +589,32 @@ namespace.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">0.276</td>
+<td align="right">0.267</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">0.379</td>
+<td align="right">0.367</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="odd">
 <td align="left">full_files</td>
-<td align="right">0.379</td>
+<td align="right">0.367</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="even">
 <td align="left">term_overlap</td>
-<td align="right">0.414</td>
+<td align="right">0.400</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="odd">
 <td align="left">bm25_retrieval</td>
-<td align="right">0.448</td>
+<td align="right">0.433</td>
+<td align="left">High (&gt; 25%)</td>
+</tr>
+<tr class="even">
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">0.433</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 </tbody>
@@ -758,31 +778,37 @@ differences across projects is not robust.</caption>
 <tr class="odd">
 <td align="left">bm25_retrieval</td>
 <td align="right">0.841</td>
-<td align="right">0.795</td>
+<td align="right">0.747</td>
 <td align="right">0.735</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
 <td align="right">0.846</td>
-<td align="right">0.777</td>
+<td align="right">0.732</td>
 <td align="right">0.734</td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
 <td align="right">0.771</td>
-<td align="right">0.676</td>
+<td align="right">0.641</td>
 <td align="right">0.651</td>
 </tr>
 <tr class="even">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="right">0.850</td>
-<td align="right">0.769</td>
-<td align="right">0.782</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">0.827</td>
+<td align="right">0.730</td>
+<td align="right">0.795</td>
 </tr>
 <tr class="odd">
+<td align="left">rrlmgraph_tfidf</td>
+<td align="right">0.850</td>
+<td align="right">0.757</td>
+<td align="right">0.782</td>
+</tr>
+<tr class="even">
 <td align="left">term_overlap</td>
 <td align="right">0.812</td>
-<td align="right">0.783</td>
+<td align="right">0.736</td>
 <td align="right">0.705</td>
 </tr>
 </tbody>
