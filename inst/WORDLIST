@@ -54,12 +54,15 @@ runnable
 rmarkdown
 Roxygen
 SD
+bm
+bm25
 stdin
 stdout
 SQLite
 TER
 TF
 testthat
+tfidf
 TFIDF
 UI
 tidyverse

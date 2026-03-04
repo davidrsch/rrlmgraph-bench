@@ -344,8 +344,8 @@ A **paired signed-rank test** removes between-task variance by comparing
 both strategies on the same 30 tasks.  Per-task scores are averaged across
 trials before pairing.
 
-- **Null hypothesis (H₀):** median difference (rrlmgraph_tfidf − bm25) = 0
-- **Alternative (H₁):** rrlmgraph_tfidf > bm25 (one-sided)
+- **Null hypothesis (H₀):** median difference (`rrlmgraph_tfidf` − `bm25`) = 0
+- **Alternative (H₁):** `rrlmgraph_tfidf` > `bm25` (one-sided)
 - **Threshold:** p < 0.05 (required to confirm the mcp#17 merge gate)
 
 ```{r wilcoxon}
