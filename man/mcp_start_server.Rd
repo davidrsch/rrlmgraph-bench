@@ -24,6 +24,7 @@ supply a temporary \acronym{SQLite} export created by
 \code{rrlmgraph::export_to_sqlite()} for per-task benchmarking.}
 
 \item{timeout_ms}{Handshake timeout in milliseconds (default 10\,000).}
+}
 \description{
 Start the rrlmgraph-mcp Node.js server, perform the MCP initialize
 handshake, and return a mutable state environment with \code{$proc} and
