@@ -56,6 +56,7 @@ Roxygen
 SD
 stdin
 stdout
+SQLite
 TER
 TF
 testthat
