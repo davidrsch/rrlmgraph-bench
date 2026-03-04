@@ -23,8 +23,16 @@ A list with the following elements:
 \item{\code{summary}}{\code{data.frame} with one row per strategy.}
 \item{\code{ter}}{Named numeric vector. TER values; \code{NA} for the
 baseline strategy.}
-\item{\code{pairwise}}{\code{data.frame} of pairwise test results.}
+\item{\code{pairwise}}{\code{data.frame} of pairwise Welch t-test results.}
 \item{\code{ndcg}}{Named numeric or \code{NULL} if rank data absent.}
+\item{\code{wilcoxon}}{\code{data.frame} of one-sided paired Wilcoxon
+signed-rank tests, comparing each strategy against
+\code{"bm25_retrieval"} on a per-task basis (mean score
+across trials per task).  Columns: \code{strategy},
+\code{reference}, \code{V} (test statistic), \code{p_value},
+\code{n_pairs}, \code{wins}, \code{ties}, \code{losses}.
+\code{NULL} if \code{"bm25_retrieval"} is absent or
+\code{task_id} column is missing.}
 }
 }
 \description{
