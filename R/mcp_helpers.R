@@ -69,10 +69,10 @@ mcp_read_response <- function(proc, id, timeout_ms = 30000L) {
 #'   \code{dist/index.js}).
 #' @param project_path Path to the R project root (passed as
 #'   \code{--project-path}).
-#' @param db_path Optional path to a pre-built \file{graph.sqlite}.  When
+#' @param db_path Optional path to an existing \file{graph.sqlite}.  When
 #'   supplied it is passed as \code{--db-path}, overriding the default
 #'   \code{<project_path>/.rrlmgraph/graph.sqlite} lookup.  Use this to
-#'   supply a temporary SQLite export created by
+#'   supply a temporary \acronym{SQLite} export created by
 #'   \code{rrlmgraph::export_to_sqlite()} for per-task benchmarking.
 #' @param timeout_ms Handshake timeout in milliseconds (default 10 000).
 #' @keywords internal

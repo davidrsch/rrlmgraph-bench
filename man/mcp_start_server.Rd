@@ -17,7 +17,7 @@ mcp_start_server(mcp_dir, project_path, db_path = NULL, timeout_ms = 10000L)
 \item{project_path}{Path to the R project root (passed as
 \code{--project-path}).}
 
-\item{db_path}{Optional path to a pre-built \file{graph.sqlite}.  When
+\item{db_path}{Optional path to an existing \file{graph.sqlite}.  When
 supplied it is passed as \code{--db-path}, overriding the default
 \code{<project_path>/.rrlmgraph/graph.sqlite} lookup.  Use this to
 supply a temporary \acronym{SQLite} export created by
