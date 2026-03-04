@@ -33,6 +33,23 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="rrlmgraphbench-development-version">rrlmgraphbench (development version)<a class="anchor" aria-label="anchor" href="#rrlmgraphbench-development-version"></a></h2>
+<div class="section level4">
+<h4 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/run_full_benchmark.html">run_full_benchmark()</a></code>: the <code>rrlmgraph_mcp</code> strategy now starts a fresh MCP server <strong>per task</strong> rather than one global server per run. The previous design called <code><a href="../reference/mcp_start_server.html">mcp_start_server()</a></code> with <code>projects_dir</code> (the parent of all task project directories) as <code>project_path</code>, but <code>better-sqlite3</code> could not create <code>graph.sqlite</code> there on read-only CI paths, causing a silent crash before the JSON-RPC initialize handshake completed. Each task now: (1) exports its TF-IDF graph to a temporary SQLite file via <code>rrlmgraph::export_to_sqlite()</code>, (2) starts an MCP server with the correct per-task <code>--project-path</code> and <code>--db-path</code>, and
+<ol start="3" style="list-style-type: decimal"><li>kills the server and deletes the temp file after all trials complete. Fixes the <code>rrlmgraph_mcp</code> strategy being silently dropped from all CI benchmark runs. (bench#30)</li>
+</ol></li>
+<li>
+<code><a href="../reference/run_full_benchmark.html">run_full_benchmark()</a></code> workflow: bumped <code>n_trials</code> from 1 to 2 so the paired Wilcoxon test has 60 task-pairs instead of 30, making it possible to reach statistical significance (p &lt; 0.05).</li>
+</ul></div>
+<div class="section level4">
+<h4 id="improvements-development-version">Improvements<a class="anchor" aria-label="anchor" href="#improvements-development-version"></a></h4>
+<ul><li>
+<code><a href="../reference/mcp_start_server.html">mcp_start_server()</a></code>: added <code>db_path</code> parameter. When supplied, <code>--db-path &lt;db_path&gt;</code> is passed to the Node.js process, allowing the caller to point the MCP server at an existing SQLite export rather than the default <code>&lt;project_path&gt;/.rrlmgraph/graph.sqlite</code> location.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.1" id="rrlmgraphbench-011">rrlmgraphbench 0.1.1<a class="anchor" aria-label="anchor" href="#rrlmgraphbench-011"></a></h2>
 <div class="section level4">
 <h4 id="bug-fixes-0-1-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-1"></a></h4>

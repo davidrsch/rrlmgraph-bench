@@ -375,6 +375,70 @@ if (results_available) {
 
 ------------------------------------------------------------------------
 
+## Focused test: rrlmgraph strategies vs BM25 (paired Wilcoxon)
+
+The primary research question is whether `rrlmgraph_tfidf` delivers
+statistically higher scores than `bm25_retrieval` per coding task. A
+**paired signed-rank test** removes between-task variance by comparing
+both strategies on the same 30 tasks. Per-task scores are averaged
+across trials before pairing.
+
+- **Null hypothesis (H₀):** median difference (`rrlmgraph_tfidf` −
+  `bm25`) = 0
+- **Alternative (H₁):** `rrlmgraph_tfidf` \> `bm25` (one-sided)
+- **Threshold:** p \< 0.05 (required to confirm the mcp#17 merge gate)
+
+``` r
+if (results_available && !is.null(stats$wilcoxon)) {
+  wdf <- stats$wilcoxon
+  wdf$sig <- ifelse(
+    is.na(wdf$p_value), "—",
+    ifelse(wdf$p_value < 0.001, "*** p<0.001",
+      ifelse(wdf$p_value < 0.01, "** p<0.01",
+        ifelse(wdf$p_value < 0.05, "* p<0.05", "ns (p≥0.05)")
+      )
+    )
+  )
+  knitr::kable(
+    wdf[, c(
+      "strategy", "reference", "V", "p_value",
+      "n_pairs", "wins", "ties", "losses", "sig"
+    )],
+    digits = 4,
+    caption = paste0(
+      "One-sided paired Wilcoxon signed-rank tests: strategy > bm25_retrieval. ",
+      "V = Wilcoxon statistic; wins/ties/losses count per-task score direction. ",
+      "sig: *** p<0.001, ** p<0.01, * p<0.05, ns = not significant."
+    )
+  )
+  tfidf_row <- wdf[wdf$strategy == "rrlmgraph_tfidf", , drop = FALSE]
+  if (nrow(tfidf_row) == 1L && !is.na(tfidf_row$p_value)) {
+    if (tfidf_row$p_value < 0.05) {
+      message(
+        sprintf(
+          "CONFIRMED: rrlmgraph_tfidf > bm25_retrieval (p=%.4f, n=%d pairs, %d W/%d T/%d L).",
+          tfidf_row$p_value, tfidf_row$n_pairs,
+          tfidf_row$wins, tfidf_row$ties, tfidf_row$losses
+        )
+      )
+    } else {
+      message(
+        sprintf(
+          "NOT SIGNIFICANT: rrlmgraph_tfidf vs bm25_retrieval (p=%.4f, n=%d pairs). ",
+          tfidf_row$p_value, tfidf_row$n_pairs
+        ),
+        "Increase n_trials for more statistical power."
+      )
+    }
+  }
+} else {
+  message("Wilcoxon results not available (requires bm25_retrieval and task_id in results).")
+}
+#> Wilcoxon results not available (requires bm25_retrieval and task_id in results).
+```
+
+------------------------------------------------------------------------
+
 ## Per-project breakdown
 
 The benchmark uses three fixture R projects of different types. Breaking

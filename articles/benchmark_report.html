@@ -704,6 +704,74 @@ practical effect size: |d| &lt; 0.2 = negligible, 0.2-0.5 = small,
 <hr>
 </div>
 <div class="section level2">
+<h2 id="focused-test-rrlmgraph-strategies-vs-bm25-paired-wilcoxon">Focused test: rrlmgraph strategies vs BM25 (paired Wilcoxon)<a class="anchor" aria-label="anchor" href="#focused-test-rrlmgraph-strategies-vs-bm25-paired-wilcoxon"></a>
+</h2>
+<p>The primary research question is whether <code>rrlmgraph_tfidf</code>
+delivers statistically higher scores than <code>bm25_retrieval</code>
+per coding task. A <strong>paired signed-rank test</strong> removes
+between-task variance by comparing both strategies on the same 30 tasks.
+Per-task scores are averaged across trials before pairing.</p>
+<ul>
+<li>
+<strong>Null hypothesis (H₀):</strong> median difference
+(<code>rrlmgraph_tfidf</code> − <code>bm25</code>) = 0</li>
+<li>
+<strong>Alternative (H₁):</strong> <code>rrlmgraph_tfidf</code> &gt;
+<code>bm25</code> (one-sided)</li>
+<li>
+<strong>Threshold:</strong> p &lt; 0.05 (required to confirm the
+mcp#17 merge gate)</li>
+</ul>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">results_available</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">stats</span><span class="op">$</span><span class="va">wilcoxon</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">wdf</span> <span class="op">&lt;-</span> <span class="va">stats</span><span class="op">$</span><span class="va">wilcoxon</span></span>
+<span>  <span class="va">wdf</span><span class="op">$</span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">wdf</span><span class="op">$</span><span class="va">p_value</span><span class="op">)</span>, <span class="st">"—"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wdf</span><span class="op">$</span><span class="va">p_value</span> <span class="op">&lt;</span> <span class="fl">0.001</span>, <span class="st">"*** p&lt;0.001"</span>,</span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wdf</span><span class="op">$</span><span class="va">p_value</span> <span class="op">&lt;</span> <span class="fl">0.01</span>, <span class="st">"** p&lt;0.01"</span>,</span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wdf</span><span class="op">$</span><span class="va">p_value</span> <span class="op">&lt;</span> <span class="fl">0.05</span>, <span class="st">"* p&lt;0.05"</span>, <span class="st">"ns (p≥0.05)"</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span></span>
+<span>    <span class="va">wdf</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>      <span class="st">"strategy"</span>, <span class="st">"reference"</span>, <span class="st">"V"</span>, <span class="st">"p_value"</span>,</span>
+<span>      <span class="st">"n_pairs"</span>, <span class="st">"wins"</span>, <span class="st">"ties"</span>, <span class="st">"losses"</span>, <span class="st">"sig"</span></span>
+<span>    <span class="op">)</span><span class="op">]</span>,</span>
+<span>    digits <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>    caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>      <span class="st">"One-sided paired Wilcoxon signed-rank tests: strategy &gt; bm25_retrieval. "</span>,</span>
+<span>      <span class="st">"V = Wilcoxon statistic; wins/ties/losses count per-task score direction. "</span>,</span>
+<span>      <span class="st">"sig: *** p&lt;0.001, ** p&lt;0.01, * p&lt;0.05, ns = not significant."</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="va">tfidf_row</span> <span class="op">&lt;-</span> <span class="va">wdf</span><span class="op">[</span><span class="va">wdf</span><span class="op">$</span><span class="va">strategy</span> <span class="op">==</span> <span class="st">"rrlmgraph_tfidf"</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">tfidf_row</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1L</span> <span class="op">&amp;&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">tfidf_row</span><span class="op">$</span><span class="va">p_value</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw">if</span> <span class="op">(</span><span class="va">tfidf_row</span><span class="op">$</span><span class="va">p_value</span> <span class="op">&lt;</span> <span class="fl">0.05</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>          <span class="st">"CONFIRMED: rrlmgraph_tfidf &gt; bm25_retrieval (p=%.4f, n=%d pairs, %d W/%d T/%d L)."</span>,</span>
+<span>          <span class="va">tfidf_row</span><span class="op">$</span><span class="va">p_value</span>, <span class="va">tfidf_row</span><span class="op">$</span><span class="va">n_pairs</span>,</span>
+<span>          <span class="va">tfidf_row</span><span class="op">$</span><span class="va">wins</span>, <span class="va">tfidf_row</span><span class="op">$</span><span class="va">ties</span>, <span class="va">tfidf_row</span><span class="op">$</span><span class="va">losses</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
+<span>          <span class="st">"NOT SIGNIFICANT: rrlmgraph_tfidf vs bm25_retrieval (p=%.4f, n=%d pairs). "</span>,</span>
+<span>          <span class="va">tfidf_row</span><span class="op">$</span><span class="va">p_value</span>, <span class="va">tfidf_row</span><span class="op">$</span><span class="va">n_pairs</span></span>
+<span>        <span class="op">)</span>,</span>
+<span>        <span class="st">"Increase n_trials for more statistical power."</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
+<span>  <span class="op">}</span></span>
+<span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Wilcoxon results not available (requires bm25_retrieval and task_id in results)."</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span><span class="co">#&gt; Wilcoxon results not available (requires bm25_retrieval and task_id in results).</span></span></code></pre></div>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="per-project-breakdown">Per-project breakdown<a class="anchor" aria-label="anchor" href="#per-project-breakdown"></a>
 </h2>
 <p>The benchmark uses three fixture R projects of different types.
@@ -738,7 +806,7 @@ across project types or only works for specific ones.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">results_available</span> <span class="op">&amp;&amp;</span> <span class="st">"task_id"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/regmatches.html" class="external-link">regmatches</a></span><span class="op">(</span></span>
 <span>    <span class="va">all_results</span><span class="op">$</span><span class="va">task_id</span>,</span>
@@ -823,7 +891,7 @@ improve across trials it suggests the LLM benefits from the specific
 context being fed (learning effect within context window). Flat lines
 indicate consistent performance; downward trends indicate
 instability.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">results_available</span> <span class="op">&amp;&amp;</span> <span class="st">"trial"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">trial_means</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">score</span> <span class="op">~</span> <span class="va">strategy</span> <span class="op">+</span> <span class="va">trial</span>,</span>
 <span>    data <span class="op">=</span> <span class="va">all_results</span>,</span>
@@ -849,7 +917,7 @@ instability.</p>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
