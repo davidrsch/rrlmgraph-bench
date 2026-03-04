@@ -100,7 +100,7 @@ jobs:
           Rscript -e '
             results <- rrlmgraphbench::run_full_benchmark(
               output_path  = "inst/results/benchmark_results.rds",
-              n_trials     = 1L,
+              n_trials     = 2L,
               llm_provider = "github",
               llm_model    = "gpt-4.1-mini",
               resume       = TRUE
