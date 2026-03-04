@@ -60,11 +60,19 @@ A list with the following elements:
 
 - `pairwise`:
 
-  `data.frame` of pairwise test results.
+  `data.frame` of pairwise Welch t-test results.
 
 - `ndcg`:
 
   Named numeric or `NULL` if rank data absent.
+
+- `wilcoxon`:
+
+  `data.frame` of one-sided paired Wilcoxon signed-rank tests, comparing
+  each strategy against `"bm25_retrieval"` on a per-task basis (mean
+  score across trials per task). Columns: `strategy`, `reference`, `V`
+  (test statistic), `p_value`, `n_pairs`, `wins`, `ties`, `losses`.
+  `NULL` if `"bm25_retrieval"` is absent or `task_id` column is missing.
 
 ## Details
 

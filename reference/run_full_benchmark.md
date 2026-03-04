@@ -18,8 +18,8 @@ run_full_benchmark(
   llm_model = NULL,
   seed = 42L,
   rate_limit_delay = 6,
-  strategies = c("rrlmgraph_tfidf", "full_files", "term_overlap", "bm25_retrieval",
-    "no_context"),
+  strategies = c("rrlmgraph_tfidf", "rrlmgraph_ollama", "full_files", "term_overlap",
+    "bm25_retrieval", "no_context", "rrlmgraph_mcp"),
   resume = FALSE,
   mcp_server_dir = NULL,
   .dry_run = FALSE
@@ -73,12 +73,12 @@ run_full_benchmark(
 
 - strategies:
 
-  Character vector. Subset of strategies to run. Defaults to all five
+  Character vector. Subset of strategies to run. Defaults to all
   non-Ollama, non-MCP strategies. Useful for reducing the total number
   of LLM API calls when the provider enforces a daily request quota
-  (e.g. GitHub Models free tier allows ~150 requests/day; with 30 tasks
-  and the default 5 strategies that is exactly 150 calls). Ollama and
-  MCP strategies are silently skipped when their prerequisites are
+  (e.g. GitHub Models free tier allows ~210 requests/day; with 30 tasks
+  and all 7 strategies that is exactly 210 calls). Ollama and MCP
+  strategies are silently skipped when their prerequisites are
   unavailable.
 
 - resume:

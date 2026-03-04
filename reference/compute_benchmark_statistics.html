@@ -104,10 +104,20 @@ Required columns:</p><dl><dt><code>strategy</code></dt>
 baseline strategy.</p></dd>
 
 <dt><code>pairwise</code></dt>
-<dd><p><code>data.frame</code> of pairwise test results.</p></dd>
+<dd><p><code>data.frame</code> of pairwise Welch t-test results.</p></dd>
 
 <dt><code>ndcg</code></dt>
 <dd><p>Named numeric or <code>NULL</code> if rank data absent.</p></dd>
+
+<dt><code>wilcoxon</code></dt>
+<dd><p><code>data.frame</code> of one-sided paired Wilcoxon
+signed-rank tests, comparing each strategy against
+<code>"bm25_retrieval"</code> on a per-task basis (mean score
+across trials per task).  Columns: <code>strategy</code>,
+<code>reference</code>, <code>V</code> (test statistic), <code>p_value</code>,
+<code>n_pairs</code>, <code>wins</code>, <code>ties</code>, <code>losses</code>.
+<code>NULL</code> if <code>"bm25_retrieval"</code> is absent or
+<code>task_id</code> column is missing.</p></dd>
 
 
 </dl></div>

@@ -32,4 +32,4 @@ mcp_start_server(mcp_dir, project_path, db_path = NULL, timeout_ms = 10000L)
 
 - timeout_ms:
 
-  Handshake timeout in milliseconds (default 10\\000).
+  Handshake timeout in milliseconds (default 10 000).
