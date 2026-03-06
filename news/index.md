@@ -37,7 +37,7 @@
       context for every MCP task.
   2.  The `initialize` JSON-RPC request sent `"capabilities":[]` (an
       empty JSON **array**) instead of `"capabilities":{}` (an empty
-      **object**). The MCP SDK’s Zod schema rejects arrays, so the
+      **object**). The Zod schema in the MCP SDK rejects arrays, so the
       server returned a `-32603` error before the fix was applied. The
       same fix is applied to the `notifications/initialized` `params`
       field. Together these two bugs caused `rrlmgraph_mcp` scores to
