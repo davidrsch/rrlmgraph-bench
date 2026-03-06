@@ -19,13 +19,13 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { os: ubuntu-latest,  r: "release" }
-          - { os: ubuntu-latest,  r: "oldrel-1" }
-          - { os: ubuntu-latest,  r: "oldrel-2" }
-          - { os: ubuntu-latest,  r: "oldrel-3" }
-          - { os: ubuntu-latest,  r: "devel", http-user-agent: "release" }
+          - { os: ubuntu-latest, r: "release" }
+          - { os: ubuntu-latest, r: "oldrel-1" }
+          - { os: ubuntu-latest, r: "oldrel-2" }
+          - { os: ubuntu-latest, r: "oldrel-3" }
+          - { os: ubuntu-latest, r: "devel", http-user-agent: "release" }
           - { os: windows-latest, r: "release" }
-          - { os: macos-latest,   r: "release" }
+          - { os: macos-latest, r: "release" }
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +60,15 @@ jobs:
           res <- spelling::spell_check_package()
           if (nrow(res) > 0L) {
             print(res)
-            write.csv(res, "spell-debug/spell_failures.csv", row.names = FALSE)
+            # spell_check_package() returns a list-column (found); flatten it
+            # before writing so write.csv doesn't die on 'unimplemented type list'.
+            res_flat <- res
+            res_flat$found <- vapply(
+              res$found,
+              function(x) paste(x, collapse = "; "),
+              character(1L)
+            )
+            write.csv(res_flat, "spell-debug/spell_failures.csv", row.names = FALSE)
             stop("Spell check failed -- add words to inst/WORDLIST.",
                  call. = FALSE)
           }

@@ -56,9 +56,11 @@ Roxygen
 SD
 bm
 bm25
+SDK
 stdin
 stdout
 SQLite
+Zod
 TER
 TF
 testthat
