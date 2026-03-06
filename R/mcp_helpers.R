@@ -20,10 +20,12 @@ mcp_read_response <- function(proc, id, timeout_ms = 30000L) {
   t_limit <- proc.time()[["elapsed"]] + timeout_ms / 1000
   buffer <- ""
   while (proc.time()[["elapsed"]] < t_limit) {
+    # processx::process$poll_io() returns keys "output" and "error" (not
+    # "stdout"/"stderr") on all platforms; see processx documentation.
     ready <- tryCatch(proc$poll_io(100L), error = function(e) {
-      c(stdout = "eof")
+      c(output = "eof")
     })
-    if (ready[["stdout"]] %in% c("ready", "eof")) {
+    if (isTRUE(ready[["output"]] %in% c("ready", "eof"))) {
       chunk <- tryCatch(proc$read_output(), error = function(e) "")
       if (nzchar(chunk)) buffer <- paste0(buffer, chunk)
     }
@@ -54,7 +56,7 @@ mcp_read_response <- function(proc, id, timeout_ms = 30000L) {
         return(parsed)
       }
     }
-    if (ready[["stdout"]] == "eof") break
+    if (isTRUE(ready[["output"]] == "eof")) break
   }
   NULL
 }
@@ -129,13 +131,17 @@ mcp_start_server <- function(
   state$next_id <- 1L
 
   # MCP initialize handshake
+  # NOTE: capabilities must be an empty JSON *object* ({}) not an array ([]).
+  # In R, list() serialises to [] via jsonlite; setNames(list(), character(0))
+  # forces {} which the MCP SDK's Zod schema accepts.  Same fix for the
+  # notifications/initialized params field.
   init_req <- list(
     jsonrpc = "2.0",
     id = 0L,
     method = "initialize",
     params = list(
       protocolVersion = "2024-11-05",
-      capabilities = list(),
+      capabilities = setNames(list(), character(0)),
       clientInfo = list(name = "rrlmgraphbench", version = "0.1.0")
     )
   )
@@ -146,13 +152,20 @@ mcp_start_server <- function(
       if (is.null(resp)) {
         stop("MCP initialize timed out")
       }
+      if (!is.null(resp[["error"]])) {
+        err_msg <- tryCatch(
+          resp[["error"]][["message"]],
+          error = function(e) "unknown error"
+        )
+        stop("MCP initialize rejected: ", err_msg)
+      }
       # Send initialized notification (no id -- it is not a request)
       mcp_write_msg(
         proc,
         list(
           jsonrpc = "2.0",
           method = "notifications/initialized",
-          params = list()
+          params = setNames(list(), character(0))
         )
       )
       state

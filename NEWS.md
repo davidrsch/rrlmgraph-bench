@@ -2,6 +2,21 @@
 
 ### Bug fixes
 
+- `mcp_read_response()`: fixed two bugs that silently disabled the
+  `rrlmgraph_mcp` strategy in every benchmark run:
+  1. `processx::process$poll_io()` returns keys `"output"` and `"error"`
+     on all platforms, but the code was testing `ready[["stdout"]]`,
+     throwing `"subscript out of bounds"` in R and causing the outer
+     `tryCatch` in `mcp_start_server()` to return `NULL`, which made
+     `build_context()` return empty context for every MCP task.
+  2. The `initialize` JSON-RPC request sent `"capabilities":[]` (an
+     empty JSON **array**) instead of `"capabilities":{}` (an empty
+     **object**). The MCP SDK's Zod schema rejects arrays, so the server
+     returned a `-32603` error before the fix was applied. The same fix
+     is applied to the `notifications/initialized` `params` field.
+     Together these two bugs caused `rrlmgraph_mcp` scores to equal
+     `no_context` (mean ~0.689) in the n=2 benchmark results. (bench#30)
+
 - `run_full_benchmark()`: the `rrlmgraph_mcp` strategy now starts a fresh
   MCP server **per task** rather than one global server per run. The
   previous design called `mcp_start_server()` with `projects_dir` (the
