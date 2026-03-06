@@ -1,5 +1,21 @@
 # rrlmgraphbench (development version)
 
+### CI / workflow
+
+- `run-benchmark.yml` now runs **daily** (was weekly) with a version-bump gate:
+  - A cheap `check-version` job fetches the remote rrlmgraph `DESCRIPTION`
+    and compares the `Version:` field to `inst/last-benchmarked-rrlmgraph-version.txt`.
+  - On scheduled runs, the heavy `benchmark` job is skipped (and all its
+    ~8 min of Node / Ollama / R setup) when the version has not changed.
+  - Manual `workflow_dispatch` always bypasses the gate. A `force_run`
+    boolean input is also provided for explicit overrides.
+  - If the remote version cannot be fetched (network failure), the gate
+    **defaults to running** (fail-open) so a version bump is never silently missed.
+  - The version stamp file is written **after** a successful benchmark run only.
+    A failed run does not advance the stamp, so the next scheduled run retries.
+  - Benchmark commit messages now include the rrlmgraph version for traceability
+    (e.g. `chore: update benchmark results [rrlmgraph 0.1.2]`).
+
 ### Bug fixes
 
 - `mcp_read_response()`: fixed two bugs that silently disabled the

@@ -18,3 +18,9 @@ packrat/lib*/
 # rrlmgraph cache directories (generated artefacts, not source)
 **/.rrlmgraph/
 .vscode/
+
+# Temporary diagnostic / one-off scripts (not part of the package)
+check_*.R
+diag_*.R
+strip_*.R
+test_raw_*.R

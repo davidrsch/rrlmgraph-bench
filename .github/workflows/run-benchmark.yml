@@ -1,16 +1,90 @@
 on:
-  workflow_dispatch: # run manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Bypass the version-bump gate and always run"
+        type: boolean
+        default: false
   schedule:
-    - cron: "0 3 * * 1" # every Monday at 03:00 UTC
+    - cron: "0 3 * * *" # daily at 03:00 UTC
 
 name: run-benchmark
 
 permissions:
-  contents: write # needed to commit the results RDS
-  models: read # needed for GitHub Models inference API
+  contents: write # needed to commit results and version stamp
+  models: read    # needed for GitHub Models inference API
+
+# ── Job 1: version gate ────────────────────────────────────────────────────────
+# A cheap (~10 s) job that checks whether the upstream rrlmgraph package has
+# been bumped since the last successful benchmark run.  The heavy benchmark job
+# is skipped via a job-level `if` when no change is detected AND the trigger is
+# a scheduled run.  Manual dispatch always runs (force_run bypasses the gate too).
+#
+# Failure modes handled:
+#   • curl fails (network)        → default to RUN (fail-open, never skip silently)
+#   • version file missing        → STORED_VER=none → always runs first time
+#   • benchmark job fails         → version file NOT written → next run retries
+#   • concurrent runs             → resume=TRUE makes benchmark idempotent
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      skip:           ${{ steps.gate.outputs.skip }}
+      remote_version: ${{ steps.gate.outputs.remote_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine whether to run benchmark
+        id: gate
+        run: |
+          # Fetch the latest rrlmgraph DESCRIPTION from GitHub.
+          # If curl fails (rate-limit / network outage), default to running so
+          # a version bump is never silently missed.
+          REMOTE_VER=$(curl -sf \
+            "https://raw.githubusercontent.com/davidrsch/rrlmgraph/main/DESCRIPTION" \
+            | grep '^Version:' | awk '{print $2}' || echo "")
+
+          if [ -z "$REMOTE_VER" ]; then
+            echo "::warning::Could not fetch rrlmgraph remote version — defaulting to RUN"
+            echo "skip=false"            >> "$GITHUB_OUTPUT"
+            echo "remote_version=unknown" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "remote_version=$REMOTE_VER" >> "$GITHUB_OUTPUT"
+
+          STORED_FILE="inst/last-benchmarked-rrlmgraph-version.txt"
+          if [ -f "$STORED_FILE" ]; then
+            STORED_VER=$(tr -d '[:space:]' < "$STORED_FILE")
+          else
+            STORED_VER="none"
+          fi
+
+          # Gate: skip only when (a) scheduled run, (b) version unchanged,
+          # (c) force_run is not set.  Manual dispatch always falls through.
+          EVENT="${{ github.event_name }}"
+          FORCE="${{ inputs.force_run }}"
+
+          if [ "$REMOTE_VER" = "$STORED_VER" ] \
+              && [ "$EVENT" = "schedule" ] \
+              && [ "$FORCE" != "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::rrlmgraph is still at $REMOTE_VER — no benchmark needed today"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            if [ "$REMOTE_VER" != "$STORED_VER" ]; then
+              echo "::notice::rrlmgraph bumped $STORED_VER → $REMOTE_VER — benchmark queued"
+            else
+              echo "::notice::Trigger: event=$EVENT force=$FORCE — running regardless of version"
+            fi
+          fi
+
+# ── Job 2: benchmark ──────────────────────────────────────────────────────────
   benchmark:
+    needs: check-version
+    # Skip the entire job (and all its expensive setup) when the gate fired.
+    # This saves ~8 min of Node/Ollama/R setup plus 2+ h of LLM calls.
+    if: needs.check-version.outputs.skip != 'true'
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }} # auto-set, no extra secret needed
@@ -114,17 +188,26 @@ jobs:
             message("Total tokens: ", sum(results$total_tokens, na.rm = TRUE))
           '
 
-      - name: Commit results
+      - name: Commit results and record version stamp
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Write the version stamp AFTER a successful benchmark run only.
+          # If the benchmark step failed, this step is skipped and the stamp
+          # remains at its previous value, so the next scheduled run will retry.
+          RRLMGRAPH_VER="${{ needs.check-version.outputs.remote_version }}"
+          echo "$RRLMGRAPH_VER" > inst/last-benchmarked-rrlmgraph-version.txt
+
           git add inst/results/benchmark_results.rds
+          git add inst/last-benchmarked-rrlmgraph-version.txt
           # Also commit the partial checkpoint so the next daily run can resume
           # from where this one left off (quota-safe incremental accumulation).
           if [ -f inst/results/benchmark_results_partial.rds ]; then
             git add inst/results/benchmark_results_partial.rds
           fi
-          git diff --cached --quiet || git commit -m "chore: update precomputed benchmark results"
+          git diff --cached --quiet || \
+            git commit -m "chore: update benchmark results [rrlmgraph $RRLMGRAPH_VER]"
           git pull --rebase origin main
           git push
 
