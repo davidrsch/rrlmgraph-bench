@@ -130,19 +130,24 @@ if (results_available) {
     caption = "Summary: mean score, 95% CI, token usage, and hallucination rate per strategy."
   )
 }
-#> Warning: ! n_trials = 1: inferential statistics require >= 2 trials.
-#> ℹ Returning point estimates only (no CI, t-tests, or Cohen's d).
-#> ℹ Rerun with n_trials >= 3 for full statistical output.
+#> Warning in wilcox.test.default(x, y, paired = TRUE, alternative = "greater"):
+#> cannot compute exact p-value with zeroes
+#> Warning in wilcox.test.default(x, y, paired = TRUE, alternative = "greater"):
+#> cannot compute exact p-value with zeroes
+#> Warning in wilcox.test.default(x, y, paired = TRUE, alternative = "greater"):
+#> cannot compute exact p-value with zeroes
+#> Warning in wilcox.test.default(x, y, paired = TRUE, alternative = "greater"):
+#> cannot compute exact p-value with zeroes
 ```
 
 | strategy         |   n | mean_score | sd_score | ci_lo_95 | ci_hi_95 | mean_total_tokens | hallucination_rate |
 |:-----------------|----:|-----------:|---------:|---------:|---------:|------------------:|-------------------:|
-| rrlmgraph_tfidf  |  30 |      0.797 |    0.118 |    0.753 |    0.841 |           725.500 |              0.367 |
-| full_files       |  30 |      0.770 |    0.147 |    0.715 |    0.825 |          1278.533 |              0.367 |
-| term_overlap     |  30 |      0.751 |    0.147 |    0.696 |    0.806 |          2395.233 |              0.400 |
-| bm25_retrieval   |  30 |      0.774 |    0.146 |    0.720 |    0.829 |          2298.267 |              0.433 |
-| no_context       |  30 |      0.688 |    0.159 |    0.628 |    0.747 |           264.800 |              0.267 |
-| rrlmgraph_ollama |  30 |      0.784 |    0.130 |    0.735 |    0.832 |           748.100 |              0.433 |
+| rrlmgraph_tfidf  |  60 |      0.799 |    0.109 |    0.771 |    0.827 |           732.067 |              0.400 |
+| full_files       |  60 |      0.778 |    0.134 |    0.743 |    0.812 |          1705.300 |              0.367 |
+| term_overlap     |  60 |      0.761 |    0.146 |    0.724 |    0.799 |          2526.133 |              0.400 |
+| bm25_retrieval   |  60 |      0.769 |    0.145 |    0.732 |    0.807 |          2166.717 |              0.433 |
+| no_context       |  60 |      0.693 |    0.156 |    0.653 |    0.734 |           262.617 |              0.300 |
+| rrlmgraph_ollama |  60 |      0.791 |    0.116 |    0.761 |    0.821 |           747.550 |              0.433 |
 
 Summary: mean score, 95% CI, token usage, and hallucination rate per
 strategy.
@@ -234,11 +239,11 @@ if (results_available) {
 
 | strategy         |   TER | interpretation                 |
 |:-----------------|------:|:-------------------------------|
-| no_context       | 4.309 | More efficient than full_files |
-| rrlmgraph_tfidf  | 1.822 | More efficient than full_files |
-| rrlmgraph_ollama | 1.739 | More efficient than full_files |
-| bm25_retrieval   | 0.559 | Less efficient than full_files |
-| term_overlap     | 0.520 | Less efficient than full_files |
+| no_context       | 5.790 | More efficient than full_files |
+| rrlmgraph_tfidf  | 2.395 | More efficient than full_files |
+| rrlmgraph_ollama | 2.320 | More efficient than full_files |
+| bm25_retrieval   | 0.779 | Less efficient than full_files |
+| term_overlap     | 0.661 | Less efficient than full_files |
 | full_files       |    NA | N/A (baseline)                 |
 
 Token Efficiency Ratio (TER) vs full_files baseline. TER \> 1: strategy
@@ -277,9 +282,9 @@ if (results_available) {
 
 | strategy         | hallucination_rate | verdict       |
 |:-----------------|-------------------:|:--------------|
-| no_context       |              0.267 | High (\> 25%) |
-| rrlmgraph_tfidf  |              0.367 | High (\> 25%) |
+| no_context       |              0.300 | High (\> 25%) |
 | full_files       |              0.367 | High (\> 25%) |
+| rrlmgraph_tfidf  |              0.400 | High (\> 25%) |
 | term_overlap     |              0.400 | High (\> 25%) |
 | bm25_retrieval   |              0.433 | High (\> 25%) |
 | rrlmgraph_ollama |              0.433 | High (\> 25%) |
@@ -370,8 +375,29 @@ if (results_available) {
     message("Pairwise tests require n_trials >= 2 per strategy.")
   }
 }
-#> Pairwise tests require n_trials >= 2 per strategy.
 ```
+
+| strategy_1      | strategy_2       | statistic | p_value_raw | p_bonferroni | cohens_d | sig    | effect     |
+|:----------------|:-----------------|----------:|------------:|-------------:|---------:|:-------|:-----------|
+| rrlmgraph_tfidf | full_files       |    0.9804 |      0.3290 |       1.0000 |   0.1790 | ns     | negligible |
+| rrlmgraph_tfidf | term_overlap     |    1.6263 |      0.1068 |       1.0000 |   0.2969 | ns     | small      |
+| rrlmgraph_tfidf | bm25_retrieval   |    1.2842 |      0.2018 |       1.0000 |   0.2345 | ns     | small      |
+| rrlmgraph_tfidf | no_context       |    4.3299 |      0.0000 |       0.0005 |   0.7905 | \*\*\* | medium     |
+| rrlmgraph_tfidf | rrlmgraph_ollama |    0.4155 |      0.6785 |       1.0000 |   0.0759 | ns     | negligible |
+| full_files      | term_overlap     |    0.6385 |      0.5244 |       1.0000 |   0.1166 | ns     | negligible |
+| full_files      | bm25_retrieval   |    0.3194 |      0.7500 |       1.0000 |   0.0583 | ns     | negligible |
+| full_files      | no_context       |    3.1756 |      0.0019 |       0.0288 |   0.5798 | \*     | medium     |
+| full_files      | rrlmgraph_ollama |   -0.5834 |      0.5608 |       1.0000 |  -0.1065 | ns     | negligible |
+| term_overlap    | bm25_retrieval   |   -0.3093 |      0.7577 |       1.0000 |  -0.0565 | ns     | negligible |
+| term_overlap    | no_context       |    2.4659 |      0.0151 |       0.2267 |   0.4502 | ns     | small      |
+| term_overlap    | rrlmgraph_ollama |   -1.2349 |      0.2194 |       1.0000 |  -0.2255 | ns     | small      |
+| bm25_retrieval  | no_context       |    2.7749 |      0.0064 |       0.0964 |   0.5066 | ns     | medium     |
+| bm25_retrieval  | rrlmgraph_ollama |   -0.8984 |      0.3709 |       1.0000 |  -0.1640 | ns     | negligible |
+| no_context      | rrlmgraph_ollama |   -3.8987 |      0.0002 |       0.0025 |  -0.7118 | \*\*   | medium     |
+
+Pairwise Welch t-tests (Bonferroni-corrected). sig: ns = not
+significant, \* p\<0.05, \*\* p\<0.01, \*\*\* p\<0.001. effect: Cohen’s
+d magnitude.
 
 ------------------------------------------------------------------------
 
@@ -434,7 +460,7 @@ if (results_available && !is.null(stats$wilcoxon)) {
 } else {
   message("Wilcoxon results not available (requires bm25_retrieval and task_id in results).")
 }
-#> Wilcoxon results not available (requires bm25_retrieval and task_id in results).
+#> NOT SIGNIFICANT: rrlmgraph_tfidf vs bm25_retrieval (p=0.1049, n=30 pairs). Increase n_trials for more statistical power.
 ```
 
 ------------------------------------------------------------------------
@@ -482,12 +508,12 @@ if (results_available && "task_id" %in% names(all_results)) {
 
 | strategy         | mini_ds |  rpkg | shiny |
 |:-----------------|--------:|------:|------:|
-| bm25_retrieval   |   0.841 | 0.747 | 0.735 |
-| full_files       |   0.846 | 0.732 | 0.734 |
-| no_context       |   0.771 | 0.641 | 0.651 |
-| rrlmgraph_ollama |   0.827 | 0.730 | 0.795 |
-| rrlmgraph_tfidf  |   0.850 | 0.757 | 0.782 |
-| term_overlap     |   0.812 | 0.736 | 0.705 |
+| bm25_retrieval   |   0.828 | 0.746 | 0.734 |
+| full_files       |   0.843 | 0.758 | 0.732 |
+| no_context       |   0.788 | 0.642 | 0.650 |
+| rrlmgraph_ollama |   0.834 | 0.743 | 0.795 |
+| rrlmgraph_tfidf  |   0.851 | 0.758 | 0.789 |
+| term_overlap     |   0.826 | 0.740 | 0.717 |
 
 Mean score per strategy per project type. A strategy with large
 differences across projects is not robust.
@@ -552,13 +578,13 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] rrlmgraphbench_0.1.1
+#> [1] rrlmgraphbench_0.1.2
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] digest_0.6.39     desc_1.4.3        R6_2.6.1          fastmap_1.2.0    
 #>  [5] xfun_0.56         cachem_1.1.0      knitr_1.51        htmltools_0.5.9  
 #>  [9] rmarkdown_2.30    lifecycle_1.0.5   cli_3.6.5         sass_0.4.10      
-#> [13] pkgdown_2.2.0     textshaping_1.0.4 jquerylib_0.1.4   systemfonts_1.3.1
+#> [13] pkgdown_2.2.0     textshaping_1.0.4 jquerylib_0.1.4   systemfonts_1.3.2
 #> [17] compiler_4.5.2    tools_4.5.2       ragg_1.5.0        bslib_0.10.0     
 #> [21] evaluate_1.0.5    yaml_2.3.12       otel_0.2.0        jsonlite_2.0.0   
 #> [25] rlang_1.1.7       fs_1.6.6          htmlwidgets_1.6.4
