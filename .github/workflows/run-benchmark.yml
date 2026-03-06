@@ -55,27 +55,39 @@ jobs:
 
           STORED_FILE="inst/last-benchmarked-rrlmgraph-version.txt"
           if [ -f "$STORED_FILE" ]; then
-            STORED_VER=$(tr -d '[:space:]' < "$STORED_FILE")
+            STORED_RAW=$(tr -d '[:space:]' < "$STORED_FILE")
+            # Support both legacy format ("0.1.2") and new format ("0.1.2:done")
+            STORED_VER=$(echo "$STORED_RAW" | cut -d: -f1)
+            STORED_STATUS=$(echo "$STORED_RAW" | cut -s -d: -f2)
+            [ -z "$STORED_STATUS" ] && STORED_STATUS="done" # legacy = done
           else
             STORED_VER="none"
+            STORED_STATUS="none"
           fi
 
-          # Gate: skip only when (a) scheduled run, (b) version unchanged,
-          # (c) force_run is not set.  Manual dispatch always falls through.
+          # Gate: skip only when ALL of:
+          #   (a) scheduled run,  (b) version unchanged,
+          #   (c) previous run fully complete (status=done),
+          #   (d) force_run not set.
+          # A partial run (status!=done) always re-runs to finish accumulating
+          # trials, even when the upstream version has not changed.
           EVENT="${{ github.event_name }}"
           FORCE="${{ inputs.force_run }}"
 
           if [ "$REMOTE_VER" = "$STORED_VER" ] \
+              && [ "$STORED_STATUS" = "done" ] \
               && [ "$EVENT" = "schedule" ] \
               && [ "$FORCE" != "true" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::rrlmgraph is still at $REMOTE_VER — no benchmark needed today"
+            echo "::notice::rrlmgraph is still at $REMOTE_VER and last run was complete -- skipping today"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
             if [ "$REMOTE_VER" != "$STORED_VER" ]; then
-              echo "::notice::rrlmgraph bumped $STORED_VER → $REMOTE_VER — benchmark queued"
+              echo "::notice::rrlmgraph bumped $STORED_VER -> $REMOTE_VER -- benchmark queued"
+            elif [ "$STORED_STATUS" != "done" ]; then
+              echo "::notice::Previous run was incomplete (status=$STORED_STATUS) -- re-running to finish"
             else
-              echo "::notice::Trigger: event=$EVENT force=$FORCE — running regardless of version"
+              echo "::notice::Trigger: event=$EVENT force=$FORCE -- running regardless of version"
             fi
           fi
 
@@ -86,6 +98,7 @@ jobs:
     # This saves ~8 min of Node/Ollama/R setup plus 2+ h of LLM calls.
     if: needs.check-version.outputs.skip != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 330  # 5.5 h safety net -- leaves 30 min for cleanup before GHA's 6 h limit
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }} # auto-set, no extra secret needed
 
@@ -145,39 +158,71 @@ jobs:
             local::.
           needs: local
 
-      - name: Verify GitHub Models access
+      - name: Check GitHub Models access and remaining quota
+        id: quota
         run: |
-          Rscript -e '
-            # Quick smoke-test: use chat_openai_compatible() directly because
-            # ellmer 0.4.0 broke chat_github() by routing to the OpenAI
-            # Responses endpoint, which GitHub Models does not implement.
-            tryCatch({
-              gh_pat  <- Sys.getenv("GITHUB_PAT", "")
-              cred_fn <- (function(k) function() k)(gh_pat)
-              chat <- ellmer::chat_openai_compatible(
-                base_url    = "https://models.github.ai/inference/",
-                model       = "gpt-4.1-mini",
-                credentials = cred_fn
-              )
-              resp <- chat$chat("Say only: OK")
-              message("GitHub Models smoke test PASSED: ", trimws(resp))
-            }, error = function(e) {
-              stop("GitHub Models smoke test FAILED: ", conditionMessage(e))
-            })
-          '
+          # Issue a minimal chat-completion call to: (1) verify API access,
+          # (2) capture x-ratelimit-remaining-requests so we know exactly how
+          # many calls remain today, and (3) derive max_new_tasks to pass to R.
+          #
+          # Fail-open: if the rate-limit header is absent (provider API change),
+          # run unconstrained rather than silently skip.
+          http_code=$(curl -s \
+            -o /tmp/quota_body.json \
+            -w "%{http_code}" \
+            -D /tmp/quota_headers.txt \
+            -H "Authorization: Bearer $GITHUB_PAT" \
+            -H "Content-Type: application/json" \
+            -d '{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"OK"}],"max_tokens":1}' \
+            "https://models.github.ai/inference/chat/completions")
+          if [ "$http_code" != "200" ]; then
+            echo "::error::GitHub Models access check failed (HTTP $http_code): $(cat /tmp/quota_body.json)"
+            exit 1
+          fi
+          echo "GitHub Models access OK"
+
+          # Parse remaining-requests header; subtract 1 for this probe call.
+          N_STRATEGIES=7
+          REMAINING=$(grep -i 'x-ratelimit-remaining-requests' /tmp/quota_headers.txt \
+                      | head -1 | awk '{print $2}' | tr -d '\r' || echo "")
+          if echo "$REMAINING" | grep -qE '^[0-9]+$'; then
+            REMAINING=$((REMAINING - 1))
+            MAX_TASKS=$((REMAINING / N_STRATEGIES))
+            echo "::notice::Remaining requests after probe: $REMAINING -> max_new_tasks today: $MAX_TASKS"
+          else
+            echo "::warning::Could not parse rate-limit headers -- running unconstrained"
+            MAX_TASKS=9999
+          fi
+
+          echo "max_new_tasks=$MAX_TASKS" >> "$GITHUB_OUTPUT"
+          if [ "$MAX_TASKS" -le 0 ]; then
+            echo "::warning::API quota near zero -- skipping benchmark today"
+            echo "skip_benchmark=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip_benchmark=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Run benchmark
+        if: steps.quota.outputs.skip_benchmark != 'true'
         env:
           # Tells run_full_benchmark() where to find the built MCP server
           RRLMGRAPH_MCP_DIR: ${{ github.workspace }}/rrlmgraph-mcp
+          RRLMGRAPH_MAX_NEW_TASKS: ${{ steps.quota.outputs.max_new_tasks }}
         run: |
           Rscript -e '
+            # Translate the quota-derived task ceiling from the environment.
+            # 9999 (or missing) means unconstrained.
+            max_t_env <- suppressWarnings(
+              as.integer(Sys.getenv("RRLMGRAPH_MAX_NEW_TASKS", "9999"))
+            )
+            max_t <- if (is.na(max_t_env) || max_t_env >= 9999L) NULL else max_t_env
             results <- rrlmgraphbench::run_full_benchmark(
-              output_path  = "inst/results/benchmark_results.rds",
-              n_trials     = 3L,
-              llm_provider = "github",
-              llm_model    = "gpt-4.1-mini",
-              resume       = TRUE
+              output_path   = "inst/results/benchmark_results.rds",
+              n_trials      = 3L,
+              llm_provider  = "github",
+              llm_model     = "gpt-4.1-mini",
+              resume        = TRUE,
+              max_new_tasks = max_t
             )
             message("Benchmark complete. Rows: ", nrow(results))
             n_na <- sum(is.na(results$score))
@@ -193,11 +238,23 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Write the version stamp AFTER a successful benchmark run only.
-          # If the benchmark step failed, this step is skipped and the stamp
-          # remains at its previous value, so the next scheduled run will retry.
+          # Write the version stamp with a completion-status suffix:
+          #   VERSION:done    -- all n_tasks x n_strategies x n_trials rows present
+          #   VERSION:partial -- run was quota-interrupted; resume tomorrow
+          # The gate in check-version skips ONLY when the suffix is ":done".
           RRLMGRAPH_VER="${{ needs.check-version.outputs.remote_version }}"
-          echo "$RRLMGRAPH_VER" > inst/last-benchmarked-rrlmgraph-version.txt
+          EXPECTED_ROWS=$((30 * 7 * 3))  # n_tasks x n_strategies x n_trials
+          COMPLETED_ROWS=$(Rscript --vanilla -e \
+            'r <- tryCatch(readRDS("inst/results/benchmark_results.rds"),
+                           error = function(e) data.frame(score = numeric(0)))
+             cat(sum(!is.na(r$score)))' 2>/dev/null || echo 0)
+          if [ "$COMPLETED_ROWS" -ge "$EXPECTED_ROWS" ]; then
+            STAMP_STATUS="done"
+          else
+            STAMP_STATUS="partial"
+            echo "::notice::Benchmark partial ($COMPLETED_ROWS/$EXPECTED_ROWS non-NA rows) -- will resume tomorrow"
+          fi
+          echo "${RRLMGRAPH_VER}:${STAMP_STATUS}" > inst/last-benchmarked-rrlmgraph-version.txt
 
           git add inst/results/benchmark_results.rds
           git add inst/last-benchmarked-rrlmgraph-version.txt

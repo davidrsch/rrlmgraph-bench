@@ -68,6 +68,12 @@
 #'   Required when `"rrlmgraph_mcp"` is included in `strategies`; the strategy
 #'   is silently skipped (with a warning) if no path is found or Node.js is
 #'   not installed.
+#' @param max_new_tasks Integer(1) or `NULL`. Maximum number of *new* tasks
+#'   (tasks that have at least one unseen (strategy, trial) combination) to
+#'   process in this run.  When `NULL` (default) all tasks are processed.
+#'   Useful when the available API quota is known in advance: set
+#'   `max_new_tasks = floor(remaining_requests / n_strategies)` and combine
+#'   with `resume = TRUE` so tomorrow's run continues where today's left off.
 #' @param .dry_run     Logical(1). When `TRUE` the LLM is not called;
 #'   dummy scores of `0.5` are returned.  Useful for integration tests.
 #'
@@ -127,6 +133,7 @@ run_full_benchmark <- function(
   ),
   resume = FALSE,
   mcp_server_dir = NULL,
+  max_new_tasks = NULL,
   .dry_run = FALSE
 ) {
   llm_provider <- match.arg(llm_provider)
@@ -329,11 +336,44 @@ run_full_benchmark <- function(
     n_combos
   ))
 
+  # Reset quota-exhaustion signal from any prior run in this R session, then
+  # initialise the counters used by the max_new_tasks gate (bench#37).
+  Sys.setenv(RRLMGRAPHBENCH_QUOTA_EXHAUSTED = "")
+  quota_hit <- FALSE
+  new_tasks_started <- 0L
+
   t0 <- proc.time()[["elapsed"]]
   results <- list()
   run_idx <- 0L
 
   for (task in tasks) {
+    # ---- Quota-aware task gating (bench#37) --------------------------------
+    # Determine whether any (strategy, trial) combinations for this task still
+    # need to be run.  If max_new_tasks is set (from a pre-run quota check) and
+    # we have already started that many new tasks today, stop before the graph
+    # build or MCP server start -- avoiding expensive wasted work.
+    task_has_new_work <- any(vapply(strategies, function(s) {
+      any(vapply(seq_len(n_trials), function(t) {
+        !paste(task$task_id, s, as.integer(t), sep = "|") %in% skip_keys
+      }, logical(1L)))
+    }, logical(1L)))
+    if (task_has_new_work) {
+      if (!is.null(max_new_tasks) && new_tasks_started >= max_new_tasks) {
+        message(sprintf(
+          paste0(
+            "[rrlmgraphbench] max_new_tasks=%d reached (%d/%d tasks processed)",
+            " -- stopping to stay within API quota.",
+            " Set resume=TRUE to continue in the next run."
+          ),
+          max_new_tasks,
+          new_tasks_started,
+          length(tasks)
+        ))
+        break
+      }
+      new_tasks_started <- new_tasks_started + 1L
+    }
+
     project_path <- file.path(projects_dir, task$project)
     if (.dry_run) {
       graph_tfidf <- NULL
@@ -438,7 +478,16 @@ run_full_benchmark <- function(
           result_row$score,
           remaining
         ))
+
+        # Stop immediately when run_single signalled quota exhaustion.
+        # The checkpoint written at the end of this task block includes all
+        # rows completed so far; the next run with resume=TRUE will continue.
+        if (Sys.getenv("RRLMGRAPHBENCH_QUOTA_EXHAUSTED") == "true") {
+          quota_hit <- TRUE
+          break # break trial loop
+        }
       }
+      if (quota_hit) break # break strategy loop
     }
 
     # ---- Checkpoint save after each task block ----------------------------
@@ -477,6 +526,7 @@ run_full_benchmark <- function(
       unlink(mcp_tmp_db)
       mcp_tmp_db <- NULL
     }
+    if (quota_hit) break # break task loop -- partial checkpoint already saved above
   }
 
   all_results <- do.call(

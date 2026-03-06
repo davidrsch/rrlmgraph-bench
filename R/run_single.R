@@ -108,7 +108,9 @@ run_single <- function(
           chat_fn <- getExportedValue("ellmer", chat_fn_name)
           chat_fn(model = resolved_model)
         }
-        chat$chat(prompt)
+        # Bypass API call when quota was already exhausted earlier in this run.
+        if (Sys.getenv("RRLMGRAPHBENCH_QUOTA_EXHAUSTED") == "true") NA_character_
+        else chat$chat(prompt)
       },
       error = function(e) {
         msg <- conditionMessage(e)
@@ -122,53 +124,30 @@ run_single <- function(
           ignore.case = TRUE
         )
         if (is_rate_limit) {
+          # Signal quota exhaustion so the outer benchmark loop stops after
+          # the current task block.  Do NOT sleep or retry: the daily quota
+          # resets in ~24 h, so retrying is always futile and a 60 s sleep
+          # per remaining call would block the runner for hours.
+          Sys.setenv(RRLMGRAPHBENCH_QUOTA_EXHAUSTED = "true")
           message(
-            "[run_single] Rate-limit hit (429) -- waiting 60s before retry..."
+            "[run_single] Quota exhausted (429) -- aborting retries; ",
+            "run will resume from checkpoint tomorrow."
           )
-          Sys.sleep(60)
-          tryCatch(
-            {
-              chat2 <- if (llm_provider == "github") {
-                gh_pat2 <- Sys.getenv(
-                  "GITHUB_PAT",
-                  Sys.getenv("GITHUB_TOKEN", "")
-                )
-                cred_fn2 <- (function(k) function() k)(gh_pat2)
-                ellmer::chat_openai_compatible(
-                  base_url = "https://models.github.ai/inference/",
-                  model = resolved_model,
-                  credentials = cred_fn2
-                )
-              } else {
-                chat_fn2 <- getExportedValue(
-                  "ellmer",
-                  switch(
-                    llm_provider,
-                    openai = "chat_openai",
-                    anthropic = "chat_anthropic",
-                    ollama = "chat_ollama"
-                  )
-                )
-                chat_fn2(model = resolved_model)
-              }
-              chat2$chat(prompt)
-            },
-            error = function(e2) {
-              message(
-                "[run_single] Retry failed: ",
-                conditionMessage(e2)
-              )
-              NA_character_
-            }
-          )
+          NA_character_
         } else {
           message("[run_single] LLM call failed: ", msg)
           ""
         }
       }
     )
-    # Rate-limit polite delay between API calls (bench#35)
-    if (!.dry_run && rate_limit_delay > 0) {
+    # Rate-limit polite delay between API calls (bench#35).
+    # Skip the delay when quota is exhausted -- no more real API calls will
+    # be made, so sleeping would just burn CI minutes to no effect.
+    if (
+      !.dry_run &&
+        rate_limit_delay > 0 &&
+        Sys.getenv("RRLMGRAPHBENCH_QUOTA_EXHAUSTED") != "true"
+    ) {
       Sys.sleep(rate_limit_delay)
     }
     latency_sec <- proc.time()[["elapsed"]] - t1
