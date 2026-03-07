@@ -12,7 +12,7 @@ name: run-benchmark
 
 permissions:
   contents: write # needed to commit results and version stamp
-  models: read    # needed for GitHub Models inference API
+  models: read # needed for GitHub Models inference API
 
 # ── Job 1: work-to-do gate ────────────────────────────────────────────────────
 # A cheap (~10 s) job that decides whether the benchmark needs to run today.
@@ -20,23 +20,32 @@ permissions:
 #   (a) rrlmgraph upstream version has not changed since the last run
 #   (b) all expected rows (n_tasks x n_strategies x n_trials) are present
 #
-# The stamp file stores VERSION:COMPLETED:EXPECTED (e.g. "0.1.2:360:630").
-# Using raw numbers rather than a qualitative "done/partial" label means the
-# gate can never be fooled by a stale or manually-seeded status string.
+# State is read from inst/results/benchmark_manifest.json (written by the
+# commit step after every run -- complete or partial).  This is the single
+# source of truth; there is no manually-seeded stamp file that can go stale.
+# The manifest is plain JSON, parsed here with `jq` (pre-installed on all
+# ubuntu-latest runners).
+#
+# Version-bump → fresh_start:
+#   When the gate detects a version change, it emits fresh_start=true.
+#   The benchmark job then deletes any partial checkpoint and runs with
+#   resume=FALSE, ensuring all rows in the output RDS belong to the SAME
+#   algorithm version (required for valid Wilcoxon comparisons).
 #
 # Failure modes handled:
-#   • curl fails (network)      → default to RUN (fail-open)
-#   • stamp file missing        → STORED_VER=none → always runs first time
-#   • COMPLETED < EXPECTED      → always runs (missing trials)
-#   • version changed           → always runs
-#   • manual / force_run        → always runs
+#   • curl fails (network)         → default to RUN (fail-open)
+#   • manifest missing             → STORED_VER=none → always runs first time
+#   • completed_rows < expected    → always runs (missing trials)
+#   • version changed              → always runs (fresh_start=true)
+#   • manual / force_run           → always runs
 
 jobs:
-  check-version:
+  gate:
     runs-on: ubuntu-latest
     outputs:
-      skip:           ${{ steps.gate.outputs.skip }}
+      skip: ${{ steps.gate.outputs.skip }}
       remote_version: ${{ steps.gate.outputs.remote_version }}
+      fresh_start: ${{ steps.gate.outputs.fresh_start }}
     steps:
       - uses: actions/checkout@v4
 
@@ -54,24 +63,35 @@ jobs:
             echo "::warning::Could not fetch rrlmgraph remote version — defaulting to RUN"
             echo "skip=false"            >> "$GITHUB_OUTPUT"
             echo "remote_version=unknown" >> "$GITHUB_OUTPUT"
+            echo "fresh_start=false"      >> "$GITHUB_OUTPUT"
             exit 0
           fi
           echo "remote_version=$REMOTE_VER" >> "$GITHUB_OUTPUT"
 
-          STORED_FILE="inst/last-benchmarked-rrlmgraph-version.txt"
-          if [ -f "$STORED_FILE" ]; then
-            STORED_RAW=$(tr -d '[:space:]' < "$STORED_FILE")
-            STORED_VER=$(echo "$STORED_RAW" | cut -d: -f1)
-            STORED_COMPLETED=$(echo "$STORED_RAW" | cut -d: -f2)
-            STORED_EXPECTED=$(echo "$STORED_RAW" | cut -d: -f3)
-            # Treat missing/legacy fields as 0/9999 so we always run until
-            # the stamp is written in the new format.
+          # Read the manifest written by the previous run's commit step.
+          # Falls back to sentinel values that guarantee a first-time run.
+          MANIFEST="inst/results/benchmark_manifest.json"
+          if [ -f "$MANIFEST" ]; then
+            STORED_VER=$(jq -r '.rrlmgraph_version // "none"' "$MANIFEST")
+            STORED_COMPLETED=$(jq -r '.completed_rows // 0' "$MANIFEST")
+            STORED_EXPECTED=$(jq -r '.expected_rows // 9999' "$MANIFEST")
+            # Guard against corrupt JSON -- treat non-numeric as sentinel
             echo "$STORED_COMPLETED" | grep -qE '^[0-9]+$' || STORED_COMPLETED=0
             echo "$STORED_EXPECTED"  | grep -qE '^[0-9]+$' || STORED_EXPECTED=9999
           else
             STORED_VER="none"
             STORED_COMPLETED=0
             STORED_EXPECTED=9999
+          fi
+
+          # Emit fresh_start when the upstream version changed (and a prior run
+          # exists).  The benchmark job uses this to wipe the partial checkpoint
+          # and run with resume=FALSE, preventing cross-version row mixing.
+          if [ "$REMOTE_VER" != "$STORED_VER" ] && [ "$STORED_VER" != "none" ]; then
+            echo "fresh_start=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::rrlmgraph bumped $STORED_VER -> $REMOTE_VER -- fresh start (partial checkpoint will be wiped)"
+          else
+            echo "fresh_start=false" >> "$GITHUB_OUTPUT"
           fi
 
           # Skip only when ALL of:
@@ -90,23 +110,21 @@ jobs:
             echo "::notice::Benchmark complete ($STORED_COMPLETED/$STORED_EXPECTED rows) and rrlmgraph still at $REMOTE_VER -- skipping today"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
-            if [ "$REMOTE_VER" != "$STORED_VER" ]; then
-              echo "::notice::rrlmgraph bumped $STORED_VER -> $REMOTE_VER -- benchmark queued"
-            elif [ "$STORED_COMPLETED" -lt "$STORED_EXPECTED" ]; then
+            if [ "$STORED_COMPLETED" -lt "$STORED_EXPECTED" ]; then
               echo "::notice::Benchmark incomplete ($STORED_COMPLETED/$STORED_EXPECTED rows) -- re-running to accumulate remaining trials"
-            else
+            elif [ "$EVENT" != "schedule" ] || [ "$FORCE" = "true" ]; then
               echo "::notice::Trigger: event=$EVENT force=$FORCE -- running regardless of completion status"
             fi
           fi
 
-# ── Job 2: benchmark ──────────────────────────────────────────────────────────
+  # ── Job 2: benchmark ──────────────────────────────────────────────────────────
   benchmark:
-    needs: check-version
+    needs: gate
     # Skip the entire job (and all its expensive setup) when the gate fired.
     # This saves ~8 min of Node/Ollama/R setup plus 2+ h of LLM calls.
-    if: needs.check-version.outputs.skip != 'true'
+    if: needs.gate.outputs.skip != 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 330  # 5.5 h safety net -- leaves 30 min for cleanup before GHA's 6 h limit
+    timeout-minutes: 330 # 5.5 h safety net -- leaves 30 min for cleanup before GHA's 6 h limit
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }} # auto-set, no extra secret needed
 
@@ -216,6 +234,10 @@ jobs:
           # Tells run_full_benchmark() where to find the built MCP server
           RRLMGRAPH_MCP_DIR: ${{ github.workspace }}/rrlmgraph-mcp
           RRLMGRAPH_MAX_NEW_TASKS: ${{ steps.quota.outputs.max_new_tasks }}
+          # When the upstream rrlmgraph version changed, the gate sets this to
+          # "true" so we wipe the partial checkpoint (preventing cross-version
+          # row mixing) and run with resume=FALSE for a scientifically valid run.
+          RRLMGRAPH_FRESH_START: ${{ needs.gate.outputs.fresh_start }}
         run: |
           Rscript -e '
             # Translate the quota-derived task ceiling from the environment.
@@ -224,12 +246,24 @@ jobs:
               as.integer(Sys.getenv("RRLMGRAPH_MAX_NEW_TASKS", "9999"))
             )
             max_t <- if (is.na(max_t_env) || max_t_env >= 9999L) NULL else max_t_env
+
+            # Fresh start on version bump: wipe partial so we never mix rows
+            # from two different algorithm versions in the same results RDS.
+            fresh <- Sys.getenv("RRLMGRAPH_FRESH_START") == "true"
+            if (fresh) {
+              partial <- "inst/results/benchmark_results_partial.rds"
+              if (file.exists(partial)) {
+                file.remove(partial)
+                message("[CI] rrlmgraph version bumped -- wiped partial checkpoint for clean start")
+              }
+            }
+
             results <- rrlmgraphbench::run_full_benchmark(
               output_path   = "inst/results/benchmark_results.rds",
               n_trials      = 3L,
               llm_provider  = "github",
               llm_model     = "gpt-4.1-mini",
-              resume        = TRUE,
+              resume        = !fresh,
               max_new_tasks = max_t
             )
             message("Benchmark complete. Rows: ", nrow(results))
@@ -241,30 +275,41 @@ jobs:
             message("Total tokens: ", sum(results$total_tokens, na.rm = TRUE))
           '
 
-      - name: Commit results and record version stamp
+      - name: Commit results and update manifest
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Write the stamp as VERSION:COMPLETED:EXPECTED so the gate can
-          # reason quantitatively -- it never needs to trust a qualitative
-          # "done"/"partial" label that could be manually set wrong.
-          RRLMGRAPH_VER="${{ needs.check-version.outputs.remote_version }}"
+          # Write benchmark_manifest.json -- the single source of truth read
+          # by the gate on the next run.  Using JSON + jq means:
+          #   • no manually-seeded file format to get wrong
+          #   • fields are self-documenting and typed (numbers vs strings)
+          #   • the gate can never be misled by a stale qualitative label
+          RRLMGRAPH_VER="${{ needs.gate.outputs.remote_version }}"
           EXPECTED_ROWS=$((30 * 7 * 3))  # n_tasks x n_strategies x n_trials
           COMPLETED_ROWS=$(Rscript --vanilla -e \
             'r <- tryCatch(readRDS("inst/results/benchmark_results.rds"),
                            error = function(e) data.frame(score = numeric(0)))
              cat(sum(!is.na(r$score)))' 2>/dev/null || echo 0)
-          echo "${RRLMGRAPH_VER}:${COMPLETED_ROWS}:${EXPECTED_ROWS}" > inst/last-benchmarked-rrlmgraph-version.txt
-          echo "::notice::Stamp written: rrlmgraph=$RRLMGRAPH_VER rows=$COMPLETED_ROWS/$EXPECTED_ROWS"
+
+          MANIFEST="inst/results/benchmark_manifest.json"
+          jq -n \
+            --arg     ver  "$RRLMGRAPH_VER" \
+            --argjson comp "$COMPLETED_ROWS" \
+            --argjson exp  "$EXPECTED_ROWS" \
+            '{rrlmgraph_version: $ver, completed_rows: $comp, expected_rows: $exp}' \
+            > "$MANIFEST"
+          echo "::notice::Manifest written: rrlmgraph=$RRLMGRAPH_VER rows=$COMPLETED_ROWS/$EXPECTED_ROWS"
 
           git add inst/results/benchmark_results.rds
-          git add inst/last-benchmarked-rrlmgraph-version.txt
+          git add "$MANIFEST"
           # Also commit the partial checkpoint so the next daily run can resume
           # from where this one left off (quota-safe incremental accumulation).
           if [ -f inst/results/benchmark_results_partial.rds ]; then
             git add inst/results/benchmark_results_partial.rds
           fi
+          # Remove the legacy stamp file if it still exists (transition clean-up)
+          git rm --ignore-unmatch inst/last-benchmarked-rrlmgraph-version.txt
           git diff --cached --quiet || \
             git commit -m "chore: update benchmark results [rrlmgraph $RRLMGRAPH_VER]"
           git pull --rebase origin main
