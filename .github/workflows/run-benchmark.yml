@@ -15,10 +15,13 @@ permissions:
   models: read # needed for GitHub Models inference API
 
 # ── Job 1: work-to-do gate ────────────────────────────────────────────────────
-# A cheap (~10 s) job that decides whether the benchmark needs to run today.
-# The benchmark is skipped ONLY when BOTH of these are true on a scheduled run:
+# A cheap (~10 s) job that decides whether the benchmark needs to run.
+# The benchmark is skipped ONLY when BOTH of these are true:
 #   (a) rrlmgraph upstream version has not changed since the last run
 #   (b) all expected rows (n_tasks x n_strategies x n_trials) are present
+#
+# The decision is purely data-driven and identical for scheduled and manual
+# runs.  Use force_run=true to explicitly re-run a complete benchmark.
 #
 # State is read from inst/results/benchmark_manifest.json (written by the
 # commit step after every run -- complete or partial).  This is the single
@@ -37,7 +40,7 @@ permissions:
 #   • manifest missing             → STORED_VER=none → always runs first time
 #   • completed_rows < expected    → always runs (missing trials)
 #   • version changed              → always runs (fresh_start=true)
-#   • manual / force_run           → always runs
+#   • force_run=true               → always runs
 
 jobs:
   gate:
@@ -94,26 +97,27 @@ jobs:
             echo "fresh_start=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # Skip only when ALL of:
-          #   (a) scheduled run -- manual dispatch always falls through
-          #   (b) version unchanged
-          #   (c) benchmark complete: COMPLETED >= EXPECTED
-          #   (d) force_run not set
-          EVENT="${{ github.event_name }}"
+          # Skip when ALL of:
+          #   (a) version unchanged
+          #   (b) benchmark complete: COMPLETED >= EXPECTED
+          #   (c) force_run not set
+          # The trigger (schedule vs manual dispatch) is irrelevant -- if the
+          # work is done and no force is requested, skip regardless of how the
+          # workflow was started.  Use force_run=true to explicitly re-run a
+          # complete benchmark.
           FORCE="${{ inputs.force_run }}"
 
           if [ "$REMOTE_VER" = "$STORED_VER" ] \
               && [ "$STORED_COMPLETED" -ge "$STORED_EXPECTED" ] \
-              && [ "$EVENT" = "schedule" ] \
               && [ "$FORCE" != "true" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Benchmark complete ($STORED_COMPLETED/$STORED_EXPECTED rows) and rrlmgraph still at $REMOTE_VER -- skipping today"
+            echo "::notice::Benchmark complete ($STORED_COMPLETED/$STORED_EXPECTED rows) and rrlmgraph still at $REMOTE_VER -- skipping"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
             if [ "$STORED_COMPLETED" -lt "$STORED_EXPECTED" ]; then
-              echo "::notice::Benchmark incomplete ($STORED_COMPLETED/$STORED_EXPECTED rows) -- re-running to accumulate remaining trials"
-            elif [ "$EVENT" != "schedule" ] || [ "$FORCE" = "true" ]; then
-              echo "::notice::Trigger: event=$EVENT force=$FORCE -- running regardless of completion status"
+              echo "::notice::Benchmark incomplete ($STORED_COMPLETED/$STORED_EXPECTED rows) -- running to accumulate remaining trials"
+            elif [ "$FORCE" = "true" ]; then
+              echo "::notice::force_run=true -- running regardless of completion status"
             fi
           fi
 
