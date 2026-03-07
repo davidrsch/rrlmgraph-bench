@@ -10,6 +10,16 @@ on:
 
 name: run-benchmark
 
+# Prevent two benchmark runs from executing in parallel.  Concurrent runs
+# read the same manifest, run identical combos (fixed seed=42 shuffle), and
+# race to push results -- the second push fails with a rebase conflict and
+# all its work is lost.  Queuing (cancel-in-progress: false) means a manual
+# dispatch triggered while the cron run is in progress will wait and then
+# start correctly from the updated manifest.
+concurrency:
+  group: run-benchmark
+  cancel-in-progress: false
+
 permissions:
   contents: write # needed to commit results and version stamp
   models: read # needed for GitHub Models inference API
