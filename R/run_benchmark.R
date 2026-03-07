@@ -340,6 +340,7 @@ run_full_benchmark <- function(
   # initialise the counters used by the max_new_tasks gate (bench#37).
   Sys.setenv(RRLMGRAPHBENCH_QUOTA_EXHAUSTED = "")
   quota_hit <- FALSE
+  consecutive_na <- 0L
   new_tasks_started <- 0L
 
   t0 <- proc.time()[["elapsed"]]
@@ -479,12 +480,23 @@ run_full_benchmark <- function(
           remaining
         ))
 
-        # Stop immediately when run_single signalled quota exhaustion.
-        # The checkpoint written at the end of this task block includes all
-        # rows completed so far; the next run with resume=TRUE will continue.
-        if (Sys.getenv("RRLMGRAPHBENCH_QUOTA_EXHAUSTED") == "true") {
-          quota_hit <- TRUE
-          break # break trial loop
+        # Track consecutive NA scores to detect quota exhaustion.
+        # run_single returns NA on 429 after one 60-s retry; three
+        # consecutive NAs means the daily quota is truly exhausted.
+        if (is.na(result_row$score)) {
+          consecutive_na <- consecutive_na + 1L
+          if (consecutive_na >= 3L) {
+            message(
+              "[rrlmgraphbench] 3 consecutive NA scores -- ",
+              "quota likely exhausted, stopping.  ",
+              "Run with resume=TRUE to continue tomorrow."
+            )
+            Sys.setenv(RRLMGRAPHBENCH_QUOTA_EXHAUSTED = "true")
+            quota_hit <- TRUE
+            break # break trial loop
+          }
+        } else {
+          consecutive_na <- 0L
         }
       }
       if (quota_hit) break # break strategy loop

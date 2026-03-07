@@ -124,16 +124,23 @@ run_single <- function(
           ignore.case = TRUE
         )
         if (is_rate_limit) {
-          # Signal quota exhaustion so the outer benchmark loop stops after
-          # the current task block.  Do NOT sleep or retry: the daily quota
-          # resets in ~24 h, so retrying is always futile and a 60 s sleep
-          # per remaining call would block the runner for hours.
-          Sys.setenv(RRLMGRAPHBENCH_QUOTA_EXHAUSTED = "true")
+          # Wait 60 s then retry once.  The outer benchmark loop tracks
+          # consecutive NAs and decides when quota is truly exhausted
+          # (3 in a row).  From run_single's perspective every 429 is
+          # worth one polite retry before giving up on this call.
           message(
-            "[run_single] Quota exhausted (429) -- aborting retries; ",
-            "run will resume from checkpoint tomorrow."
+            "[run_single] 429 rate-limit -- waiting 60 s before retry..."
           )
-          NA_character_
+          Sys.sleep(60)
+          tryCatch(
+            chat$chat(prompt),
+            error = function(e2) {
+              message(
+                "[run_single] Retry also failed: ", conditionMessage(e2)
+              )
+              NA_character_
+            }
+          )
         } else {
           message("[run_single] LLM call failed: ", msg)
           ""
