@@ -372,63 +372,73 @@ rate per strategy.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">60</td>
-<td align="right">0.799</td>
-<td align="right">0.109</td>
-<td align="right">0.771</td>
-<td align="right">0.827</td>
-<td align="right">732.067</td>
-<td align="right">0.400</td>
+<td align="right">66</td>
+<td align="right">0.803</td>
+<td align="right">0.106</td>
+<td align="right">0.777</td>
+<td align="right">0.829</td>
+<td align="right">732.576</td>
+<td align="right">0.409</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
-<td align="right">60</td>
-<td align="right">0.778</td>
-<td align="right">0.134</td>
-<td align="right">0.743</td>
-<td align="right">0.812</td>
-<td align="right">1705.300</td>
-<td align="right">0.367</td>
+<td align="right">66</td>
+<td align="right">0.769</td>
+<td align="right">0.143</td>
+<td align="right">0.734</td>
+<td align="right">0.805</td>
+<td align="right">1782.485</td>
+<td align="right">0.364</td>
 </tr>
 <tr class="odd">
 <td align="left">term_overlap</td>
-<td align="right">60</td>
-<td align="right">0.761</td>
-<td align="right">0.146</td>
-<td align="right">0.724</td>
-<td align="right">0.799</td>
-<td align="right">2526.133</td>
-<td align="right">0.400</td>
+<td align="right">66</td>
+<td align="right">0.762</td>
+<td align="right">0.143</td>
+<td align="right">0.727</td>
+<td align="right">0.797</td>
+<td align="right">2503.394</td>
+<td align="right">0.394</td>
 </tr>
 <tr class="even">
 <td align="left">bm25_retrieval</td>
-<td align="right">60</td>
-<td align="right">0.769</td>
-<td align="right">0.145</td>
-<td align="right">0.732</td>
-<td align="right">0.807</td>
-<td align="right">2166.717</td>
-<td align="right">0.433</td>
+<td align="right">66</td>
+<td align="right">0.768</td>
+<td align="right">0.140</td>
+<td align="right">0.733</td>
+<td align="right">0.802</td>
+<td align="right">2177.894</td>
+<td align="right">0.439</td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">60</td>
-<td align="right">0.693</td>
-<td align="right">0.156</td>
-<td align="right">0.653</td>
-<td align="right">0.734</td>
-<td align="right">262.617</td>
-<td align="right">0.300</td>
+<td align="right">66</td>
+<td align="right">0.686</td>
+<td align="right">0.164</td>
+<td align="right">0.646</td>
+<td align="right">0.726</td>
+<td align="right">259.348</td>
+<td align="right">0.303</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">60</td>
+<td align="right">66</td>
 <td align="right">0.791</td>
-<td align="right">0.116</td>
-<td align="right">0.761</td>
-<td align="right">0.821</td>
-<td align="right">747.550</td>
-<td align="right">0.433</td>
+<td align="right">0.114</td>
+<td align="right">0.762</td>
+<td align="right">0.819</td>
+<td align="right">752.712</td>
+<td align="right">0.439</td>
+</tr>
+<tr class="odd">
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">15</td>
+<td align="right">0.799</td>
+<td align="right">0.076</td>
+<td align="right">0.757</td>
+<td align="right">0.841</td>
+<td align="right">1536.800</td>
+<td align="right">0.400</td>
 </tr>
 </tbody>
 </table>
@@ -523,30 +533,35 @@ strategy is less efficient.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">5.790</td>
+<td align="right">6.129</td>
 <td align="left">More efficient than full_files</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">2.395</td>
+<td align="right">2.538</td>
 <td align="left">More efficient than full_files</td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">2.320</td>
+<td align="right">2.434</td>
 <td align="left">More efficient than full_files</td>
 </tr>
 <tr class="even">
-<td align="left">bm25_retrieval</td>
-<td align="right">0.779</td>
-<td align="left">Less efficient than full_files</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">1.205</td>
+<td align="left">More efficient than full_files</td>
 </tr>
 <tr class="odd">
-<td align="left">term_overlap</td>
-<td align="right">0.661</td>
+<td align="left">bm25_retrieval</td>
+<td align="right">0.817</td>
 <td align="left">Less efficient than full_files</td>
 </tr>
 <tr class="even">
+<td align="left">term_overlap</td>
+<td align="right">0.705</td>
+<td align="left">Less efficient than full_files</td>
+</tr>
+<tr class="odd">
 <td align="left">full_files</td>
 <td align="right">NA</td>
 <td align="left">N/A (baseline)</td>
@@ -594,32 +609,37 @@ namespace.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">0.300</td>
+<td align="right">0.303</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
-<td align="right">0.367</td>
+<td align="right">0.364</td>
+<td align="left">High (&gt; 25%)</td>
+</tr>
+<tr class="odd">
+<td align="left">term_overlap</td>
+<td align="right">0.394</td>
+<td align="left">High (&gt; 25%)</td>
+</tr>
+<tr class="even">
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">0.400</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
-<td align="right">0.400</td>
+<td align="right">0.409</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="even">
-<td align="left">term_overlap</td>
-<td align="right">0.400</td>
+<td align="left">bm25_retrieval</td>
+<td align="right">0.439</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 <tr class="odd">
-<td align="left">bm25_retrieval</td>
-<td align="right">0.433</td>
-<td align="left">High (&gt; 25%)</td>
-</tr>
-<tr class="even">
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">0.433</td>
+<td align="right">0.439</td>
 <td align="left">High (&gt; 25%)</td>
 </tr>
 </tbody>
@@ -705,16 +725,16 @@ practical effect size: |d| &lt; 0.2 = negligible, 0.2-0.5 = small,
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Pairwise tests require n_trials &gt;= 2 per strategy."</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<table style="width:100%;" class="table">
+<table class="table">
 <caption>Pairwise Welch t-tests (Bonferroni-corrected). sig: ns = not
 significant, * p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001. effect: Cohen’s
 d magnitude.</caption>
 <colgroup>
-<col width="17%">
+<col width="18%">
 <col width="18%">
 <col width="10%">
+<col width="12%">
 <col width="13%">
-<col width="14%">
 <col width="9%">
 <col width="4%">
 <col width="11%">
@@ -733,152 +753,212 @@ d magnitude.</caption>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">full_files</td>
-<td align="right">0.9804</td>
-<td align="right">0.3290</td>
+<td align="right">1.5161</td>
+<td align="right">0.1321</td>
 <td align="right">1.0000</td>
-<td align="right">0.1790</td>
+<td align="right">0.2639</td>
 <td align="left">ns</td>
-<td align="left">negligible</td>
+<td align="left">small</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">term_overlap</td>
-<td align="right">1.6263</td>
-<td align="right">0.1068</td>
+<td align="right">1.8586</td>
+<td align="right">0.0655</td>
 <td align="right">1.0000</td>
-<td align="right">0.2969</td>
+<td align="right">0.3235</td>
 <td align="left">ns</td>
 <td align="left">small</td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">bm25_retrieval</td>
-<td align="right">1.2842</td>
-<td align="right">0.2018</td>
+<td align="right">1.6004</td>
+<td align="right">0.1121</td>
 <td align="right">1.0000</td>
-<td align="right">0.2345</td>
+<td align="right">0.2786</td>
 <td align="left">ns</td>
 <td align="left">small</td>
 </tr>
 <tr class="even">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">no_context</td>
-<td align="right">4.3299</td>
+<td align="right">4.8534</td>
 <td align="right">0.0000</td>
-<td align="right">0.0005</td>
-<td align="right">0.7905</td>
+<td align="right">0.0001</td>
+<td align="right">0.8449</td>
 <td align="left">***</td>
-<td align="left">medium</td>
+<td align="left">large</td>
 </tr>
 <tr class="odd">
 <td align="left">rrlmgraph_tfidf</td>
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">0.4155</td>
-<td align="right">0.6785</td>
+<td align="right">0.6244</td>
+<td align="right">0.5335</td>
 <td align="right">1.0000</td>
-<td align="right">0.0759</td>
+<td align="right">0.1087</td>
 <td align="left">ns</td>
 <td align="left">negligible</td>
 </tr>
 <tr class="even">
-<td align="left">full_files</td>
-<td align="left">term_overlap</td>
-<td align="right">0.6385</td>
-<td align="right">0.5244</td>
+<td align="left">rrlmgraph_tfidf</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">0.1490</td>
+<td align="right">0.8827</td>
 <td align="right">1.0000</td>
-<td align="right">0.1166</td>
+<td align="right">0.0381</td>
 <td align="left">ns</td>
 <td align="left">negligible</td>
 </tr>
 <tr class="odd">
 <td align="left">full_files</td>
-<td align="left">bm25_retrieval</td>
-<td align="right">0.3194</td>
-<td align="right">0.7500</td>
+<td align="left">term_overlap</td>
+<td align="right">0.2965</td>
+<td align="right">0.7674</td>
 <td align="right">1.0000</td>
-<td align="right">0.0583</td>
+<td align="right">0.0516</td>
 <td align="left">ns</td>
 <td align="left">negligible</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
+<td align="left">bm25_retrieval</td>
+<td align="right">0.0551</td>
+<td align="right">0.9561</td>
+<td align="right">1.0000</td>
+<td align="right">0.0096</td>
+<td align="left">ns</td>
+<td align="left">negligible</td>
+</tr>
+<tr class="odd">
+<td align="left">full_files</td>
 <td align="left">no_context</td>
-<td align="right">3.1756</td>
-<td align="right">0.0019</td>
-<td align="right">0.0288</td>
-<td align="right">0.5798</td>
+<td align="right">3.1076</td>
+<td align="right">0.0023</td>
+<td align="right">0.0488</td>
+<td align="right">0.5410</td>
 <td align="left">*</td>
 <td align="left">medium</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">full_files</td>
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">-0.5834</td>
-<td align="right">0.5608</td>
+<td align="right">-0.9438</td>
+<td align="right">0.3471</td>
 <td align="right">1.0000</td>
-<td align="right">-0.1065</td>
+<td align="right">-0.1643</td>
 <td align="left">ns</td>
 <td align="left">negligible</td>
+</tr>
+<tr class="odd">
+<td align="left">full_files</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">-1.1242</td>
+<td align="right">0.2676</td>
+<td align="right">1.0000</td>
+<td align="right">-0.2590</td>
+<td align="left">ns</td>
+<td align="left">small</td>
 </tr>
 <tr class="even">
 <td align="left">term_overlap</td>
 <td align="left">bm25_retrieval</td>
-<td align="right">-0.3093</td>
-<td align="right">0.7577</td>
+<td align="right">-0.2444</td>
+<td align="right">0.8073</td>
 <td align="right">1.0000</td>
-<td align="right">-0.0565</td>
+<td align="right">-0.0426</td>
 <td align="left">ns</td>
 <td align="left">negligible</td>
 </tr>
 <tr class="odd">
 <td align="left">term_overlap</td>
 <td align="left">no_context</td>
-<td align="right">2.4659</td>
-<td align="right">0.0151</td>
-<td align="right">0.2267</td>
-<td align="right">0.4502</td>
+<td align="right">2.8384</td>
+<td align="right">0.0053</td>
+<td align="right">0.1108</td>
+<td align="right">0.4941</td>
 <td align="left">ns</td>
 <td align="left">small</td>
 </tr>
 <tr class="even">
 <td align="left">term_overlap</td>
 <td align="left">rrlmgraph_ollama</td>
-<td align="right">-1.2349</td>
-<td align="right">0.2194</td>
+<td align="right">-1.2748</td>
+<td align="right">0.2047</td>
 <td align="right">1.0000</td>
-<td align="right">-0.2255</td>
+<td align="right">-0.2219</td>
 <td align="left">ns</td>
 <td align="left">small</td>
 </tr>
 <tr class="odd">
-<td align="left">bm25_retrieval</td>
-<td align="left">no_context</td>
-<td align="right">2.7749</td>
-<td align="right">0.0064</td>
-<td align="right">0.0964</td>
-<td align="right">0.5066</td>
+<td align="left">term_overlap</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">-1.4064</td>
+<td align="right">0.1674</td>
+<td align="right">1.0000</td>
+<td align="right">-0.3245</td>
 <td align="left">ns</td>
-<td align="left">medium</td>
+<td align="left">small</td>
 </tr>
 <tr class="even">
 <td align="left">bm25_retrieval</td>
-<td align="left">rrlmgraph_ollama</td>
-<td align="right">-0.8984</td>
-<td align="right">0.3709</td>
-<td align="right">1.0000</td>
-<td align="right">-0.1640</td>
-<td align="left">ns</td>
-<td align="left">negligible</td>
-</tr>
-<tr class="odd">
 <td align="left">no_context</td>
-<td align="left">rrlmgraph_ollama</td>
-<td align="right">-3.8987</td>
-<td align="right">0.0002</td>
+<td align="right">3.0856</td>
 <td align="right">0.0025</td>
-<td align="right">-0.7118</td>
-<td align="left">**</td>
+<td align="right">0.0524</td>
+<td align="right">0.5371</td>
+<td align="left">ns</td>
 <td align="left">medium</td>
+</tr>
+<tr class="odd">
+<td align="left">bm25_retrieval</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">-1.0175</td>
+<td align="right">0.3109</td>
+<td align="right">1.0000</td>
+<td align="right">-0.1771</td>
+<td align="left">ns</td>
+<td align="left">negligible</td>
+</tr>
+<tr class="even">
+<td align="left">bm25_retrieval</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">-1.1870</td>
+<td align="right">0.2424</td>
+<td align="right">1.0000</td>
+<td align="right">-0.2754</td>
+<td align="left">ns</td>
+<td align="left">small</td>
+</tr>
+<tr class="odd">
+<td align="left">no_context</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">-4.2539</td>
+<td align="right">0.0000</td>
+<td align="right">0.0009</td>
+<td align="right">-0.7405</td>
+<td align="left">***</td>
+<td align="left">medium</td>
+</tr>
+<tr class="even">
+<td align="left">no_context</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">-4.0081</td>
+<td align="right">0.0002</td>
+<td align="right">0.0045</td>
+<td align="right">-0.8843</td>
+<td align="left">**</td>
+<td align="left">large</td>
+</tr>
+<tr class="odd">
+<td align="left">rrlmgraph_ollama</td>
+<td align="left">rrlmgraph_mcp</td>
+<td align="right">-0.3490</td>
+<td align="right">0.7295</td>
+<td align="right">1.0000</td>
+<td align="right">-0.0870</td>
+<td align="left">ns</td>
+<td align="left">negligible</td>
 </tr>
 </tbody>
 </table>
@@ -949,7 +1029,7 @@ mcp#17 merge gate)</li>
 <span><span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/message.html" class="external-link">message</a></span><span class="op">(</span><span class="st">"Wilcoxon results not available (requires bm25_retrieval and task_id in results)."</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; NOT SIGNIFICANT: rrlmgraph_tfidf vs bm25_retrieval (p=0.1049, n=30 pairs). Increase n_trials for more statistical power.</span></span></code></pre></div>
+<span><span class="co">#&gt; NOT SIGNIFICANT: rrlmgraph_tfidf vs bm25_retrieval (p=0.0972, n=30 pairs). Increase n_trials for more statistical power.</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -1026,39 +1106,45 @@ differences across projects is not robust.</caption>
 <tbody>
 <tr class="odd">
 <td align="left">bm25_retrieval</td>
-<td align="right">0.828</td>
+<td align="right">0.824</td>
 <td align="right">0.746</td>
-<td align="right">0.734</td>
+<td align="right">0.726</td>
 </tr>
 <tr class="even">
 <td align="left">full_files</td>
-<td align="right">0.843</td>
+<td align="right">0.834</td>
 <td align="right">0.758</td>
-<td align="right">0.732</td>
+<td align="right">0.709</td>
 </tr>
 <tr class="odd">
 <td align="left">no_context</td>
-<td align="right">0.788</td>
+<td align="right">0.784</td>
 <td align="right">0.642</td>
-<td align="right">0.650</td>
+<td align="right">0.619</td>
 </tr>
 <tr class="even">
-<td align="left">rrlmgraph_ollama</td>
-<td align="right">0.834</td>
-<td align="right">0.743</td>
+<td align="left">rrlmgraph_mcp</td>
 <td align="right">0.795</td>
+<td align="right">NA</td>
+<td align="right">0.805</td>
 </tr>
 <tr class="odd">
-<td align="left">rrlmgraph_tfidf</td>
-<td align="right">0.851</td>
-<td align="right">0.758</td>
-<td align="right">0.789</td>
+<td align="left">rrlmgraph_ollama</td>
+<td align="right">0.829</td>
+<td align="right">0.743</td>
+<td align="right">0.791</td>
 </tr>
 <tr class="even">
+<td align="left">rrlmgraph_tfidf</td>
+<td align="right">0.850</td>
+<td align="right">0.758</td>
+<td align="right">0.791</td>
+</tr>
+<tr class="odd">
 <td align="left">term_overlap</td>
-<td align="right">0.826</td>
+<td align="right">0.827</td>
 <td align="right">0.740</td>
-<td align="right">0.717</td>
+<td align="right">0.710</td>
 </tr>
 </tbody>
 </table>
@@ -1127,10 +1213,10 @@ instability.</p>
 <span><span class="co">#&gt;  [1] digest_0.6.39     desc_1.4.3        R6_2.6.1          fastmap_1.2.0    </span></span>
 <span><span class="co">#&gt;  [5] xfun_0.56         cachem_1.1.0      knitr_1.51        htmltools_0.5.9  </span></span>
 <span><span class="co">#&gt;  [9] rmarkdown_2.30    lifecycle_1.0.5   cli_3.6.5         sass_0.4.10      </span></span>
-<span><span class="co">#&gt; [13] pkgdown_2.2.0     textshaping_1.0.4 jquerylib_0.1.4   systemfonts_1.3.2</span></span>
-<span><span class="co">#&gt; [17] compiler_4.5.2    tools_4.5.2       ragg_1.5.0        bslib_0.10.0     </span></span>
+<span><span class="co">#&gt; [13] pkgdown_2.2.0     textshaping_1.0.5 jquerylib_0.1.4   systemfonts_1.3.2</span></span>
+<span><span class="co">#&gt; [17] compiler_4.5.2    tools_4.5.2       ragg_1.5.1        bslib_0.10.0     </span></span>
 <span><span class="co">#&gt; [21] evaluate_1.0.5    yaml_2.3.12       otel_0.2.0        jsonlite_2.0.0   </span></span>
-<span><span class="co">#&gt; [25] rlang_1.1.7       fs_1.6.6          htmlwidgets_1.6.4</span></span></code></pre></div>
+<span><span class="co">#&gt; [25] rlang_1.1.7       fs_1.6.7          htmlwidgets_1.6.4</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
