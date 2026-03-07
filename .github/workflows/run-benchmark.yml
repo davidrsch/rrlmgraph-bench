@@ -14,17 +14,22 @@ permissions:
   contents: write # needed to commit results and version stamp
   models: read    # needed for GitHub Models inference API
 
-# ── Job 1: version gate ────────────────────────────────────────────────────────
-# A cheap (~10 s) job that checks whether the upstream rrlmgraph package has
-# been bumped since the last successful benchmark run.  The heavy benchmark job
-# is skipped via a job-level `if` when no change is detected AND the trigger is
-# a scheduled run.  Manual dispatch always runs (force_run bypasses the gate too).
+# ── Job 1: work-to-do gate ────────────────────────────────────────────────────
+# A cheap (~10 s) job that decides whether the benchmark needs to run today.
+# The benchmark is skipped ONLY when BOTH of these are true on a scheduled run:
+#   (a) rrlmgraph upstream version has not changed since the last run
+#   (b) all expected rows (n_tasks x n_strategies x n_trials) are present
+#
+# The stamp file stores VERSION:COMPLETED:EXPECTED (e.g. "0.1.2:360:630").
+# Using raw numbers rather than a qualitative "done/partial" label means the
+# gate can never be fooled by a stale or manually-seeded status string.
 #
 # Failure modes handled:
-#   • curl fails (network)        → default to RUN (fail-open, never skip silently)
-#   • version file missing        → STORED_VER=none → always runs first time
-#   • benchmark job fails         → version file NOT written → next run retries
-#   • concurrent runs             → resume=TRUE makes benchmark idempotent
+#   • curl fails (network)      → default to RUN (fail-open)
+#   • stamp file missing        → STORED_VER=none → always runs first time
+#   • COMPLETED < EXPECTED      → always runs (missing trials)
+#   • version changed           → always runs
+#   • manual / force_run        → always runs
 
 jobs:
   check-version:
@@ -56,38 +61,41 @@ jobs:
           STORED_FILE="inst/last-benchmarked-rrlmgraph-version.txt"
           if [ -f "$STORED_FILE" ]; then
             STORED_RAW=$(tr -d '[:space:]' < "$STORED_FILE")
-            # Support both legacy format ("0.1.2") and new format ("0.1.2:done")
             STORED_VER=$(echo "$STORED_RAW" | cut -d: -f1)
-            STORED_STATUS=$(echo "$STORED_RAW" | cut -s -d: -f2)
-            [ -z "$STORED_STATUS" ] && STORED_STATUS="done" # legacy = done
+            STORED_COMPLETED=$(echo "$STORED_RAW" | cut -d: -f2)
+            STORED_EXPECTED=$(echo "$STORED_RAW" | cut -d: -f3)
+            # Treat missing/legacy fields as 0/9999 so we always run until
+            # the stamp is written in the new format.
+            echo "$STORED_COMPLETED" | grep -qE '^[0-9]+$' || STORED_COMPLETED=0
+            echo "$STORED_EXPECTED"  | grep -qE '^[0-9]+$' || STORED_EXPECTED=9999
           else
             STORED_VER="none"
-            STORED_STATUS="none"
+            STORED_COMPLETED=0
+            STORED_EXPECTED=9999
           fi
 
-          # Gate: skip only when ALL of:
-          #   (a) scheduled run,  (b) version unchanged,
-          #   (c) previous run fully complete (status=done),
-          #   (d) force_run not set.
-          # A partial run (status!=done) always re-runs to finish accumulating
-          # trials, even when the upstream version has not changed.
+          # Skip only when ALL of:
+          #   (a) scheduled run -- manual dispatch always falls through
+          #   (b) version unchanged
+          #   (c) benchmark complete: COMPLETED >= EXPECTED
+          #   (d) force_run not set
           EVENT="${{ github.event_name }}"
           FORCE="${{ inputs.force_run }}"
 
           if [ "$REMOTE_VER" = "$STORED_VER" ] \
-              && [ "$STORED_STATUS" = "done" ] \
+              && [ "$STORED_COMPLETED" -ge "$STORED_EXPECTED" ] \
               && [ "$EVENT" = "schedule" ] \
               && [ "$FORCE" != "true" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::rrlmgraph is still at $REMOTE_VER and last run was complete -- skipping today"
+            echo "::notice::Benchmark complete ($STORED_COMPLETED/$STORED_EXPECTED rows) and rrlmgraph still at $REMOTE_VER -- skipping today"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
             if [ "$REMOTE_VER" != "$STORED_VER" ]; then
               echo "::notice::rrlmgraph bumped $STORED_VER -> $REMOTE_VER -- benchmark queued"
-            elif [ "$STORED_STATUS" != "done" ]; then
-              echo "::notice::Previous run was incomplete (status=$STORED_STATUS) -- re-running to finish"
+            elif [ "$STORED_COMPLETED" -lt "$STORED_EXPECTED" ]; then
+              echo "::notice::Benchmark incomplete ($STORED_COMPLETED/$STORED_EXPECTED rows) -- re-running to accumulate remaining trials"
             else
-              echo "::notice::Trigger: event=$EVENT force=$FORCE -- running regardless of version"
+              echo "::notice::Trigger: event=$EVENT force=$FORCE -- running regardless of completion status"
             fi
           fi
 
@@ -238,23 +246,17 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Write the version stamp with a completion-status suffix:
-          #   VERSION:done    -- all n_tasks x n_strategies x n_trials rows present
-          #   VERSION:partial -- run was quota-interrupted; resume tomorrow
-          # The gate in check-version skips ONLY when the suffix is ":done".
+          # Write the stamp as VERSION:COMPLETED:EXPECTED so the gate can
+          # reason quantitatively -- it never needs to trust a qualitative
+          # "done"/"partial" label that could be manually set wrong.
           RRLMGRAPH_VER="${{ needs.check-version.outputs.remote_version }}"
           EXPECTED_ROWS=$((30 * 7 * 3))  # n_tasks x n_strategies x n_trials
           COMPLETED_ROWS=$(Rscript --vanilla -e \
             'r <- tryCatch(readRDS("inst/results/benchmark_results.rds"),
                            error = function(e) data.frame(score = numeric(0)))
              cat(sum(!is.na(r$score)))' 2>/dev/null || echo 0)
-          if [ "$COMPLETED_ROWS" -ge "$EXPECTED_ROWS" ]; then
-            STAMP_STATUS="done"
-          else
-            STAMP_STATUS="partial"
-            echo "::notice::Benchmark partial ($COMPLETED_ROWS/$EXPECTED_ROWS non-NA rows) -- will resume tomorrow"
-          fi
-          echo "${RRLMGRAPH_VER}:${STAMP_STATUS}" > inst/last-benchmarked-rrlmgraph-version.txt
+          echo "${RRLMGRAPH_VER}:${COMPLETED_ROWS}:${EXPECTED_ROWS}" > inst/last-benchmarked-rrlmgraph-version.txt
+          echo "::notice::Stamp written: rrlmgraph=$RRLMGRAPH_VER rows=$COMPLETED_ROWS/$EXPECTED_ROWS"
 
           git add inst/results/benchmark_results.rds
           git add inst/last-benchmarked-rrlmgraph-version.txt
