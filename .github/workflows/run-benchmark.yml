@@ -280,6 +280,13 @@ jobs:
           '
 
       - name: Commit results and update manifest
+        # Only run when the benchmark actually executed.  If the quota probe
+        # returned 0 (skip_benchmark=true), we leave the manifest unchanged:
+        # the stored version stays as the previous run's version, so tomorrow's
+        # gate will still see "version changed" or "incomplete" and try again.
+        # Updating the manifest here when no benchmark ran would incorrectly
+        # stamp the new upstream version as "complete" using old row data.
+        if: steps.quota.outputs.skip_benchmark != 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
