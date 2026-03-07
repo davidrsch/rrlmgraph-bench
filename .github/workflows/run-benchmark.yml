@@ -297,6 +297,18 @@ jobs:
           #   • fields are self-documenting and typed (numbers vs strings)
           #   • the gate can never be misled by a stale qualitative label
           RRLMGRAPH_VER="${{ needs.gate.outputs.remote_version }}"
+          # When the gate could not reach GitHub (network blip), it emits
+          # "unknown".  Writing "unknown" to the manifest would cause a false
+          # fresh_start on the NEXT successful gate run: any non-"none" stored
+          # version that differs from the real remote version triggers a wipe.
+          # Fall back to the installed package version -- it is always accurate
+          # because R setup installed rrlmgraph from GitHub earlier this job.
+          if [ "$RRLMGRAPH_VER" = "unknown" ]; then
+            RRLMGRAPH_VER=$(Rscript --vanilla -e \
+              'cat(as.character(utils::packageVersion("rrlmgraph")))' \
+              2>/dev/null || echo "unknown")
+            echo "::notice::Gate reported unknown version; resolved from installed package: $RRLMGRAPH_VER"
+          fi
           EXPECTED_ROWS=$((30 * 7 * 3))  # n_tasks x n_strategies x n_trials
           COMPLETED_ROWS=$(Rscript --vanilla -e \
             'r <- tryCatch(readRDS("inst/results/benchmark_results.rds"),
