@@ -353,11 +353,19 @@ run_full_benchmark <- function(
     # need to be run.  If max_new_tasks is set (from a pre-run quota check) and
     # we have already started that many new tasks today, stop before the graph
     # build or MCP server start -- avoiding expensive wasted work.
-    task_has_new_work <- any(vapply(strategies, function(s) {
-      any(vapply(seq_len(n_trials), function(t) {
-        !paste(task$task_id, s, as.integer(t), sep = "|") %in% skip_keys
-      }, logical(1L)))
-    }, logical(1L)))
+    task_has_new_work <- any(vapply(
+      strategies,
+      function(s) {
+        any(vapply(
+          seq_len(n_trials),
+          function(t) {
+            !paste(task$task_id, s, as.integer(t), sep = "|") %in% skip_keys
+          },
+          logical(1L)
+        ))
+      },
+      logical(1L)
+    ))
     if (task_has_new_work) {
       if (!is.null(max_new_tasks) && new_tasks_started >= max_new_tasks) {
         message(sprintf(

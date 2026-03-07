@@ -109,8 +109,11 @@ run_single <- function(
           chat_fn(model = resolved_model)
         }
         # Bypass API call when quota was already exhausted earlier in this run.
-        if (Sys.getenv("RRLMGRAPHBENCH_QUOTA_EXHAUSTED") == "true") NA_character_
-        else chat$chat(prompt)
+        if (Sys.getenv("RRLMGRAPHBENCH_QUOTA_EXHAUSTED") == "true") {
+          NA_character_
+        } else {
+          chat$chat(prompt)
+        }
       },
       error = function(e) {
         msg <- conditionMessage(e)
@@ -136,7 +139,8 @@ run_single <- function(
             chat$chat(prompt),
             error = function(e2) {
               message(
-                "[run_single] Retry also failed: ", conditionMessage(e2)
+                "[run_single] Retry also failed: ",
+                conditionMessage(e2)
               )
               NA_character_
             }
