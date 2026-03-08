@@ -9,6 +9,7 @@ on:
     - cron: "0 3 * * *"  # primary window: 03:00 UTC
     - cron: "0 9 * * *"  # fallback: 09:00 UTC (quota may have reset)
     - cron: "0 15 * * *" # second fallback: 15:00 UTC
+    - cron: "0 21 * * *" # third fallback: 21:00 UTC
 
 name: run-benchmark
 
