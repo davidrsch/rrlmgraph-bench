@@ -6,7 +6,9 @@ on:
         type: boolean
         default: false
   schedule:
-    - cron: "0 3 * * *" # daily at 03:00 UTC
+    - cron: "0 3 * * *"  # primary window: 03:00 UTC
+    - cron: "0 9 * * *"  # fallback: 09:00 UTC (quota may have reset)
+    - cron: "0 15 * * *" # second fallback: 15:00 UTC
 
 name: run-benchmark
 
@@ -215,6 +217,12 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"model":"gpt-4.1-mini","messages":[{"role":"user","content":"OK"}],"max_tokens":1}' \
             "https://models.github.ai/inference/chat/completions")
+          if [ "$http_code" = "429" ]; then
+            echo "::warning::GitHub Models quota exhausted (HTTP 429) -- skipping benchmark, fallback cron will retry later"
+            echo "skip_benchmark=true" >> "$GITHUB_OUTPUT"
+            echo "max_new_tasks=0"     >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [ "$http_code" != "200" ]; then
             echo "::error::GitHub Models access check failed (HTTP $http_code): $(cat /tmp/quota_body.json)"
             exit 1
