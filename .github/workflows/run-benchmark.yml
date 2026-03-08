@@ -149,9 +149,13 @@ jobs:
       - uses: actions/checkout@v4
 
       # Check out rrlmgraph-mcp so the MCP strategy has a Node.js server to run
+      # Pinned to audit/expert-review (contains the context-compression +
+      # node_ids fixes from mcp#23) until mcp#17 merges to main; revert
+      # ref to 'main' after mcp#17 is merged.
       - uses: actions/checkout@v4
         with:
           repository: davidrsch/rrlmgraph-mcp
+          ref: audit/expert-review
           path: rrlmgraph-mcp
 
       - uses: actions/setup-node@v4
