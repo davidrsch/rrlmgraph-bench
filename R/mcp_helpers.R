@@ -243,9 +243,23 @@ mcp_query_context <- function(
       if (is.null(ctx_text) || is.na(ctx_text)) {
         ctx_text <- ""
       }
-      # The metaFooter reports the count but not individual node names, so
-      # node_ids is left empty (NDCG will be NA for rrlmgraph_mcp rows).
-      list(chunks = ctx_text, node_ids = character(0L))
+      # Parse node_ids from the third content item added by query_context.ts
+      # (iteration 4 fix: JSON { node_ids: [...] }).  Fall back to empty on
+      # any parse error so existing results are not broken.
+      node_ids <- character(0L)
+      if (length(content) >= 3L) {
+        ids_json <- tryCatch(content[[3L]][["text"]], error = function(e) NULL)
+        if (!is.null(ids_json) && nzchar(ids_json)) {
+          parsed_ids <- tryCatch(
+            jsonlite::fromJSON(ids_json, simplifyVector = TRUE)[["node_ids"]],
+            error = function(e) character(0L)
+          )
+          if (is.character(parsed_ids) && length(parsed_ids) > 0L) {
+            node_ids <- parsed_ids
+          }
+        }
+      }
+      list(chunks = ctx_text, node_ids = node_ids)
     },
     error = function(e) {
       warning(

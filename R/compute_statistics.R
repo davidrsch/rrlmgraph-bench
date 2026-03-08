@@ -40,6 +40,7 @@
 #'       \code{"bm25_retrieval"} on a per-task basis (mean score
 #'       across trials per task).  Columns: \code{strategy},
 #'       \code{reference}, \code{V} (test statistic), \code{p_value},
+#'       \code{effect_r} (rank-biserial correlation in \eqn{[-1, 1]}),
 #'       \code{n_pairs}, \code{wins}, \code{ties}, \code{losses}.
 #'       \code{NULL} if \code{"bm25_retrieval"} is absent or
 #'       \code{task_id} column is missing.}
@@ -309,6 +310,7 @@ compute_benchmark_statistics <- function(all_results) {
           reference = wilcoxon_ref,
           V = NA_real_,
           p_value = NA_real_,
+          effect_r = NA_real_,
           n_pairs = n_pairs,
           wins = NA_integer_,
           ties = NA_integer_,
@@ -323,14 +325,30 @@ compute_benchmark_statistics <- function(all_results) {
       ties <- sum(diff_vec == 0, na.rm = TRUE)
       losses <- sum(diff_vec < 0, na.rm = TRUE)
       wt <- tryCatch(
-        stats::wilcox.test(x, y, paired = TRUE, alternative = "greater"),
+        stats::wilcox.test(
+          x,
+          y,
+          paired = TRUE,
+          alternative = "greater",
+          exact = FALSE # suppress ties warning; continuity correction applied
+        ),
         error = function(e) list(statistic = NA_real_, p.value = NA_real_)
       )
+      # Rank-biserial correlation: r = 1 - 2W / (n * (n + 1))
+      # where n = number of non-zero differences (n_pairs - ties).
+      # Interpretation: +1 = tfidf always wins, 0 = no effect, -1 = always loses.
+      n_nz <- n_pairs - ties
+      r_rb <- if (!is.na(as.numeric(wt$statistic)) && n_nz > 0L) {
+        1 - 2 * as.numeric(wt$statistic) / (n_nz * (n_nz + 1L))
+      } else {
+        NA_real_
+      }
       data.frame(
         strategy = s,
         reference = wilcoxon_ref,
         V = as.numeric(wt$statistic),
         p_value = wt$p.value,
+        effect_r = r_rb,
         n_pairs = n_pairs,
         wins = wins,
         ties = ties,
