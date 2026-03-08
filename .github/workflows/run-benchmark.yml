@@ -29,9 +29,16 @@ permissions:
 
 # ── Job 1: work-to-do gate ────────────────────────────────────────────────────
 # A cheap (~10 s) job that decides whether the benchmark needs to run.
-# The benchmark is skipped ONLY when BOTH of these are true:
-#   (a) rrlmgraph upstream version has not changed since the last run
-#   (b) all expected rows (n_tasks x n_strategies x n_trials) are present
+# The benchmark is skipped ONLY when ALL of these are true:
+#   (a) rrlmgraph R-package version has not changed since the last run
+#   (b) rrlmgraph-mcp version (package.json) has not changed since the last run
+#   (c) all expected rows (n_tasks x n_strategies x n_trials) are present
+#
+# Both upstream repos are tracked so that a change to the MCP server (which
+# affects context_tokens and node_ids) triggers the same fresh-start logic as
+# a change to the R package.  The benchmark checkout always uses 'main' of
+# each upstream; versioning is enforced via semver in DESCRIPTION/package.json
+# rather than by branch names, which are ephemeral.
 #
 # The decision is purely data-driven and identical for scheduled and manual
 # runs.  Use force_run=true to explicitly re-run a complete benchmark.
@@ -43,10 +50,10 @@ permissions:
 # ubuntu-latest runners).
 #
 # Version-bump → fresh_start:
-#   When the gate detects a version change, it emits fresh_start=true.
-#   The benchmark job then deletes any partial checkpoint and runs with
-#   resume=FALSE, ensuring all rows in the output RDS belong to the SAME
-#   algorithm version (required for valid Wilcoxon comparisons).
+#   When the gate detects a version change in EITHER upstream, it emits
+#   fresh_start=true.  The benchmark job then deletes any partial checkpoint
+#   and runs with resume=FALSE, ensuring all rows in the output RDS belong to
+#   the SAME algorithm version (required for valid Wilcoxon comparisons).
 #
 # Failure modes handled:
 #   • curl fails (network)         → default to RUN (fail-open)
@@ -61,6 +68,7 @@ jobs:
     outputs:
       skip: ${{ steps.gate.outputs.skip }}
       remote_version: ${{ steps.gate.outputs.remote_version }}
+      remote_mcp_version: ${{ steps.gate.outputs.remote_mcp_version }}
       fresh_start: ${{ steps.gate.outputs.fresh_start }}
     steps:
       - uses: actions/checkout@v4
@@ -68,27 +76,37 @@ jobs:
       - name: Determine whether to run benchmark
         id: gate
         run: |
-          # Fetch the latest rrlmgraph DESCRIPTION from GitHub.
-          # If curl fails (rate-limit / network outage), default to running so
-          # a version bump is never silently missed.
+          # ── Fetch upstream versions ────────────────────────────────────────
+          # Both rrlmgraph (R package) and rrlmgraph-mcp (Node.js server) are
+          # tracked.  A version bump in EITHER triggers a fresh run.
+          # Fail-open on network errors: default to RUN rather than silently
+          # skipping a version change.
+
           REMOTE_VER=$(curl -sf \
             "https://raw.githubusercontent.com/davidrsch/rrlmgraph/main/DESCRIPTION" \
             | grep '^Version:' | awk '{print $2}' || echo "")
 
-          if [ -z "$REMOTE_VER" ]; then
-            echo "::warning::Could not fetch rrlmgraph remote version — defaulting to RUN"
-            echo "skip=false"            >> "$GITHUB_OUTPUT"
-            echo "remote_version=unknown" >> "$GITHUB_OUTPUT"
-            echo "fresh_start=false"      >> "$GITHUB_OUTPUT"
+          MCP_VER=$(curl -sf \
+            "https://raw.githubusercontent.com/davidrsch/rrlmgraph-mcp/main/package.json" \
+            | jq -r '.version // ""' || echo "")
+
+          if [ -z "$REMOTE_VER" ] || [ -z "$MCP_VER" ]; then
+            echo "::warning::Could not fetch upstream versions (rrlmgraph='$REMOTE_VER' mcp='$MCP_VER') — defaulting to RUN"
+            echo "skip=false"                >> "$GITHUB_OUTPUT"
+            echo "remote_version=unknown"     >> "$GITHUB_OUTPUT"
+            echo "remote_mcp_version=unknown" >> "$GITHUB_OUTPUT"
+            echo "fresh_start=false"          >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          echo "remote_version=$REMOTE_VER" >> "$GITHUB_OUTPUT"
+          echo "remote_version=$REMOTE_VER"     >> "$GITHUB_OUTPUT"
+          echo "remote_mcp_version=$MCP_VER"    >> "$GITHUB_OUTPUT"
 
-          # Read the manifest written by the previous run's commit step.
+          # ── Read stored state from manifest ────────────────────────────────
           # Falls back to sentinel values that guarantee a first-time run.
           MANIFEST="inst/results/benchmark_manifest.json"
           if [ -f "$MANIFEST" ]; then
             STORED_VER=$(jq -r '.rrlmgraph_version // "none"' "$MANIFEST")
+            STORED_MCP_VER=$(jq -r '.rrlmgraph_mcp_version // "none"' "$MANIFEST")
             STORED_COMPLETED=$(jq -r '.completed_rows // 0' "$MANIFEST")
             STORED_EXPECTED=$(jq -r '.expected_rows // 9999' "$MANIFEST")
             # Guard against corrupt JSON -- treat non-numeric as sentinel
@@ -96,35 +114,47 @@ jobs:
             echo "$STORED_EXPECTED"  | grep -qE '^[0-9]+$' || STORED_EXPECTED=9999
           else
             STORED_VER="none"
+            STORED_MCP_VER="none"
             STORED_COMPLETED=0
             STORED_EXPECTED=9999
           fi
 
-          # Emit fresh_start when the upstream version changed (and a prior run
-          # exists).  The benchmark job uses this to wipe the partial checkpoint
-          # and run with resume=FALSE, preventing cross-version row mixing.
-          if [ "$REMOTE_VER" != "$STORED_VER" ] && [ "$STORED_VER" != "none" ]; then
+          # ── Detect version changes → fresh_start ───────────────────────────
+          # Only emit fresh_start when a prior run exists (STORED_VER != none).
+          # A change to EITHER upstream version raises the flag, because both
+          # affect the context content and therefore result validity.
+          FRESH_START=false
+          if [ "$STORED_VER" != "none" ]; then
+            if [ "$REMOTE_VER" != "$STORED_VER" ]; then
+              FRESH_START=true
+              echo "::notice::rrlmgraph bumped $STORED_VER -> $REMOTE_VER"
+            fi
+            if [ "$MCP_VER" != "$STORED_MCP_VER" ]; then
+              FRESH_START=true
+              echo "::notice::rrlmgraph-mcp bumped $STORED_MCP_VER -> $MCP_VER"
+            fi
+          fi
+          if [ "$FRESH_START" = "true" ]; then
             echo "fresh_start=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::rrlmgraph bumped $STORED_VER -> $REMOTE_VER -- fresh start (partial checkpoint will be wiped)"
+            echo "::notice::Version change detected -- fresh start (partial checkpoint will be wiped)"
           else
             echo "fresh_start=false" >> "$GITHUB_OUTPUT"
           fi
 
-          # Skip when ALL of:
-          #   (a) version unchanged
-          #   (b) benchmark complete: COMPLETED >= EXPECTED
-          #   (c) force_run not set
-          # The trigger (schedule vs manual dispatch) is irrelevant -- if the
-          # work is done and no force is requested, skip regardless of how the
-          # workflow was started.  Use force_run=true to explicitly re-run a
-          # complete benchmark.
+          # ── Skip decision ──────────────────────────────────────────────────
+          # Skip only when ALL of:
+          #   (a) rrlmgraph version unchanged
+          #   (b) rrlmgraph-mcp version unchanged
+          #   (c) benchmark complete (COMPLETED >= EXPECTED)
+          #   (d) force_run not set
           FORCE="${{ inputs.force_run }}"
 
           if [ "$REMOTE_VER" = "$STORED_VER" ] \
+              && [ "$MCP_VER" = "$STORED_MCP_VER" ] \
               && [ "$STORED_COMPLETED" -ge "$STORED_EXPECTED" ] \
               && [ "$FORCE" != "true" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Benchmark complete ($STORED_COMPLETED/$STORED_EXPECTED rows) and rrlmgraph still at $REMOTE_VER -- skipping"
+            echo "::notice::Benchmark complete ($STORED_COMPLETED/$STORED_EXPECTED rows), rrlmgraph=$REMOTE_VER mcp=$MCP_VER -- skipping"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
             if [ "$STORED_COMPLETED" -lt "$STORED_EXPECTED" ]; then
@@ -148,14 +178,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Check out rrlmgraph-mcp so the MCP strategy has a Node.js server to run
-      # Pinned to audit/expert-review (contains the context-compression +
-      # node_ids fixes from mcp#23) until mcp#17 merges to main; revert
-      # ref to 'main' after mcp#17 is merged.
+      # Check out rrlmgraph-mcp so the MCP strategy has a Node.js server to run.
+      # Always uses 'main' -- the gate tracks package.json version and triggers
+      # a fresh run automatically whenever rrlmgraph-mcp is updated.
       - uses: actions/checkout@v4
         with:
           repository: davidrsch/rrlmgraph-mcp
-          ref: audit/expert-review
           path: rrlmgraph-mcp
 
       - uses: actions/setup-node@v4
@@ -320,17 +348,24 @@ jobs:
           #   • fields are self-documenting and typed (numbers vs strings)
           #   • the gate can never be misled by a stale qualitative label
           RRLMGRAPH_VER="${{ needs.gate.outputs.remote_version }}"
+          MCP_VER="${{ needs.gate.outputs.remote_mcp_version }}"
           # When the gate could not reach GitHub (network blip), it emits
           # "unknown".  Writing "unknown" to the manifest would cause a false
           # fresh_start on the NEXT successful gate run: any non-"none" stored
           # version that differs from the real remote version triggers a wipe.
-          # Fall back to the installed package version -- it is always accurate
-          # because R setup installed rrlmgraph from GitHub earlier this job.
+          # Fall back to installed versions -- always accurate because the
+          # setup steps already installed both packages from GitHub.
           if [ "$RRLMGRAPH_VER" = "unknown" ]; then
             RRLMGRAPH_VER=$(Rscript --vanilla -e \
               'cat(as.character(utils::packageVersion("rrlmgraph")))' \
               2>/dev/null || echo "unknown")
-            echo "::notice::Gate reported unknown version; resolved from installed package: $RRLMGRAPH_VER"
+            echo "::notice::Gate reported unknown rrlmgraph version; resolved from installed package: $RRLMGRAPH_VER"
+          fi
+          if [ "$MCP_VER" = "unknown" ]; then
+            MCP_VER=$(node -e \
+              'const p=require("./rrlmgraph-mcp/package.json"); process.stdout.write(p.version)' \
+              2>/dev/null || echo "unknown")
+            echo "::notice::Gate reported unknown mcp version; resolved from checked-out package.json: $MCP_VER"
           fi
           EXPECTED_ROWS=$((30 * 7 * 5))  # n_tasks x n_strategies x n_trials
           COMPLETED_ROWS=$(Rscript --vanilla -e \
@@ -340,12 +375,13 @@ jobs:
 
           MANIFEST="inst/results/benchmark_manifest.json"
           jq -n \
-            --arg     ver  "$RRLMGRAPH_VER" \
-            --argjson comp "$COMPLETED_ROWS" \
-            --argjson exp  "$EXPECTED_ROWS" \
-            '{rrlmgraph_version: $ver, completed_rows: $comp, expected_rows: $exp}' \
+            --arg     ver      "$RRLMGRAPH_VER" \
+            --arg     mcp_ver  "$MCP_VER" \
+            --argjson comp     "$COMPLETED_ROWS" \
+            --argjson exp      "$EXPECTED_ROWS" \
+            '{rrlmgraph_version: $ver, rrlmgraph_mcp_version: $mcp_ver, completed_rows: $comp, expected_rows: $exp}' \
             > "$MANIFEST"
-          echo "::notice::Manifest written: rrlmgraph=$RRLMGRAPH_VER rows=$COMPLETED_ROWS/$EXPECTED_ROWS"
+          echo "::notice::Manifest written: rrlmgraph=$RRLMGRAPH_VER mcp=$MCP_VER rows=$COMPLETED_ROWS/$EXPECTED_ROWS"
 
           git add inst/results/benchmark_results.rds
           git add "$MANIFEST"
